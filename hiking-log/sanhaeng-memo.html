@@ -16,6 +16,8 @@ textarea{min-height:110px}
 .chip.on{background:#355f43;color:#fff}
 .big{display:block;width:100%;font-size:21px;font-weight:bold;padding:16px;margin:8px 0;border:0;border-radius:12px;background:#355f43;color:#fff}
 .big.alt{background:#c9531f}
+.big.sv{background:#fff;color:#355f43;border:3px solid #355f43}
+#fab{position:fixed;right:14px;bottom:14px;z-index:5;font-size:18px;font-weight:bold;padding:12px 20px;border:0;border-radius:999px;background:#355f43;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.3)}
 .sub{font-size:17px;padding:12px 14px;margin:4px 6px 4px 0;border:2px solid #b9c7bb;border-radius:10px;background:#fff;color:#1d2a21}
 .item{background:#fff;border-radius:10px;padding:10px 12px;margin:8px 0;border-left:6px solid #c9531f;position:relative}
 .item b{color:#c9531f}
@@ -27,6 +29,7 @@ textarea{min-height:110px}
 </head>
 <body>
 <div id="msg"></div>
+<button id="fab" type="button" onclick="saveNow()">💾 저장</button>
 <h1>⛰️ 산행 메모 <span id="st" class="st">⚠ 기능 꺼짐</span></h1>
 
 <div class="lab">산행지</div>
@@ -40,6 +43,8 @@ textarea{min-height:110px}
 
 <button class="big" type="button" onclick="addEntry(false)">기록 추가 (현재 시각 자동)</button>
 <button class="big alt" type="button" onclick="addEntry(true)">📷 사진 찍었음 표시 (시각만 기록)</button>
+<button class="big sv" type="button" onclick="saveNow()">💾 저장</button>
+<div class="lab" id="saved">아직 저장 전</div>
 
 <div class="lab">지금까지 기록</div>
 <div id="list"></div>
@@ -71,7 +76,12 @@ function load(){
   if (!data.date) data.date = todayStr();
 }
 function save(){
-  try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { canSave = false; }
+  try { localStorage.setItem(KEY, JSON.stringify(data)); canSave = true; $('saved').textContent = '마지막 저장 ' + nowStr() + ' (' + data.items.length + '건)'; return true; } catch (e) { canSave = false; return false; }
+}
+function saveNow(){
+  data.place = $('place').value;
+  if (save()) { build(); msg('💾 저장했습니다 ' + nowStr()); }
+  else { build(); saveFile(); }
 }
 function saveBase(){ data.place = $('place').value; save(); build(); }
 
@@ -139,7 +149,7 @@ function clearAll(){
 load();
 $('place').value = data.place || '';
 drawChips(); drawList(); build();
-$('st').textContent = canSave ? '✅ 작동 중' : '✅ 작동 중 (자동저장 불가: 끝나면 꼭 복사)';
+save(); $('st').textContent = canSave ? '✅ 작동 중' : '✅ 작동 중 (자동저장 불가: 끝나면 꼭 복사)';
 $('st').className = 'st ok';
 setInterval(function(){ if (document.activeElement && document.activeElement.id === 'txt') save(); }, 5000);
 </script>
