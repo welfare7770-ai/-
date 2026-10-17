@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+<title>산길 기록장</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap">
+<style>
+/* Layout: 산행 순서대로 내려가는 한 줄 기록지. 상단 고정 띠에 산행 선택·구간 이동, 기록 카드마다 '지금' 시각 버튼과 사진 첨부. */
+:root{
+  --bg:#eef2ec; --surface:#fbfcfa; --ink:#1e2a22; --muted:#5a6a5f; --line:#cfd9cf;
+  --moss:#355f43; --moss-soft:#dfe9e0; --ribbon:#c9531f; --ribbon-soft:#f6e3d8; --ok:#2f7a4a;
+  --f-display:"Gowun Batang","Noto Serif KR","Apple SD Gothic Neo",serif;
+  --f-body:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-num:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111713; --surface:#18201b; --ink:#e2eae3; --muted:#98a99c; --line:#2b372f;
+  --moss:#83b693; --moss-soft:#1f2f24; --ribbon:#ee8a57; --ribbon-soft:#3a2418; --ok:#7cc795; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111713; --surface:#18201b; --ink:#e2eae3; --muted:#98a99c; --line:#2b372f;
+  --moss:#83b693; --moss-soft:#1f2f24; --ribbon:#ee8a57; --ribbon-soft:#3a2418; --ok:#7cc795; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 96px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{padding-block:10px 8px;display:grid;gap:8px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:700;font-size:1.15rem;margin-right:auto;letter-spacing:-.01em}
+.brand small{font-family:var(--f-body);font-weight:400;font-size:.78rem;color:var(--muted);margin-left:6px}
+.status{font-size:.78rem;color:var(--muted)}
+.status.ok{color:var(--ok)}
+select,input,textarea{font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;min-width:0}
+textarea{min-height:76px;resize:vertical}
+input:focus,textarea:focus,select:focus,button:focus-visible{outline:2px solid var(--moss);outline-offset:1px}
+#hikeSel{flex:1 1 180px;width:auto}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 12px;white-space:nowrap}
+button.primary{background:var(--moss);border-color:var(--moss);color:var(--surface)}
+button.ribbon{background:var(--ribbon-soft);border-color:var(--ribbon);color:var(--ribbon);font-size:.82rem;padding:6px 10px}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+button.danger{color:var(--ribbon)}
+nav.jump{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+nav.jump::-webkit-scrollbar{display:none}
+nav.jump a{flex:none;text-decoration:none;color:var(--muted);font-size:.84rem;border:1px solid var(--line);border-radius:999px;padding:4px 11px;background:var(--bg)}
+nav.jump a:hover{color:var(--moss);border-color:var(--moss)}
+section.sec{margin-top:28px;scroll-margin-top:120px}
+section.sec>h2{font-family:var(--f-display);font-size:1.3rem;margin:0 0 4px;display:flex;align-items:baseline;gap:10px;text-wrap:balance}
+section.sec>h2 .no{font-family:var(--f-num);font-size:.85rem;color:var(--surface);background:var(--moss);border-radius:6px;padding:1px 7px}
+.lead{color:var(--muted);font-size:.88rem;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}
+.grid .full{grid-column:1/-1}
+@media (max-width:560px){.grid{grid-template-columns:minmax(0,1fr)}}
+label.fld{display:grid;gap:4px;min-width:0}
+label.fld>span{font-size:.84rem;color:var(--muted);display:flex;justify-content:space-between;gap:6px;align-items:center}
+.timebox{display:flex;gap:6px}
+.timebox input{flex:1}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:12px}
+.rec{border-left:4px solid var(--ribbon);margin-top:14px}
+.rec h3{margin:0;font-family:var(--f-display);font-size:1.08rem;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.rec h3 .tag{font-family:var(--f-num);font-size:.78rem;color:var(--ribbon)}
+.rec h3 .stamp{margin-left:auto;font-family:var(--f-num);font-size:.8rem;color:var(--muted);font-weight:400}
+.photos{display:grid;gap:8px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.thumb{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg);display:grid}
+.thumb img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;max-width:100%}
+.thumb .meta{padding:6px 8px;display:grid;gap:4px;font-size:.76rem;color:var(--muted)}
+.thumb .meta b{font-family:var(--f-num);color:var(--ribbon);font-weight:600}
+.thumb input{padding:5px 7px;font-size:.82rem}
+.thumb .x{justify-self:end;padding:2px 8px;font-size:.75rem}
+.addphoto{display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--moss);color:var(--moss);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:.88rem;width:max-content}
+.addphoto input{display:none}
+.checks{display:grid;gap:8px}
+.checks label{display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.checks input{width:20px;height:20px;accent-color:var(--moss);flex:none}
+.out{display:grid;gap:10px}
+.out textarea{min-height:320px;font-size:.9rem;line-height:1.55;background:var(--bg)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button[aria-pressed="true"]{background:var(--moss);color:var(--surface);border-color:var(--moss)}
+.hint{font-size:.8rem;color:var(--muted)}
+.miss{background:var(--ribbon-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:.86rem}
+.banner{background:var(--ribbon-soft);border:1px solid var(--ribbon);border-radius:10px;padding:10px 12px;font-size:.86rem;margin-top:12px}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--ribbon-soft);border-radius:8px;padding:8px 10px;font-size:.86rem}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:.88rem;z-index:20;max-width:calc(100% - 32px)}
+.hide-mobile{min-height:0}
+@media (max-width:560px){.hide-mobile{display:none}}
+.dur{font-family:var(--f-num);font-size:.78rem}
+@media (prefers-reduced-motion:no-preference){.toast{transition:opacity .2s}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="row">
+      <div class="brand">산길 기록장<small>산행 중 기록 → 블로그 원고</small></div>
+      <span id="saveStatus" class="status">저장 준비</span>
+    </div>
+    <div class="row">
+      <select id="hikeSel" aria-label="산행 선택"></select>
+      <button id="newHike" class="primary">새 산행</button>
+      <button id="delHike" class="ghost danger">삭제</button>
+    </div>
+    <div id="delConfirm" class="confirm" hidden>이 산행 기록과 사진을 모두 지울까요?
+      <button id="delYes" class="danger">지우기</button><button id="delNo">취소</button></div>
+    <nav class="jump" aria-label="구간 이동">
+      <a href="#s1">1 기본정보</a><a href="#s2">2 출발</a><a href="#s3">3 현장 기록</a><a href="#s4">4 성찰</a><a href="#s5">5 최종 확인</a><a href="#s6">6 블로그 메모</a><a href="#s7">7 원고 요청</a><a href="#s8">백업</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="storeWarn" class="banner" hidden>이 화면에서는 기록이 기기에 저장되지 않습니다. 산행을 마치면 7번에서 원고 요청문을 복사하거나 백업을 꼭 받아 두세요.</div>
+  <div id="form"></div>
+
+  <section class="sec" id="s7">
+    <h2><span class="no">7</span>블로그 원고 작성 요청</h2>
+    <p class="lead">위 기록을 모아 만든 글입니다. ‘원고 요청문’을 복사해 Claude에게 붙여넣으면 네이버 블로그 산행후기 원고를 받을 수 있습니다.</p>
+    <div class="out card">
+      <div class="tabs" role="group" aria-label="출력 형식">
+        <button data-out="prompt" aria-pressed="true">원고 요청문</button>
+        <button data-out="skeleton" aria-pressed="false">블로그 초안 뼈대</button>
+        <button data-out="note" aria-pressed="false">기록 노트만</button>
+      </div>
+      <div id="missBox" class="miss" hidden></div>
+      <textarea id="outText" readonly aria-label="생성된 글"></textarea>
+      <div class="row"><button id="copyOut" class="primary">복사하기</button><button id="refreshOut">다시 만들기</button>
+        <span class="hint">사진 파일은 블로그 편집기에서 직접 올리고, 글 속 ‘사진 n’ 표시 위치에 넣으세요.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="s8">
+    <h2>기록 백업</h2>
+    <p class="lead">기록은 지금 쓰는 기기의 브라우저에만 저장됩니다. 기기를 바꾸거나 브라우저 데이터를 지우기 전에 백업하세요.</p>
+    <div class="card">
+      <div class="checks"><label><input type="checkbox" id="bkPhotos"> 사진까지 포함 (용량이 커집니다)</label></div>
+      <div class="row"><button id="bkMake">백업 만들기</button><button id="bkCopy">백업 복사</button><button id="bkFile">파일로 저장</button></div>
+      <textarea id="bkText" aria-label="백업 내용" placeholder="백업 만들기를 누르면 여기에 내용이 나옵니다. 복원하려면 백업 내용을 여기에 붙여넣고 ‘복원’을 누르세요."></textarea>
+      <div class="row"><button id="bkRestore">붙여넣은 백업 복원</button>
+        <label class="addphoto">백업 파일 열기<input type="file" id="bkOpen" accept=".json,application/json,text/plain"></label></div>
+    </div>
+  </section>
+</main>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(() => {
+const RECORDS = [
+  {id:'r1', tag:'기록 1', title:'산행 초입', fields:[['time','시간','time'],['place','장소'],['scenery','풍경·숲의 모습','area'],['photos'],['feeling','느낌·생각','area']]},
+  {id:'r2', tag:'기록 2', title:'주요 경유지', fields:[['time','시간','time'],['place','장소'],['sign','이정표·이동 방향'],['around','주변 풍경','area'],['photos'],['feeling','느낌·생각','area']]},
+  {id:'r3', tag:'기록 3', title:'인상적인 장소', fields:[['time','시간','time'],['place','장소'],['object','나무·꽃·바위·문화유적'],['observe','특별히 관찰한 것','area'],['photos'],['voice','음성 기록 요약','area']]},
+  {id:'r4', tag:'기록 4', title:'가장 힘들었던 구간', fields:[['time','시간','time'],['place','장소'],['trail','길의 상태·경사','area'],['body','체력적으로 느낀 점','area'],['remember','기억할 내용','area'],['photos']]},
+  {id:'r5', tag:'기록 5', title:'정상 또는 최종 목적지', fields:[['time','도착 시각','time'],['place','장소'],['view','주변 전망','area'],['scene','가장 인상적인 장면','area'],['photos'],['thought','정상에서 떠오른 생각','area']]},
+  {id:'r6', tag:'기록 6', title:'하산', fields:[['time','하산 시작 시각','time'],['route','하산 경로'],['found','하산 중 발견한 풍경','area'],['endTime','하산 완료 시각','time'],['photos'],['review','산행을 마친 소감','area']]},
+];
+const SECTIONS = [
+  {id:'s1', no:'1', title:'산행 기본정보', key:'basic', lead:'산행 전·후에 채웁니다. 종료 시각을 넣으면 총 소요시간을 계산해 드립니다.', fields:[
+    ['date','산행일','date'],['mountain','산행지'],['companions','동행자'],['weather','날씨'],
+    ['startTime','출발 시각','time'],['endTime','산행 종료 시각','time'],
+    ['course','산행 코스','area',true],['distance','실제 이동거리','text',false,'예: 8.4km (트랭글 기준)'],['duration','총 소요시간','text',false,'예: 5시간 20분']]},
+  {id:'s2', no:'2', title:'산행 출발', key:'depart', lead:'들머리에서 한 번 적어 둡니다.', fields:[
+    ['place','출발 장소'],['time','출발 시각','time'],['mood','출발 당시 날씨와 기분','area',true],['purpose','오늘 산행의 목적','area',true]]},
+  {id:'s3', no:'3', title:'산행 중 현장 기록', key:'rec'},
+  {id:'s4', no:'4', title:'오늘의 철학적 성찰', key:'reflect', lead:'하산 후나 쉬는 자리에서 적습니다.', fields:[
+    ['scene','오늘 산에서 가장 인상 깊었던 장면','area',true],['question','그 장면에서 떠오른 인생의 질문','area',true],
+    ['philosopher','연결하고 싶은 철학자','text',false,'예: 마르쿠스 아우렐리우스'],['blank',''],
+    ['link','철학자의 사상과 연결한 생각','area',true],['lesson','오늘 산행이 내게 남긴 교훈','area',true]]},
+  {id:'s5', no:'5', title:'산행 정보 최종 확인', key:'check'},
+  {id:'s6', no:'6', title:'네이버 블로그 작성 메모', key:'blog', lead:'원고 요청 전에 방향을 잡아 둡니다.', fields:[
+    ['titles','제목 후보','area',true,'한 줄에 하나씩'],['theme','오늘의 핵심 주제','text',true],
+    ['mustPhotos','반드시 넣을 사진','text',false,'예: 사진 3, 사진 7'],['places','꼭 소개할 장소'],
+    ['tips','독자에게 알려줄 산행 팁','area',true],['closing','마무리 문장에 담을 생각','area',true]]},
+];
+const CHECKS = [['distance','실제 이동거리 확인'],['duration','총 소요시간 확인'],['route','산행 경로 확인'],['photos','사진과 촬영 장소 확인'],['facts','식물·역사·문화 정보 확인'],['unsure','불확실한 사실 구분']];
+const PHILOSOPHERS = ['헤라클레이토스','소크라테스','플라톤','아리스토텔레스','디오게네스','에피쿠로스','루크레티우스','세네카','에픽테토스','마르쿠스 아우렐리우스','키케로','아우구스티누스','몽테뉴','스피노자','루소','칸트','쇼펜하우어','니체','소로'];
+const LS_KEY = 'sangil-records-v1';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const nowHM = () => { const d = new Date(); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
+
+/* ---------- 저장소 ---------- */
+let lsOK = true;
+function loadAll(){ try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch(e){ lsOK = false; return null; } }
+function saveAll(){
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); setStatus('저장됨 ' + nowHM(), true); }
+  catch(e){ lsOK = false; $('#storeWarn').hidden = false; setStatus('저장 안 됨'); }
+}
+let saveTimer;
+function queueSave(){ setStatus('입력 중…'); clearTimeout(saveTimer); saveTimer = setTimeout(saveAll, 500); }
+function setStatus(t, ok){ const el = $('#saveStatus'); el.textContent = t; el.classList.toggle('ok', !!ok); }
+
+const photoCache = new Map();
+let dbP = null;
+function db(){
+  if (!dbP) dbP = new Promise((res, rej) => {
+    try { const r = indexedDB.open('sangil-photos', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('p');
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    } catch(e){ rej(e); }
+  });
+  return dbP;
+}
+async function idb(mode, fn){ const d = await db(); return new Promise((res, rej) => { const tx = d.transaction('p', mode); const r = fn(tx.objectStore('p')); tx.oncomplete = () => res(r && r.result); tx.onerror = () => rej(tx.error); }); }
+const putPhoto = (id, data) => { photoCache.set(id, data); return idb('readwrite', s => s.put(data, id)).catch(() => { $('#storeWarn').hidden = false; }); };
+const delPhoto = id => { photoCache.delete(id); return idb('readwrite', s => s.delete(id)).catch(() => {}); };
+async function getPhoto(id){ if (photoCache.has(id)) return photoCache.get(id); try { const v = await idb('readonly', s => s.get(id)); if (v) photoCache.set(id, v); return v; } catch(e){ return null; } }
+
+function newHike(){ const id = uid(); return { id, created: Date.now(), f: { 'basic.date': today() }, checks: {}, extras: [], photos: [] }; }
+let state = loadAll();
+if (!state || !state.hikes || !Object.keys(state.hikes).length){ const h = newHike(); state = { hikes: { [h.id]: h }, current: h.id }; }
+if (!lsOK) $('#storeWarn').hidden = false;
+const H = () => state.hikes[state.current];
+
+/* ---------- 화면 구성 ---------- */
+function fieldHTML(key, label, type, full, ph){
+  if (key.endsWith('.blank')) return '<div class="hide-mobile"></div>';
+  const id = 'f_' + key.replace(/\./g, '_');
+  const now = type === 'time' ? `<button type="button" class="ribbon" data-now="${key}">지금</button>` : '';
+  const extra = key === 'basic.duration' ? '<button type="button" class="ghost dur" id="durCalc" hidden></button>' : '';
+  const list = key === 'reflect.philosopher' ? ' list="philList"' : '';
+  let ctl;
+  if (type === 'area') ctl = `<textarea id="${id}" data-key="${key}" placeholder="${esc(ph || '')}"></textarea>`;
+  else if (type === 'time') ctl = `<div class="timebox"><input id="${id}" type="time" data-key="${key}">${now}</div>`;
+  else ctl = `<input id="${id}" type="${type === 'date' ? 'date' : 'text'}" data-key="${key}" placeholder="${esc(ph || '')}"${list}>`;
+  return `<label class="fld${full ? ' full' : ''}" for="${id}"><span>${esc(label)}${extra}</span>${ctl}</label>`;
+}
+function recHTML(r){
+  const body = r.fields.map(([k, l, t]) => k === 'photos'
+    ? `<div class="photos full" data-rec="${r.id}"><div class="thumbs"></div><label class="addphoto">사진 추가<input type="file" accept="image/*" multiple data-photo="${r.id}"></label></div>`
+    : fieldHTML(`rec.${r.id}.${k}`, l, t || 'text', t === 'area')).join('');
+  return `<div class="card rec" id="${r.id}"><h3><span class="tag">${r.tag}</span>${r.title}<span class="stamp" data-stamp="${r.id}"></span></h3><div class="grid">${body}</div></div>`;
+}
+function buildForm(){
+  let html = '';
+  for (const s of SECTIONS){
+    html += `<section class="sec" id="${s.id}"><h2><span class="no">${s.no}</span>${s.title}</h2>`;
+    if (s.key === 'rec'){
+      html += '<p class="lead">걸으면서 해당 지점에 닿을 때마다 ‘지금’을 누르고 짧게 적으세요. 사진은 휴대폰 카메라로 바로 찍어 올릴 수 있습니다.</p>';
+      html += RECORDS.map(recHTML).join('');
+      html += '<div id="extras"></div><div class="row" style="margin-top:12px"><button id="addExtra" class="primary">기록 더하기 (쉼터·샘터·전망바위 등)</button></div>';
+    } else if (s.key === 'check'){
+      html += '<p class="lead">원고를 요청하기 전에 확인한 항목에 표시합니다. 표시하지 않은 항목은 요청문에 ‘미확인’으로 넘어갑니다.</p><div class="checks">';
+      html += CHECKS.map(([k, l]) => `<label><input type="checkbox" data-check="${k}"> ${l}</label>`).join('') + '</div>';
+    } else {
+      html += `<p class="lead">${s.lead}</p><div class="grid">` + s.fields.map(([k, l, t, full, ph]) => fieldHTML(`${s.key}.${k}`, l, t || 'text', full || t === 'area', ph)).join('') + '</div>';
+    }
+    html += '</section>';
+  }
+  html += `<datalist id="philList">${PHILOSOPHERS.map(p => `<option value="${p}">`).join('')}</datalist>`;
+  $('#form').innerHTML = html;
+}
+function extraHTML(x, i){
+  const k = f => `ex.${x.id}.${f}`;
+  return `<div class="card rec" id="ex_${x.id}"><h3><span class="tag">추가 ${i + 1}</span>${esc(x.f?.place || '현장 기록')}<span class="stamp"></span></h3><div class="grid">
+    ${fieldHTML(k('time'), '시간', 'time')}${fieldHTML(k('place'), '장소')}
+    ${fieldHTML(k('note'), '본 것·느낀 것', 'area', true)}
+    <div class="photos full" data-rec="ex_${x.id}"><div class="thumbs"></div><label class="addphoto">사진 추가<input type="file" accept="image/*" multiple data-photo="ex_${x.id}"></label></div>
+    <div class="full row"><button type="button" class="ghost danger" data-delx="${x.id}">이 기록 지우기</button></div></div></div>`;
+}
+function renderExtras(){ $('#extras').innerHTML = H().extras.map(extraHTML).join(''); }
+
+function getVal(key){
+  if (key.startsWith('ex.')){ const [, id, f] = key.split('.'); const x = H().extras.find(e => e.id === id); return x?.f?.[f] ?? ''; }
+  return H().f[key] ?? '';
+}
+function setVal(key, v){
+  if (key.startsWith('ex.')){ const [, id, f] = key.split('.'); const x = H().extras.find(e => e.id === id); if (x){ x.f = x.f || {}; x.f[f] = v; } }
+  else H().f[key] = v;
+  H().updated = Date.now();
+}
+function fillValues(){
+  document.querySelectorAll('[data-key]').forEach(el => { el.value = getVal(el.dataset.key); });
+  document.querySelectorAll('[data-check]').forEach(el => { el.checked = !!H().checks[el.dataset.check]; });
+  RECORDS.forEach(r => { const t = H().f[`rec.${r.id}.time`]; const st = document.querySelector(`[data-stamp="${r.id}"]`); if (st) st.textContent = t || ''; });
+  updateDur();
+}
+function hikeLabel(h){ const d = h.f['basic.date'] || ''; const m = h.f['basic.mountain'] || '산행지 미정'; return `${d} ${m}`.trim(); }
+function renderSel(){
+  const hs = Object.values(state.hikes).sort((a, b) => (b.f['basic.date'] || '').localeCompare(a.f['basic.date'] || '') || b.created - a.created);
+  $('#hikeSel').innerHTML = hs.map(h => `<option value="${h.id}"${h.id === state.current ? ' selected' : ''}>${esc(hikeLabel(h))}</option>`).join('');
+}
+async function renderPhotos(){
+  const nums = photoNumbers();
+  for (const box of document.querySelectorAll('.photos[data-rec]')){
+    const rec = box.dataset.rec;
+    const list = H().photos.filter(p => p.rec === rec);
+    const thumbs = box.querySelector('.thumbs');
+    thumbs.innerHTML = list.map(p => `<div class="thumb" data-pid="${p.id}"><img alt="${esc(p.caption || p.name)}"><div class="meta">
+      <div><b>사진 ${nums.get(p.id)}</b> · ${esc(p.name)}${p.taken ? ' · ' + esc(p.taken) : ''}</div>
+      <input data-cap="${p.id}" value="${esc(p.caption || '')}" placeholder="사진 설명" aria-label="사진 설명">
+      <button type="button" class="ghost danger x" data-delp="${p.id}">빼기</button></div></div>`).join('');
+    for (const p of list){ const src = await getPhoto(p.id); const img = thumbs.querySelector(`[data-pid="${p.id}"] img`); if (img && src) img.src = src; }
+  }
+}
+function render(){ renderSel(); renderExtras(); fillValues(); renderPhotos(); refreshOut(); }
+
+/* ---------- 시간 계산 ---------- */
+function minutes(t){ const m = /^(\d{1,2}):(\d{2})$/.exec(t || ''); return m ? (+m[1]) * 60 + (+m[2]) : null; }
+function updateDur(){
+  const b = $('#durCalc'); if (!b) return;
+  const s = minutes(H().f['basic.startTime'] || H().f['depart.time']);
+  const e = minutes(H().f['basic.endTime'] || H().f['rec.r6.endTime']);
+  if (s == null || e == null || e <= s){ b.hidden = true; return; }
+  const d = e - s; b.dataset.v = `${Math.floor(d / 60)}시간 ${d % 60}분`;
+  b.textContent = `계산값 ${b.dataset.v} 넣기`; b.hidden = false;
+}
+
+/* ---------- 사진 ---------- */
+function compress(file){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => {
+      const max = 1600, r = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('이미지를 읽지 못했습니다')); };
+    img.src = url;
+  });
+}
+const recOrder = rec => { const i = RECORDS.findIndex(r => r.id === rec); if (i >= 0) return i * 100; const xi = H().extras.findIndex(x => 'ex_' + x.id === rec); return 1000 + xi; };
+function sortedPhotos(){ return [...H().photos].sort((a, b) => recOrder(a.rec) - recOrder(b.rec) || a.added - b.added); }
+function photoNumbers(){ const m = new Map(); sortedPhotos().forEach((p, i) => m.set(p.id, i + 1)); return m; }
+
+/* ---------- 출력 ---------- */
+const v = k => (H().f[k] || '').trim();
+const line = (label, val) => `- ${label}: ${val || '(기록 없음)'}`;
+function photoLines(rec, nums){
+  return H().photos.filter(p => p.rec === rec).map(p => `  · [사진 ${nums.get(p.id)}] ${p.name}${p.taken ? ` (파일시각 ${p.taken})` : ''}${p.caption ? ' — ' + p.caption : ''}`);
+}
+function buildNote(){
+  const nums = photoNumbers(); const L = [];
+  L.push('⛰️ 산행 기록 노트', '', '1. 산행 기본정보');
+  SECTIONS[0].fields.forEach(([k, l]) => L.push(line(l, v('basic.' + k))));
+  L.push('', '2. 산행 출발');
+  SECTIONS[1].fields.forEach(([k, l]) => L.push(line(l, v('depart.' + k))));
+  L.push('', '3. 산행 중 현장 기록');
+  RECORDS.forEach(r => {
+    L.push(`[${r.tag}] ${r.title}`);
+    r.fields.forEach(([k, l]) => {
+      if (k === 'photos'){ const ps = photoLines(r.id, nums); L.push(`- 사진 파일: ${ps.length ? '' : '(없음)'}`, ...ps); }
+      else L.push(line(l, v(`rec.${r.id}.${k}`)));
+    });
+  });
+  H().extras.forEach((x, i) => {
+    L.push(`[추가 기록 ${i + 1}] ${x.f?.place || ''}`, line('시간', x.f?.time), line('장소', x.f?.place), line('본 것·느낀 것', x.f?.note));
+    const ps = photoLines('ex_' + x.id, nums); L.push(`- 사진 파일: ${ps.length ? '' : '(없음)'}`, ...ps);
+  });
+  L.push('', '4. 오늘의 철학적 성찰');
+  SECTIONS[3].fields.filter(([k]) => k !== 'blank').forEach(([k, l]) => L.push(line(l, v('reflect.' + k))));
+  L.push('', '5. 산행 정보 최종 확인');
+  CHECKS.forEach(([k, l]) => L.push(`[${H().checks[k] ? 'x' : ' '}] ${l}`));
+  L.push('', '6. 네이버 블로그 작성 메모');
+  SECTIONS[5].fields.forEach(([k, l]) => L.push(line(l, v('blog.' + k))));
+  return L.join('\n');
+}
+function missing(){
+  const m = [];
+  [['basic.date','산행일'],['basic.mountain','산행지'],['basic.course','산행 코스'],['basic.distance','실제 이동거리'],['basic.duration','총 소요시간']].forEach(([k, l]) => { if (!v(k)) m.push(l); });
+  CHECKS.forEach(([k, l]) => { if (!H().checks[k]) m.push(l.replace(' 확인', '') + ' (미확인)'); });
+  return m;
+}
+function buildPrompt(){
+  const miss = missing();
+  return [buildNote(), '', '7. 블로그 원고 작성 요청',
+    '위 기록을 바탕으로 네이버 블로그에 바로 붙여넣을 수 있는 산행후기를 작성해 주세요.',
+    '작성 방향:',
+    '① 실제 산행 정보와 현장감을 충실하게 반영',
+    '② 사진을 넣을 위치와 설명 표시 (위 기록의 [사진 n] 번호를 그대로 사용)',
+    '③ 숲과 자연에 대한 관찰 포함',
+    '④ 필요한 경우 서양고전 철학과 연결',
+    '⑤ 확인되지 않은 사실은 추측하지 않기 — “(기록 없음)”인 항목은 지어내지 말고 비워 두거나 확인 필요로 표시',
+    '⑥ 읽기 쉬운 문단과 자연스러운 문체 사용',
+    miss.length ? `\n참고: 아직 확인하지 않은 정보 — ${miss.join(', ')}. 이 부분의 수치·사실은 단정하지 말아 주세요.` : ''].join('\n').trim();
+}
+function buildSkeleton(){
+  const nums = photoNumbers(); const L = [];
+  const titles = v('blog.titles').split('\n').map(s => s.trim()).filter(Boolean);
+  const ph = rec => H().photos.filter(p => p.rec === rec).map(p => `▶ [사진 ${nums.get(p.id)} 넣기] ${p.caption || p.name}`);
+  const para = (...ks) => ks.map(v).filter(Boolean).join(' ');
+  L.push(`제목: ${titles[0] || '(제목 후보를 6번에 적어 주세요)'}`);
+  if (titles.length > 1) L.push(`다른 제목 후보: ${titles.slice(1).join(' / ')}`);
+  L.push('', '■ 산행 정보 한눈에',
+    `산행일 ${v('basic.date') || '-'} · 산행지 ${v('basic.mountain') || '-'} · 동행 ${v('basic.companions') || '-'}`,
+    `코스 ${v('basic.course') || '-'}`,
+    `거리 ${v('basic.distance') || '확인 필요'} · 소요시간 ${v('basic.duration') || '확인 필요'} · 날씨 ${v('basic.weather') || '-'}`);
+  L.push('', '■ 들어가며', para('depart.mood', 'depart.purpose') || '(출발 당시 기분과 산행 목적)');
+  RECORDS.forEach(r => {
+    const keys = r.fields.map(f => f[0]).filter(k => k !== 'photos' && k !== 'time' && k !== 'endTime').map(k => `rec.${r.id}.${k}`);
+    const t = v(`rec.${r.id}.time`);
+    L.push('', `■ ${r.title}${t ? ` (${t})` : ''}`, para(...keys) || '(기록 없음)', ...ph(r.id));
+    if (r.id === 'r3'){
+      H().extras.forEach(x => {
+        L.push('', `■ ${x.f?.place || '쉬어 간 자리'}${x.f?.time ? ` (${x.f.time})` : ''}`, (x.f?.note || '').trim() || '(기록 없음)', ...ph('ex_' + x.id));
+      });
+    }
+  });
+  L.push('', '■ 산에서 건져 올린 생각', para('reflect.scene', 'reflect.question') || '(인상 깊은 장면과 질문)');
+  if (v('reflect.philosopher')) L.push(`— ${v('reflect.philosopher')}와 함께: ${v('reflect.link') || '(연결한 생각)'}`);
+  L.push(v('reflect.lesson') ? `오늘의 교훈: ${v('reflect.lesson')}` : '');
+  L.push('', '■ 이 코스를 걸을 분들께', v('blog.tips') || '(산행 팁)');
+  L.push('', '■ 마치며', v('blog.closing') || v('rec.r6.review') || '(마무리 문장)');
+  return L.filter((s, i, a) => !(s === '' && a[i - 1] === '')).join('\n');
+}
+let outMode = 'prompt';
+function refreshOut(){
+  const t = outMode === 'prompt' ? buildPrompt() : outMode === 'skeleton' ? buildSkeleton() : buildNote();
+  $('#outText').value = t;
+  const miss = missing(); const box = $('#missBox');
+  box.hidden = !miss.length; box.textContent = miss.length ? '아직 비어 있거나 확인하지 않은 항목: ' + miss.join(', ') : '';
+}
+
+/* ---------- 복사·알림 ---------- */
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2200); }
+function copyFrom(ta, okMsg){
+  const text = ta.value; if (!text){ toast('복사할 내용이 없습니다'); return; }
+  const fallback = () => { ta.focus(); ta.select(); toast('글이 선택되었습니다. 길게 눌러 복사하세요'); };
+  try { navigator.clipboard.writeText(text).then(() => toast(okMsg), fallback); } catch(e){ fallback(); }
+}
+
+/* ---------- 이벤트 ---------- */
+buildForm(); render();
+
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.key){ setVal(el.dataset.key, el.value); queueSave(); if (el.dataset.key.startsWith('basic.') || el.dataset.key.endsWith('Time') || el.dataset.key.endsWith('.time')) updateDur(); if (el.dataset.key.startsWith('basic.')) renderSel(); }
+  else if (el.dataset.cap){ const p = H().photos.find(x => x.id === el.dataset.cap); if (p){ p.caption = el.value; queueSave(); } }
+});
+document.addEventListener('change', async e => {
+  const el = e.target;
+  if (el.dataset.check){ H().checks[el.dataset.check] = el.checked; queueSave(); refreshOut(); }
+  if (el.dataset.key) refreshOut();
+  if (el.dataset.photo && el.files.length){
+    const rec = el.dataset.photo; const files = [...el.files]; el.value = '';
+    toast(`사진 ${files.length}장 넣는 중…`);
+    for (const f of files){
+      try {
+        const data = await compress(f); const id = uid();
+        const d = new Date(f.lastModified || Date.now());
+        H().photos.push({ id, rec, name: f.name || '사진.jpg', taken: `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, caption: '', added: Date.now() });
+        await putPhoto(id, data);
+      } catch(err){ toast(`${f.name}: ${err.message}`); }
+    }
+    saveAll(); renderPhotos(); refreshOut(); toast('사진을 넣었습니다');
+  }
+  if (el.id === 'hikeSel'){ state.current = el.value; saveAll(); render(); window.scrollTo(0, 0); }
+  if (el.id === 'bkOpen' && el.files[0]){ $('#bkText').value = await el.files[0].text(); el.value = ''; toast('백업 파일을 읽었습니다. ‘복원’을 누르세요'); }
+});
+document.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.now){ const k = b.dataset.now; const t = nowHM(); setVal(k, t); document.querySelector(`[data-key="${k}"]`).value = t; const st = document.querySelector(`[data-stamp="${k.split('.')[1]}"]`); if (st && k.endsWith('.time')) st.textContent = t; updateDur(); saveAll(); refreshOut(); }
+  else if (b.id === 'durCalc'){ setVal('basic.duration', b.dataset.v); $('#f_basic_duration').value = b.dataset.v; saveAll(); refreshOut(); }
+  else if (b.dataset.delp){ const id = b.dataset.delp; H().photos = H().photos.filter(p => p.id !== id); await delPhoto(id); saveAll(); renderPhotos(); refreshOut(); }
+  else if (b.dataset.delx){ const id = b.dataset.delx; for (const p of H().photos.filter(p => p.rec === 'ex_' + id)) await delPhoto(p.id); H().photos = H().photos.filter(p => p.rec !== 'ex_' + id); H().extras = H().extras.filter(x => x.id !== id); saveAll(); renderExtras(); fillValues(); renderPhotos(); refreshOut(); }
+  else if (b.id === 'addExtra'){ const x = { id: uid(), f: { time: nowHM() } }; H().extras.push(x); saveAll(); renderExtras(); fillValues(); renderPhotos(); document.getElementById('ex_' + x.id).scrollIntoView({ block: 'center' }); }
+  else if (b.id === 'newHike'){ const h = newHike(); state.hikes[h.id] = h; state.current = h.id; saveAll(); render(); window.scrollTo(0, 0); toast('새 산행 기록을 시작합니다'); }
+  else if (b.id === 'delHike'){ $('#delConfirm').hidden = false; }
+  else if (b.id === 'delNo'){ $('#delConfirm').hidden = true; }
+  else if (b.id === 'delYes'){
+    for (const p of H().photos) await delPhoto(p.id);
+    delete state.hikes[state.current];
+    if (!Object.keys(state.hikes).length){ const h = newHike(); state.hikes[h.id] = h; }
+    state.current = Object.keys(state.hikes)[0]; $('#delConfirm').hidden = true; saveAll(); render(); toast('산행 기록을 지웠습니다');
+  }
+  else if (b.dataset.out){ outMode = b.dataset.out; document.querySelectorAll('[data-out]').forEach(x => x.setAttribute('aria-pressed', x === b)); refreshOut(); }
+  else if (b.id === 'copyOut'){ refreshOut(); copyFrom($('#outText'), '복사했습니다. Claude나 블로그 편집기에 붙여넣으세요'); }
+  else if (b.id === 'refreshOut'){ refreshOut(); toast('최신 기록으로 다시 만들었습니다'); }
+  else if (b.id === 'bkMake' || b.id === 'bkFile' || b.id === 'bkCopy'){
+    const withP = $('#bkPhotos').checked; const data = { app: 'sangil', v: 1, hikes: state.hikes, photos: {} };
+    if (withP) for (const h of Object.values(state.hikes)) for (const p of h.photos){ const d = await getPhoto(p.id); if (d) data.photos[p.id] = d; }
+    const text = JSON.stringify(data); $('#bkText').value = text;
+    if (b.id === 'bkCopy') copyFrom($('#bkText'), '백업을 복사했습니다. 메모 앱 등에 보관하세요');
+    else if (b.id === 'bkFile'){
+      try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = `산행기록_백업_${today()}.json`; document.body.appendChild(a); a.click(); a.remove(); toast('파일 저장을 시도했습니다. 저장이 안 되면 ‘백업 복사’를 쓰세요'); } catch(err){ toast('이 화면에서는 파일 저장이 안 됩니다. ‘백업 복사’를 쓰세요'); }
+    } else toast('백업을 만들었습니다');
+  }
+  else if (b.id === 'bkRestore'){
+    try {
+      const d = JSON.parse($('#bkText').value); if (!d.hikes) throw new Error();
+      for (const [id, data] of Object.entries(d.photos || {})) await putPhoto(id, data);
+      Object.assign(state.hikes, d.hikes); state.current = Object.keys(d.hikes)[0]; saveAll(); render(); toast(`산행 ${Object.keys(d.hikes).length}건을 복원했습니다`);
+    } catch(err){ toast('백업 내용을 읽지 못했습니다. 백업 글 전체를 그대로 붙여넣었는지 확인하세요'); }
+  }
+});
+})();
+</script>
+
+</body>
+</html>
