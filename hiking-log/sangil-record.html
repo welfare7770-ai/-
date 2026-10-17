@@ -115,8 +115,8 @@ label.fld>span{font-size:.84rem;color:var(--muted);display:flex;justify-content:
 
 <main class="wrap">
   <div id="storeWarn" class="banner" hidden>이 화면에서는 브라우저 저장이 막혀 있습니다. [저장]을 누르면 기록이 휴대폰 ‘다운로드’ 폴더에 백업 파일로 저장됩니다. 다음에 맨 아래 ‘백업 파일 열기’로 불러오세요.</div>
-  <div id="jsWarn" class="banner">기록 화면을 불러오는 중입니다. 이 문구가 계속 보이고 1~6번 입력칸이 나오지 않으면, 지금 앱이 HTML 미리보기만 지원하고 기능(스크립트)은 막는 경우입니다. 파일을 <b>Chrome</b>이나 <b>삼성 인터넷</b> 브라우저로 열어 주세요.</div>
-  <div id="form"></div>
+  <div id="jsWarn" class="banner">저장·복사 기능을 불러오는 중입니다. 이 문구가 계속 보이면 이 앱이 스크립트를 막은 것입니다. 입력은 할 수 있지만 저장되지 않으니, 파일을 <b>삼성 인터넷</b>이나 <b>Chrome</b>으로 다시 열어 주세요.</div>
+  <div id="form"><section class="sec" id="s1"><h2><span class="no">1</span>산행 기본정보</h2><p class="lead">산행 전·후에 채웁니다. 종료 시각을 넣으면 총 소요시간을 계산해 드립니다.</p><div class="grid"><label class="fld" for="f_basic_date"><span>산행일</span><input id="f_basic_date" type="date" data-key="basic.date" placeholder=""></label><label class="fld" for="f_basic_mountain"><span>산행지</span><input id="f_basic_mountain" type="text" data-key="basic.mountain" placeholder=""></label><label class="fld" for="f_basic_companions"><span>동행자</span><input id="f_basic_companions" type="text" data-key="basic.companions" placeholder=""></label><label class="fld" for="f_basic_weather"><span>날씨</span><input id="f_basic_weather" type="text" data-key="basic.weather" placeholder=""></label><label class="fld" for="f_basic_startTime"><span>출발 시각</span><div class="timebox"><input id="f_basic_startTime" type="time" data-key="basic.startTime"><button type="button" class="ribbon" data-now="basic.startTime">지금</button></div></label><label class="fld" for="f_basic_endTime"><span>산행 종료 시각</span><div class="timebox"><input id="f_basic_endTime" type="time" data-key="basic.endTime"><button type="button" class="ribbon" data-now="basic.endTime">지금</button></div></label><label class="fld full" for="f_basic_course"><span>산행 코스</span><textarea id="f_basic_course" data-key="basic.course" placeholder=""></textarea></label><label class="fld" for="f_basic_distance"><span>실제 이동거리</span><input id="f_basic_distance" type="text" data-key="basic.distance" placeholder="예: 8.4km (트랭글 기준)"></label><label class="fld" for="f_basic_duration"><span>총 소요시간<button type="button" class="ghost dur" id="durCalc" hidden=""></button></span><input id="f_basic_duration" type="text" data-key="basic.duration" placeholder="예: 5시간 20분"></label></div></section><section class="sec" id="s2"><h2><span class="no">2</span>산행 출발</h2><p class="lead">들머리에서 한 번 적어 둡니다.</p><div class="grid"><label class="fld" for="f_depart_place"><span>출발 장소</span><input id="f_depart_place" type="text" data-key="depart.place" placeholder=""></label><label class="fld" for="f_depart_time"><span>출발 시각</span><div class="timebox"><input id="f_depart_time" type="time" data-key="depart.time"><button type="button" class="ribbon" data-now="depart.time">지금</button></div></label><label class="fld full" for="f_depart_mood"><span>출발 당시 날씨와 기분</span><textarea id="f_depart_mood" data-key="depart.mood" placeholder=""></textarea></label><label class="fld full" for="f_depart_purpose"><span>오늘 산행의 목적</span><textarea id="f_depart_purpose" data-key="depart.purpose" placeholder=""></textarea></label></div></section><section class="sec" id="s3"><h2><span class="no">3</span>산행 중 현장 기록</h2><p class="lead">걸으면서 해당 지점에 닿을 때마다 ‘지금’을 누르고 짧게 적으세요. 사진은 휴대폰 카메라로 바로 찍어 올릴 수 있습니다.</p><div class="card rec" id="r1"><h3><span class="tag">기록 1</span>산행 초입<span class="stamp" data-stamp="r1"></span></h3><div class="grid"><label class="fld" for="f_rec_r1_time"><span>시간</span><div class="timebox"><input id="f_rec_r1_time" type="time" data-key="rec.r1.time"><button type="button" class="ribbon" data-now="rec.r1.time">지금</button></div></label><label class="fld" for="f_rec_r1_place"><span>장소</span><input id="f_rec_r1_place" type="text" data-key="rec.r1.place" placeholder=""></label><label class="fld full" for="f_rec_r1_scenery"><span>풍경·숲의 모습</span><textarea id="f_rec_r1_scenery" data-key="rec.r1.scenery" placeholder=""></textarea></label><div class="photos full" data-rec="r1"><div class="thumbs"></div><label class="addphoto">사진 추가<input type="file" accept="image/*" multiple="" data-photo="r1"></label></div><label class="fld full" for="f_rec_r1_feeling"><span>느낌·생각</span><textarea id="f_rec_r1_feeling" data-key="rec.r1.feeling" placeholder=""></textarea></label></div></div><div class="card rec" id="r2"><h3><span class="tag">기록 2</span>주요 경유지<span class="stamp" data-stamp="r2"></span></h3><div class="grid"><label class="fld" for="f_rec_r2_time"><span>시간</span><div class="timebox"><input id="f_rec_r2_time" type="time" data-key="rec.r2.time"><button type="button" class="ribbon" data-now="rec.r2.time">지금</button></div></label><label class="fld" for="f_rec_r2_place"><span>장소</span><input id="f_rec_r2_place" type="text" data-key="rec.r2.place" placeholder=""></label><label class="fld" for="f_rec_r2_sign"><span>이정표·이동 방향</span><input id="f_rec_r2_sign" type="text" data-key="rec.r2.sign" placeholder=""></label><label class="fld full" for="f_rec_r2_around"><span>주변 풍경</span><textarea id="f_rec_r2_around" data-key="rec.r2.around" placeholder=""></textarea></label><div class="photos full" data-rec="r2"><div class="thumbs"></div><label class="addphoto">사진 추가<input type="file" accept="image/*" multiple="" data-photo="r2"></label></div><label class="fld full" for="f_rec_r2_feeling"><span>느낌·생각</span><textarea id="f_rec_r2_feeling" data-key="rec.r2.feeling" placeholder=""></textarea></label></div></div><div class="card rec" id="r3"><h3><span class="tag">기록 3</span>인상적인 장소<span class="stamp" data-stamp="r3"></span></h3><div class="grid"><label class="fld" for="f_rec_r3_time"><span>시간</span><div class="timebox"><input id="f_rec_r3_time" type="time" data-key="rec.r3.time"><button type="button" class="ribbon" data-now="rec.r3.time">지금</button></div></label><label class="fld" for="f_rec_r3_place"><span>장소</span><input id="f_rec_r3_place" type="text" data-key="rec.r3.place" placeholder=""></label><label class="fld" for="f_rec_r3_object"><span>나무·꽃·바위·문화유적</span><input id="f_rec_r3_object" type="text" data-key="rec.r3.object" placeholder=""></label><label class="fld full" for="f_rec_r3_observe"><span>특별히 관찰한 것</span><textarea id="f_rec_r3_observe" data-key="rec.r3.observe" placeholder=""></textarea></label><div class="photos full" data-rec="r3"><div class="thumbs"></div><label class="addphoto">사진 추가<input type="file" accept="image/*" multiple="" data-photo="r3"></label></div><label class="fld full" for="f_rec_r3_voice"><span>음성 기록 요약</span><textarea id="f_rec_r3_voice" data-key="rec.r3.voice" placeholder=""></textarea></label></div></div><div class="card rec" id="r4"><h3><span class="tag">기록 4</span>가장 힘들었던 구간<span class="stamp" data-stamp="r4"></span></h3><div class="grid"><label class="fld" for="f_rec_r4_time"><span>시간</span><div class="timebox"><input id="f_rec_r4_time" type="time" data-key="rec.r4.time"><button type="button" class="ribbon" data-now="rec.r4.time">지금</button></div></label><label class="fld" for="f_rec_r4_place"><span>장소</span><input id="f_rec_r4_place" type="text" data-key="rec.r4.place" placeholder=""></label><label class="fld full" for="f_rec_r4_trail"><span>길의 상태·경사</span><textarea id="f_rec_r4_trail" data-key="rec.r4.trail" placeholder=""></textarea></label><label class="fld full" for="f_rec_r4_body"><span>체력적으로 느낀 점</span><textarea id="f_rec_r4_body" data-key="rec.r4.body" placeholder=""></textarea></label><label class="fld full" for="f_rec_r4_remember"><span>기억할 내용</span><textarea id="f_rec_r4_remember" data-key="rec.r4.remember" placeholder=""></textarea></label><div class="photos full" data-rec="r4"><div class="thumbs"></div><label class="addphoto">사진 추가<input type="file" accept="image/*" multiple="" data-photo="r4"></label></div></div></div><div class="card rec" id="r5"><h3><span class="tag">기록 5</span>정상 또는 최종 목적지<span class="stamp" data-stamp="r5"></span></h3><div class="grid"><label class="fld" for="f_rec_r5_time"><span>도착 시각</span><div class="timebox"><input id="f_rec_r5_time" type="time" data-key="rec.r5.time"><button type="button" class="ribbon" data-now="rec.r5.time">지금</button></div></label><label class="fld" for="f_rec_r5_place"><span>장소</span><input id="f_rec_r5_place" type="text" data-key="rec.r5.place" placeholder=""></label><label class="fld full" for="f_rec_r5_view"><span>주변 전망</span><textarea id="f_rec_r5_view" data-key="rec.r5.view" placeholder=""></textarea></label><label class="fld full" for="f_rec_r5_scene"><span>가장 인상적인 장면</span><textarea id="f_rec_r5_scene" data-key="rec.r5.scene" placeholder=""></textarea></label><div class="photos full" data-rec="r5"><div class="thumbs"></div><label class="addphoto">사진 추가<input type="file" accept="image/*" multiple="" data-photo="r5"></label></div><label class="fld full" for="f_rec_r5_thought"><span>정상에서 떠오른 생각</span><textarea id="f_rec_r5_thought" data-key="rec.r5.thought" placeholder=""></textarea></label></div></div><div class="card rec" id="r6"><h3><span class="tag">기록 6</span>하산<span class="stamp" data-stamp="r6"></span></h3><div class="grid"><label class="fld" for="f_rec_r6_time"><span>하산 시작 시각</span><div class="timebox"><input id="f_rec_r6_time" type="time" data-key="rec.r6.time"><button type="button" class="ribbon" data-now="rec.r6.time">지금</button></div></label><label class="fld" for="f_rec_r6_route"><span>하산 경로</span><input id="f_rec_r6_route" type="text" data-key="rec.r6.route" placeholder=""></label><label class="fld full" for="f_rec_r6_found"><span>하산 중 발견한 풍경</span><textarea id="f_rec_r6_found" data-key="rec.r6.found" placeholder=""></textarea></label><label class="fld" for="f_rec_r6_endTime"><span>하산 완료 시각</span><div class="timebox"><input id="f_rec_r6_endTime" type="time" data-key="rec.r6.endTime"><button type="button" class="ribbon" data-now="rec.r6.endTime">지금</button></div></label><div class="photos full" data-rec="r6"><div class="thumbs"></div><label class="addphoto">사진 추가<input type="file" accept="image/*" multiple="" data-photo="r6"></label></div><label class="fld full" for="f_rec_r6_review"><span>산행을 마친 소감</span><textarea id="f_rec_r6_review" data-key="rec.r6.review" placeholder=""></textarea></label></div></div><div id="extras"></div><div class="row" style="margin-top:12px"><button id="addExtra" class="primary">기록 더하기 (쉼터·샘터·전망바위 등)</button></div></section><section class="sec" id="s4"><h2><span class="no">4</span>오늘의 철학적 성찰</h2><p class="lead">하산 후나 쉬는 자리에서 적습니다.</p><div class="grid"><label class="fld full" for="f_reflect_scene"><span>오늘 산에서 가장 인상 깊었던 장면</span><textarea id="f_reflect_scene" data-key="reflect.scene" placeholder=""></textarea></label><label class="fld full" for="f_reflect_question"><span>그 장면에서 떠오른 인생의 질문</span><textarea id="f_reflect_question" data-key="reflect.question" placeholder=""></textarea></label><label class="fld" for="f_reflect_philosopher"><span>연결하고 싶은 철학자</span><input id="f_reflect_philosopher" type="text" data-key="reflect.philosopher" placeholder="예: 마르쿠스 아우렐리우스" list="philList"></label><div class="hide-mobile"></div><label class="fld full" for="f_reflect_link"><span>철학자의 사상과 연결한 생각</span><textarea id="f_reflect_link" data-key="reflect.link" placeholder=""></textarea></label><label class="fld full" for="f_reflect_lesson"><span>오늘 산행이 내게 남긴 교훈</span><textarea id="f_reflect_lesson" data-key="reflect.lesson" placeholder=""></textarea></label></div></section><section class="sec" id="s5"><h2><span class="no">5</span>산행 정보 최종 확인</h2><p class="lead">원고를 요청하기 전에 확인한 항목에 표시합니다. 표시하지 않은 항목은 요청문에 ‘미확인’으로 넘어갑니다.</p><div class="checks"><label><input type="checkbox" data-check="distance"> 실제 이동거리 확인</label><label><input type="checkbox" data-check="duration"> 총 소요시간 확인</label><label><input type="checkbox" data-check="route"> 산행 경로 확인</label><label><input type="checkbox" data-check="photos"> 사진과 촬영 장소 확인</label><label><input type="checkbox" data-check="facts"> 식물·역사·문화 정보 확인</label><label><input type="checkbox" data-check="unsure"> 불확실한 사실 구분</label></div></section><section class="sec" id="s6"><h2><span class="no">6</span>네이버 블로그 작성 메모</h2><p class="lead">원고 요청 전에 방향을 잡아 둡니다.</p><div class="grid"><label class="fld full" for="f_blog_titles"><span>제목 후보</span><textarea id="f_blog_titles" data-key="blog.titles" placeholder="한 줄에 하나씩"></textarea></label><label class="fld full" for="f_blog_theme"><span>오늘의 핵심 주제</span><input id="f_blog_theme" type="text" data-key="blog.theme" placeholder=""></label><label class="fld" for="f_blog_mustPhotos"><span>반드시 넣을 사진</span><input id="f_blog_mustPhotos" type="text" data-key="blog.mustPhotos" placeholder="예: 사진 3, 사진 7"></label><label class="fld" for="f_blog_places"><span>꼭 소개할 장소</span><input id="f_blog_places" type="text" data-key="blog.places" placeholder=""></label><label class="fld full" for="f_blog_tips"><span>독자에게 알려줄 산행 팁</span><textarea id="f_blog_tips" data-key="blog.tips" placeholder=""></textarea></label><label class="fld full" for="f_blog_closing"><span>마무리 문장에 담을 생각</span><textarea id="f_blog_closing" data-key="blog.closing" placeholder=""></textarea></label></div></section><datalist id="philList"><option value="헤라클레이토스"></option><option value="소크라테스"></option><option value="플라톤"></option><option value="아리스토텔레스"></option><option value="디오게네스"></option><option value="에피쿠로스"></option><option value="루크레티우스"></option><option value="세네카"></option><option value="에픽테토스"></option><option value="마르쿠스 아우렐리우스"></option><option value="키케로"></option><option value="아우구스티누스"></option><option value="몽테뉴"></option><option value="스피노자"></option><option value="루소"></option><option value="칸트"></option><option value="쇼펜하우어"></option><option value="니체"></option><option value="소로"></option></datalist></div>
 
   <section class="sec" id="s7">
     <h2><span class="no">7</span>블로그 원고 작성 요청</h2>
@@ -150,366 +150,726 @@ label.fld>span{font-size:.84rem;color:var(--muted);display:flex;justify-content:
 <div id="toast" class="toast" hidden></div>
 
 <script>
-window.onerror = function(m){ var w = document.getElementById('jsWarn'); if (w){ w.hidden = false; w.textContent = '기능을 실행하지 못했습니다(' + m + '). Chrome이나 삼성 인터넷 최신 버전으로 열어 주세요.'; } };
-(() => {
-const RECORDS = [
-  {id:'r1', tag:'기록 1', title:'산행 초입', fields:[['time','시간','time'],['place','장소'],['scenery','풍경·숲의 모습','area'],['photos'],['feeling','느낌·생각','area']]},
-  {id:'r2', tag:'기록 2', title:'주요 경유지', fields:[['time','시간','time'],['place','장소'],['sign','이정표·이동 방향'],['around','주변 풍경','area'],['photos'],['feeling','느낌·생각','area']]},
-  {id:'r3', tag:'기록 3', title:'인상적인 장소', fields:[['time','시간','time'],['place','장소'],['object','나무·꽃·바위·문화유적'],['observe','특별히 관찰한 것','area'],['photos'],['voice','음성 기록 요약','area']]},
-  {id:'r4', tag:'기록 4', title:'가장 힘들었던 구간', fields:[['time','시간','time'],['place','장소'],['trail','길의 상태·경사','area'],['body','체력적으로 느낀 점','area'],['remember','기억할 내용','area'],['photos']]},
-  {id:'r5', tag:'기록 5', title:'정상 또는 최종 목적지', fields:[['time','도착 시각','time'],['place','장소'],['view','주변 전망','area'],['scene','가장 인상적인 장면','area'],['photos'],['thought','정상에서 떠오른 생각','area']]},
-  {id:'r6', tag:'기록 6', title:'하산', fields:[['time','하산 시작 시각','time'],['route','하산 경로'],['found','하산 중 발견한 풍경','area'],['endTime','하산 완료 시각','time'],['photos'],['review','산행을 마친 소감','area']]},
-];
-const SECTIONS = [
-  {id:'s1', no:'1', title:'산행 기본정보', key:'basic', lead:'산행 전·후에 채웁니다. 종료 시각을 넣으면 총 소요시간을 계산해 드립니다.', fields:[
-    ['date','산행일','date'],['mountain','산행지'],['companions','동행자'],['weather','날씨'],
-    ['startTime','출발 시각','time'],['endTime','산행 종료 시각','time'],
-    ['course','산행 코스','area',true],['distance','실제 이동거리','text',false,'예: 8.4km (트랭글 기준)'],['duration','총 소요시간','text',false,'예: 5시간 20분']]},
-  {id:'s2', no:'2', title:'산행 출발', key:'depart', lead:'들머리에서 한 번 적어 둡니다.', fields:[
-    ['place','출발 장소'],['time','출발 시각','time'],['mood','출발 당시 날씨와 기분','area',true],['purpose','오늘 산행의 목적','area',true]]},
-  {id:'s3', no:'3', title:'산행 중 현장 기록', key:'rec'},
-  {id:'s4', no:'4', title:'오늘의 철학적 성찰', key:'reflect', lead:'하산 후나 쉬는 자리에서 적습니다.', fields:[
-    ['scene','오늘 산에서 가장 인상 깊었던 장면','area',true],['question','그 장면에서 떠오른 인생의 질문','area',true],
-    ['philosopher','연결하고 싶은 철학자','text',false,'예: 마르쿠스 아우렐리우스'],['blank',''],
-    ['link','철학자의 사상과 연결한 생각','area',true],['lesson','오늘 산행이 내게 남긴 교훈','area',true]]},
-  {id:'s5', no:'5', title:'산행 정보 최종 확인', key:'check'},
-  {id:'s6', no:'6', title:'네이버 블로그 작성 메모', key:'blog', lead:'원고 요청 전에 방향을 잡아 둡니다.', fields:[
-    ['titles','제목 후보','area',true,'한 줄에 하나씩'],['theme','오늘의 핵심 주제','text',true],
-    ['mustPhotos','반드시 넣을 사진','text',false,'예: 사진 3, 사진 7'],['places','꼭 소개할 장소'],
-    ['tips','독자에게 알려줄 산행 팁','area',true],['closing','마무리 문장에 담을 생각','area',true]]},
-];
-const CHECKS = [['distance','실제 이동거리 확인'],['duration','총 소요시간 확인'],['route','산행 경로 확인'],['photos','사진과 촬영 장소 확인'],['facts','식물·역사·문화 정보 확인'],['unsure','불확실한 사실 구분']];
-const PHILOSOPHERS = ['헤라클레이토스','소크라테스','플라톤','아리스토텔레스','디오게네스','에피쿠로스','루크레티우스','세네카','에픽테토스','마르쿠스 아우렐리우스','키케로','아우구스티누스','몽테뉴','스피노자','루소','칸트','쇼펜하우어','니체','소로'];
-const LS_KEY = 'sangil-records-v1';
-const $ = s => document.querySelector(s);
-const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
-const nowHM = () => { const d = new Date(); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
-
-/* ---------- 저장소 ---------- */
-let lsOK = true;
-function loadAll(){ try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch(e){ lsOK = false; return null; } }
-function saveAll(){
-  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); lsOK = true; setStatus('저장됨 ' + nowHM(), true); return true; }
-  catch(e){ lsOK = false; $('#storeWarn').hidden = false; setStatus('저장 안 됨'); return false; }
-}
-let saveTimer;
-function queueSave(){ setStatus('입력 중…'); clearTimeout(saveTimer); saveTimer = setTimeout(() => { saveAll(); refreshOut(); }, 500); }
-function setStatus(t, ok){ const el = $('#saveStatus'); el.textContent = t; el.classList.toggle('ok', !!ok); }
-
-const photoCache = new Map();
-let dbP = null;
-function db(){
-  if (!dbP) dbP = new Promise((res, rej) => {
-    try { const r = indexedDB.open('sangil-photos', 1);
-      r.onupgradeneeded = () => r.result.createObjectStore('p');
-      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
-    } catch(e){ rej(e); }
-  });
-  return dbP;
-}
-async function idb(mode, fn){ const d = await db(); return new Promise((res, rej) => { const tx = d.transaction('p', mode); const r = fn(tx.objectStore('p')); tx.oncomplete = () => res(r && r.result); tx.onerror = () => rej(tx.error); }); }
-const putPhoto = (id, data) => { photoCache.set(id, data); return idb('readwrite', s => s.put(data, id)).catch(() => { $('#storeWarn').hidden = false; }); };
-const delPhoto = id => { photoCache.delete(id); return idb('readwrite', s => s.delete(id)).catch(() => {}); };
-async function getPhoto(id){ if (photoCache.has(id)) return photoCache.get(id); try { const v = await idb('readonly', s => s.get(id)); if (v) photoCache.set(id, v); return v; } catch(e){ return null; } }
-
-function newHike(){ const id = uid(); return { id, created: Date.now(), f: { 'basic.date': today() }, checks: {}, extras: [], photos: [] }; }
-let state = loadAll();
-if (!state || !state.hikes || !Object.keys(state.hikes).length){ const h = newHike(); state = { hikes: { [h.id]: h }, current: h.id }; }
-try { localStorage.setItem('sangil-test', '1'); localStorage.removeItem('sangil-test'); } catch(e){ lsOK = false; }
-if (!lsOK) $('#storeWarn').hidden = false;
-const H = () => state.hikes[state.current];
-
-/* ---------- 화면 구성 ---------- */
-function fieldHTML(key, label, type, full, ph){
-  if (key.endsWith('.blank')) return '<div class="hide-mobile"></div>';
-  const id = 'f_' + key.replace(/\./g, '_');
-  const now = type === 'time' ? `<button type="button" class="ribbon" data-now="${key}">지금</button>` : '';
-  const extra = key === 'basic.duration' ? '<button type="button" class="ghost dur" id="durCalc" hidden></button>' : '';
-  const list = key === 'reflect.philosopher' ? ' list="philList"' : '';
-  let ctl;
-  if (type === 'area') ctl = `<textarea id="${id}" data-key="${key}" placeholder="${esc(ph || '')}"></textarea>`;
-  else if (type === 'time') ctl = `<div class="timebox"><input id="${id}" type="time" data-key="${key}">${now}</div>`;
-  else ctl = `<input id="${id}" type="${type === 'date' ? 'date' : 'text'}" data-key="${key}" placeholder="${esc(ph || '')}"${list}>`;
-  return `<label class="fld${full ? ' full' : ''}" for="${id}"><span>${esc(label)}${extra}</span>${ctl}</label>`;
-}
-function recHTML(r){
-  const body = r.fields.map(([k, l, t]) => k === 'photos'
-    ? `<div class="photos full" data-rec="${r.id}"><div class="thumbs"></div><label class="addphoto">사진 추가<input type="file" accept="image/*" multiple data-photo="${r.id}"></label></div>`
-    : fieldHTML(`rec.${r.id}.${k}`, l, t || 'text', t === 'area')).join('');
-  return `<div class="card rec" id="${r.id}"><h3><span class="tag">${r.tag}</span>${r.title}<span class="stamp" data-stamp="${r.id}"></span></h3><div class="grid">${body}</div></div>`;
-}
-function buildForm(){
-  let html = '';
-  for (const s of SECTIONS){
-    html += `<section class="sec" id="${s.id}"><h2><span class="no">${s.no}</span>${s.title}</h2>`;
-    if (s.key === 'rec'){
-      html += '<p class="lead">걸으면서 해당 지점에 닿을 때마다 ‘지금’을 누르고 짧게 적으세요. 사진은 휴대폰 카메라로 바로 찍어 올릴 수 있습니다.</p>';
-      html += RECORDS.map(recHTML).join('');
-      html += '<div id="extras"></div><div class="row" style="margin-top:12px"><button id="addExtra" class="primary">기록 더하기 (쉼터·샘터·전망바위 등)</button></div>';
-    } else if (s.key === 'check'){
-      html += '<p class="lead">원고를 요청하기 전에 확인한 항목에 표시합니다. 표시하지 않은 항목은 요청문에 ‘미확인’으로 넘어갑니다.</p><div class="checks">';
-      html += CHECKS.map(([k, l]) => `<label><input type="checkbox" data-check="${k}"> ${l}</label>`).join('') + '</div>';
-    } else {
-      html += `<p class="lead">${s.lead}</p><div class="grid">` + s.fields.map(([k, l, t, full, ph]) => fieldHTML(`${s.key}.${k}`, l, t || 'text', full || t === 'area', ph)).join('') + '</div>';
-    }
-    html += '</section>';
-  }
-  html += `<datalist id="philList">${PHILOSOPHERS.map(p => `<option value="${p}">`).join('')}</datalist>`;
-  $('#form').innerHTML = html;
-}
-function extraHTML(x, i){
-  const k = f => `ex.${x.id}.${f}`;
-  return `<div class="card rec" id="ex_${x.id}"><h3><span class="tag">추가 ${i + 1}</span>${esc((x.f||{}).place || '현장 기록')}<span class="stamp"></span></h3><div class="grid">
-    ${fieldHTML(k('time'), '시간', 'time')}${fieldHTML(k('place'), '장소')}
-    ${fieldHTML(k('note'), '본 것·느낀 것', 'area', true)}
-    <div class="photos full" data-rec="ex_${x.id}"><div class="thumbs"></div><label class="addphoto">사진 추가<input type="file" accept="image/*" multiple data-photo="ex_${x.id}"></label></div>
-    <div class="full row"><button type="button" class="ghost danger" data-delx="${x.id}">이 기록 지우기</button></div></div></div>`;
-}
-function renderExtras(){ $('#extras').innerHTML = H().extras.map(extraHTML).join(''); }
-
-function getVal(key){
-  if (key.startsWith('ex.')){ const [, id, f] = key.split('.'); const x = H().extras.find(e => e.id === id); return (x && x.f && x.f[f] != null) ? x.f[f] : ''; }
-  return H().f[key] != null ? H().f[key] : '';
-}
-function setVal(key, v){
-  if (key.startsWith('ex.')){ const [, id, f] = key.split('.'); const x = H().extras.find(e => e.id === id); if (x){ x.f = x.f || {}; x.f[f] = v; } }
-  else H().f[key] = v;
-  H().updated = Date.now();
-}
-function fillValues(){
-  document.querySelectorAll('[data-key]').forEach(el => { el.value = getVal(el.dataset.key); });
-  document.querySelectorAll('[data-check]').forEach(el => { el.checked = !!H().checks[el.dataset.check]; });
-  RECORDS.forEach(r => { const t = H().f[`rec.${r.id}.time`]; const st = document.querySelector(`[data-stamp="${r.id}"]`); if (st) st.textContent = t || ''; });
-  updateDur();
-}
-function hikeLabel(h){ const d = h.f['basic.date'] || ''; const m = h.f['basic.mountain'] || '산행지 미정'; return `${d} ${m}`.trim(); }
-function renderSel(){
-  const hs = Object.values(state.hikes).sort((a, b) => (b.f['basic.date'] || '').localeCompare(a.f['basic.date'] || '') || b.created - a.created);
-  $('#hikeSel').innerHTML = hs.map(h => `<option value="${h.id}"${h.id === state.current ? ' selected' : ''}>${esc(hikeLabel(h))}</option>`).join('');
-}
-async function renderPhotos(){
-  const nums = photoNumbers();
-  for (const box of document.querySelectorAll('.photos[data-rec]')){
-    const rec = box.dataset.rec;
-    const list = H().photos.filter(p => p.rec === rec);
-    const thumbs = box.querySelector('.thumbs');
-    thumbs.innerHTML = list.map(p => `<div class="thumb" data-pid="${p.id}"><img alt="${esc(p.caption || p.name)}"><div class="meta">
-      <div><b>사진 ${nums.get(p.id)}</b> · ${esc(p.name)}${p.taken ? ' · ' + esc(p.taken) : ''}</div>
-      <input data-cap="${p.id}" value="${esc(p.caption || '')}" placeholder="사진 설명" aria-label="사진 설명">
-      <button type="button" class="ghost danger x" data-delp="${p.id}">빼기</button></div></div>`).join('');
-    for (const p of list){ const src = await getPhoto(p.id); const img = thumbs.querySelector(`[data-pid="${p.id}"] img`); if (img && src) img.src = src; }
-  }
-}
-function render(){ renderSel(); renderExtras(); fillValues(); renderPhotos(); refreshOut(); }
-
-/* ---------- 시간 계산 ---------- */
-function minutes(t){ const m = /^(\d{1,2}):(\d{2})$/.exec(t || ''); return m ? (+m[1]) * 60 + (+m[2]) : null; }
-function updateDur(){
-  const b = $('#durCalc'); if (!b) return;
-  const s = minutes(H().f['basic.startTime'] || H().f['depart.time']);
-  const e = minutes(H().f['basic.endTime'] || H().f['rec.r6.endTime']);
-  if (s == null || e == null || e <= s){ b.hidden = true; return; }
-  const d = e - s; b.dataset.v = `${Math.floor(d / 60)}시간 ${d % 60}분`;
-  b.textContent = `계산값 ${b.dataset.v} 넣기`; b.hidden = false;
-}
-
-/* ---------- 사진 ---------- */
-function compress(file){
-  return new Promise((res, rej) => {
-    const url = URL.createObjectURL(file); const img = new Image();
-    img.onload = () => {
-      const max = 1600, r = Math.min(1, max / Math.max(img.width, img.height));
-      const c = document.createElement('canvas'); c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      res(c.toDataURL('image/jpeg', 0.82));
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('이미지를 읽지 못했습니다')); };
-    img.src = url;
-  });
-}
-const recOrder = rec => { const i = RECORDS.findIndex(r => r.id === rec); if (i >= 0) return i * 100; const xi = H().extras.findIndex(x => 'ex_' + x.id === rec); return 1000 + xi; };
-function sortedPhotos(){ return [...H().photos].sort((a, b) => recOrder(a.rec) - recOrder(b.rec) || a.added - b.added); }
-function photoNumbers(){ const m = new Map(); sortedPhotos().forEach((p, i) => m.set(p.id, i + 1)); return m; }
-
-/* ---------- 출력 ---------- */
-const v = k => (H().f[k] || '').trim();
-const line = (label, val) => `- ${label}: ${val || '(기록 없음)'}`;
-function photoLines(rec, nums){
-  return H().photos.filter(p => p.rec === rec).map(p => `  · [사진 ${nums.get(p.id)}] ${p.name}${p.taken ? ` (파일시각 ${p.taken})` : ''}${p.caption ? ' — ' + p.caption : ''}`);
-}
-function buildNote(){
-  const nums = photoNumbers(); const L = [];
-  L.push('⛰️ 산행 기록 노트', '', '1. 산행 기본정보');
-  SECTIONS[0].fields.forEach(([k, l]) => L.push(line(l, v('basic.' + k))));
-  L.push('', '2. 산행 출발');
-  SECTIONS[1].fields.forEach(([k, l]) => L.push(line(l, v('depart.' + k))));
-  L.push('', '3. 산행 중 현장 기록');
-  RECORDS.forEach(r => {
-    L.push(`[${r.tag}] ${r.title}`);
-    r.fields.forEach(([k, l]) => {
-      if (k === 'photos'){ const ps = photoLines(r.id, nums); L.push(`- 사진 파일: ${ps.length ? '' : '(없음)'}`, ...ps); }
-      else L.push(line(l, v(`rec.${r.id}.${k}`)));
-    });
-  });
-  H().extras.forEach((x, i) => {
-    L.push(`[추가 기록 ${i + 1}] ${(x.f||{}).place || ''}`, line('시간', (x.f||{}).time), line('장소', (x.f||{}).place), line('본 것·느낀 것', (x.f||{}).note));
-    const ps = photoLines('ex_' + x.id, nums); L.push(`- 사진 파일: ${ps.length ? '' : '(없음)'}`, ...ps);
-  });
-  L.push('', '4. 오늘의 철학적 성찰');
-  SECTIONS[3].fields.filter(([k]) => k !== 'blank').forEach(([k, l]) => L.push(line(l, v('reflect.' + k))));
-  L.push('', '5. 산행 정보 최종 확인');
-  CHECKS.forEach(([k, l]) => L.push(`[${H().checks[k] ? 'x' : ' '}] ${l}`));
-  L.push('', '6. 네이버 블로그 작성 메모');
-  SECTIONS[5].fields.forEach(([k, l]) => L.push(line(l, v('blog.' + k))));
-  return L.join('\n');
-}
-function missing(){
-  const m = [];
-  [['basic.date','산행일'],['basic.mountain','산행지'],['basic.course','산행 코스'],['basic.distance','실제 이동거리'],['basic.duration','총 소요시간']].forEach(([k, l]) => { if (!v(k)) m.push(l); });
-  CHECKS.forEach(([k, l]) => { if (!H().checks[k]) m.push(l.replace(' 확인', '') + ' (미확인)'); });
-  return m;
-}
-function buildPrompt(){
-  const miss = missing();
-  return [buildNote(), '', '7. 블로그 원고 작성 요청',
-    '위 기록을 바탕으로 네이버 블로그에 바로 붙여넣을 수 있는 산행후기를 작성해 주세요.',
-    '작성 방향:',
-    '① 실제 산행 정보와 현장감을 충실하게 반영',
-    '② 사진을 넣을 위치와 설명 표시 (위 기록의 [사진 n] 번호를 그대로 사용)',
-    '③ 숲과 자연에 대한 관찰 포함',
-    '④ 필요한 경우 서양고전 철학과 연결',
-    '⑤ 확인되지 않은 사실은 추측하지 않기 — “(기록 없음)”인 항목은 지어내지 말고 비워 두거나 확인 필요로 표시',
-    '⑥ 읽기 쉬운 문단과 자연스러운 문체 사용',
-    miss.length ? `\n참고: 아직 확인하지 않은 정보 — ${miss.join(', ')}. 이 부분의 수치·사실은 단정하지 말아 주세요.` : ''].join('\n').trim();
-}
-function buildSkeleton(){
-  const nums = photoNumbers(); const L = [];
-  const titles = v('blog.titles').split('\n').map(s => s.trim()).filter(Boolean);
-  const ph = rec => H().photos.filter(p => p.rec === rec).map(p => `▶ [사진 ${nums.get(p.id)} 넣기] ${p.caption || p.name}`);
-  const para = (...ks) => ks.map(v).filter(Boolean).join(' ');
-  L.push(`제목: ${titles[0] || '(제목 후보를 6번에 적어 주세요)'}`);
-  if (titles.length > 1) L.push(`다른 제목 후보: ${titles.slice(1).join(' / ')}`);
-  L.push('', '■ 산행 정보 한눈에',
-    `산행일 ${v('basic.date') || '-'} · 산행지 ${v('basic.mountain') || '-'} · 동행 ${v('basic.companions') || '-'}`,
-    `코스 ${v('basic.course') || '-'}`,
-    `거리 ${v('basic.distance') || '확인 필요'} · 소요시간 ${v('basic.duration') || '확인 필요'} · 날씨 ${v('basic.weather') || '-'}`);
-  L.push('', '■ 들어가며', para('depart.mood', 'depart.purpose') || '(출발 당시 기분과 산행 목적)');
-  RECORDS.forEach(r => {
-    const keys = r.fields.map(f => f[0]).filter(k => k !== 'photos' && k !== 'time' && k !== 'endTime').map(k => `rec.${r.id}.${k}`);
-    const t = v(`rec.${r.id}.time`);
-    L.push('', `■ ${r.title}${t ? ` (${t})` : ''}`, para(...keys) || '(기록 없음)', ...ph(r.id));
-    if (r.id === 'r3'){
-      H().extras.forEach(x => {
-        L.push('', `■ ${(x.f||{}).place || '쉬어 간 자리'}${(x.f||{}).time ? ` (${x.f.time})` : ''}`, ((x.f||{}).note || '').trim() || '(기록 없음)', ...ph('ex_' + x.id));
-      });
-    }
-  });
-  L.push('', '■ 산에서 건져 올린 생각', para('reflect.scene', 'reflect.question') || '(인상 깊은 장면과 질문)');
-  if (v('reflect.philosopher')) L.push(`— ${v('reflect.philosopher')}와 함께: ${v('reflect.link') || '(연결한 생각)'}`);
-  L.push(v('reflect.lesson') ? `오늘의 교훈: ${v('reflect.lesson')}` : '');
-  L.push('', '■ 이 코스를 걸을 분들께', v('blog.tips') || '(산행 팁)');
-  L.push('', '■ 마치며', v('blog.closing') || v('rec.r6.review') || '(마무리 문장)');
-  return L.filter((s, i, a) => !(s === '' && a[i - 1] === '')).join('\n');
-}
-async function backupText(withP){
-  const data = { app: 'sangil', v: 1, hikes: state.hikes, photos: {} };
-  if (withP) for (const h of Object.values(state.hikes)) for (const p of h.photos){ const d = await getPhoto(p.id); if (d) data.photos[p.id] = d; }
-  return JSON.stringify(data);
-}
-function downloadText(text){
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-  a.download = `산행기록_백업_${today()}_${nowHM().replace(':', '')}.json`; document.body.appendChild(a); a.click(); a.remove();
-}
-async function saveNow(){
-  clearTimeout(saveTimer);
-  if (saveAll()){ refreshOut(); toast('저장했습니다 · ' + nowHM() + ' (이 휴대폰에 보관)'); return; }
-  try { downloadText(await backupText(true)); toast('백업 파일로 저장했습니다. 다운로드 폴더를 확인하세요'); }
-  catch(e){ toast('저장하지 못했습니다. 맨 아래 ‘백업 복사’로 메모 앱에 붙여 두세요'); }
-}
-let outMode = 'prompt';
-function refreshOut(){
-  const t = outMode === 'prompt' ? buildPrompt() : outMode === 'skeleton' ? buildSkeleton() : buildNote();
-  $('#outText').value = t;
-  const miss = missing(); const box = $('#missBox');
-  box.hidden = !miss.length; box.textContent = miss.length ? '아직 비어 있거나 확인하지 않은 항목: ' + miss.join(', ') : '';
-}
-
-/* ---------- 복사·알림 ---------- */
-let toastT;
-function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2200); }
-function copyFrom(ta, okMsg){
-  const text = ta.value; if (!text){ toast('복사할 내용이 없습니다'); return; }
-  const fallback = () => { ta.focus(); ta.select(); toast('글이 선택되었습니다. 길게 눌러 복사하세요'); };
-  try { navigator.clipboard.writeText(text).then(() => toast(okMsg), fallback); } catch(e){ fallback(); }
-}
-
-/* ---------- 이벤트 ---------- */
-buildForm(); render(); $('#jsWarn').hidden = true;
-document.addEventListener('visibilitychange', () => { if (document.hidden){ clearTimeout(saveTimer); saveAll(); } });
-window.addEventListener('pagehide', () => { clearTimeout(saveTimer); saveAll(); });
-
-document.addEventListener('input', e => {
-  const el = e.target;
-  if (el.dataset.key){ setVal(el.dataset.key, el.value); queueSave(); if (el.dataset.key.startsWith('basic.') || el.dataset.key.endsWith('Time') || el.dataset.key.endsWith('.time')) updateDur(); if (el.dataset.key.startsWith('basic.')) renderSel(); }
-  else if (el.dataset.cap){ const p = H().photos.find(x => x.id === el.dataset.cap); if (p){ p.caption = el.value; queueSave(); } }
-});
-document.addEventListener('change', async e => {
-  const el = e.target;
-  if (el.dataset.check){ H().checks[el.dataset.check] = el.checked; queueSave(); refreshOut(); }
-  if (el.dataset.key) refreshOut();
-  if (el.dataset.photo && el.files.length){
-    const rec = el.dataset.photo; const files = [...el.files]; el.value = '';
-    toast(`사진 ${files.length}장 넣는 중…`);
-    for (const f of files){
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
       try {
-        const data = await compress(f); const id = uid();
-        const d = new Date(f.lastModified || Date.now());
-        H().photos.push({ id, rec, name: f.name || '사진.jpg', taken: `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, caption: '', added: Date.now() });
-        await putPhoto(id, data);
-      } catch(err){ toast(`${f.name}: ${err.message}`); }
-    }
-    saveAll(); renderPhotos(); refreshOut(); toast('사진을 넣었습니다');
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+if (!Object.entries) Object.entries = function(o) {
+  return Object.keys(o).map(function(k) {
+    return [k, o[k]];
+  });
+};
+if (!Object.values) Object.values = function(o) {
+  return Object.keys(o).map(function(k) {
+    return o[k];
+  });
+};
+if (!String.prototype.padStart) String.prototype.padStart = function(n, c) {
+  var t = String(this);
+  c = c || " ";
+  while (t.length < n) t = c + t;
+  return t;
+};
+if (!Element.prototype.closest) Element.prototype.closest = function(q) {
+  var e = this;
+  while (e && e.nodeType === 1) {
+    if ((e.matches || e.msMatchesSelector || e.webkitMatchesSelector).call(e, q)) return e;
+    e = e.parentElement;
   }
-  if (el.id === 'hikeSel'){ state.current = el.value; saveAll(); render(); window.scrollTo(0, 0); }
-  if (el.id === 'bkOpen' && el.files[0]){ $('#bkText').value = await el.files[0].text(); el.value = ''; toast('백업 파일을 읽었습니다. ‘복원’을 누르세요'); }
-});
-document.addEventListener('click', async e => {
-  const b = e.target.closest('button'); if (!b) return;
-  if (b.id === 'saveNow' || b.id === 'saveFab'){ saveNow(); }
-  else if (b.dataset.now){ const k = b.dataset.now; const t = nowHM(); setVal(k, t); document.querySelector(`[data-key="${k}"]`).value = t; const st = document.querySelector(`[data-stamp="${k.split('.')[1]}"]`); if (st && k.endsWith('.time')) st.textContent = t; updateDur(); saveAll(); refreshOut(); }
-  else if (b.id === 'durCalc'){ setVal('basic.duration', b.dataset.v); $('#f_basic_duration').value = b.dataset.v; saveAll(); refreshOut(); }
-  else if (b.dataset.delp){ const id = b.dataset.delp; H().photos = H().photos.filter(p => p.id !== id); await delPhoto(id); saveAll(); renderPhotos(); refreshOut(); }
-  else if (b.dataset.delx){ const id = b.dataset.delx; for (const p of H().photos.filter(p => p.rec === 'ex_' + id)) await delPhoto(p.id); H().photos = H().photos.filter(p => p.rec !== 'ex_' + id); H().extras = H().extras.filter(x => x.id !== id); saveAll(); renderExtras(); fillValues(); renderPhotos(); refreshOut(); }
-  else if (b.id === 'addExtra'){ const x = { id: uid(), f: { time: nowHM() } }; H().extras.push(x); saveAll(); renderExtras(); fillValues(); renderPhotos(); document.getElementById('ex_' + x.id).scrollIntoView({ block: 'center' }); }
-  else if (b.id === 'newHike'){ const h = newHike(); state.hikes[h.id] = h; state.current = h.id; saveAll(); render(); window.scrollTo(0, 0); toast('새 산행 기록을 시작합니다'); }
-  else if (b.id === 'delHike'){ $('#delConfirm').hidden = false; }
-  else if (b.id === 'delNo'){ $('#delConfirm').hidden = true; }
-  else if (b.id === 'delYes'){
-    for (const p of H().photos) await delPhoto(p.id);
-    delete state.hikes[state.current];
-    if (!Object.keys(state.hikes).length){ const h = newHike(); state.hikes[h.id] = h; }
-    state.current = Object.keys(state.hikes)[0]; $('#delConfirm').hidden = true; saveAll(); render(); toast('산행 기록을 지웠습니다');
+  return null;
+};
+window.onerror = function(m) {
+  var w = document.getElementById("jsWarn");
+  if (w) {
+    w.hidden = false;
+    w.textContent = "\uAE30\uB2A5\uC744 \uC2E4\uD589\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4(" + m + "). Chrome\uC774\uB098 \uC0BC\uC131 \uC778\uD130\uB137 \uCD5C\uC2E0 \uBC84\uC804\uC73C\uB85C \uC5F4\uC5B4 \uC8FC\uC138\uC694.";
   }
-  else if (b.dataset.out){ outMode = b.dataset.out; document.querySelectorAll('[data-out]').forEach(x => x.setAttribute('aria-pressed', x === b)); refreshOut(); }
-  else if (b.id === 'copyOut'){ refreshOut(); copyFrom($('#outText'), '복사했습니다. Claude나 블로그 편집기에 붙여넣으세요'); }
-  else if (b.id === 'refreshOut'){ refreshOut(); toast('최신 기록으로 다시 만들었습니다'); }
-  else if (b.id === 'bkMake' || b.id === 'bkFile' || b.id === 'bkCopy'){
-    const text = await backupText($('#bkPhotos').checked); $('#bkText').value = text;
-    if (b.id === 'bkCopy') copyFrom($('#bkText'), '백업을 복사했습니다. 메모 앱 등에 보관하세요');
-    else if (b.id === 'bkFile'){
-      try { downloadText(text); toast('파일 저장을 시도했습니다. 저장이 안 되면 ‘백업 복사’를 쓰세요'); } catch(err){ toast('이 화면에서는 파일 저장이 안 됩니다. ‘백업 복사’를 쓰세요'); }
-    } else toast('백업을 만들었습니다');
-  }
-  else if (b.id === 'bkRestore'){
+};
+(() => {
+  const RECORDS = [
+    { id: "r1", tag: "\uAE30\uB85D 1", title: "\uC0B0\uD589 \uCD08\uC785", fields: [["time", "\uC2DC\uAC04", "time"], ["place", "\uC7A5\uC18C"], ["scenery", "\uD48D\uACBD\xB7\uC232\uC758 \uBAA8\uC2B5", "area"], ["photos"], ["feeling", "\uB290\uB08C\xB7\uC0DD\uAC01", "area"]] },
+    { id: "r2", tag: "\uAE30\uB85D 2", title: "\uC8FC\uC694 \uACBD\uC720\uC9C0", fields: [["time", "\uC2DC\uAC04", "time"], ["place", "\uC7A5\uC18C"], ["sign", "\uC774\uC815\uD45C\xB7\uC774\uB3D9 \uBC29\uD5A5"], ["around", "\uC8FC\uBCC0 \uD48D\uACBD", "area"], ["photos"], ["feeling", "\uB290\uB08C\xB7\uC0DD\uAC01", "area"]] },
+    { id: "r3", tag: "\uAE30\uB85D 3", title: "\uC778\uC0C1\uC801\uC778 \uC7A5\uC18C", fields: [["time", "\uC2DC\uAC04", "time"], ["place", "\uC7A5\uC18C"], ["object", "\uB098\uBB34\xB7\uAF43\xB7\uBC14\uC704\xB7\uBB38\uD654\uC720\uC801"], ["observe", "\uD2B9\uBCC4\uD788 \uAD00\uCC30\uD55C \uAC83", "area"], ["photos"], ["voice", "\uC74C\uC131 \uAE30\uB85D \uC694\uC57D", "area"]] },
+    { id: "r4", tag: "\uAE30\uB85D 4", title: "\uAC00\uC7A5 \uD798\uB4E4\uC5C8\uB358 \uAD6C\uAC04", fields: [["time", "\uC2DC\uAC04", "time"], ["place", "\uC7A5\uC18C"], ["trail", "\uAE38\uC758 \uC0C1\uD0DC\xB7\uACBD\uC0AC", "area"], ["body", "\uCCB4\uB825\uC801\uC73C\uB85C \uB290\uB080 \uC810", "area"], ["remember", "\uAE30\uC5B5\uD560 \uB0B4\uC6A9", "area"], ["photos"]] },
+    { id: "r5", tag: "\uAE30\uB85D 5", title: "\uC815\uC0C1 \uB610\uB294 \uCD5C\uC885 \uBAA9\uC801\uC9C0", fields: [["time", "\uB3C4\uCC29 \uC2DC\uAC01", "time"], ["place", "\uC7A5\uC18C"], ["view", "\uC8FC\uBCC0 \uC804\uB9DD", "area"], ["scene", "\uAC00\uC7A5 \uC778\uC0C1\uC801\uC778 \uC7A5\uBA74", "area"], ["photos"], ["thought", "\uC815\uC0C1\uC5D0\uC11C \uB5A0\uC624\uB978 \uC0DD\uAC01", "area"]] },
+    { id: "r6", tag: "\uAE30\uB85D 6", title: "\uD558\uC0B0", fields: [["time", "\uD558\uC0B0 \uC2DC\uC791 \uC2DC\uAC01", "time"], ["route", "\uD558\uC0B0 \uACBD\uB85C"], ["found", "\uD558\uC0B0 \uC911 \uBC1C\uACAC\uD55C \uD48D\uACBD", "area"], ["endTime", "\uD558\uC0B0 \uC644\uB8CC \uC2DC\uAC01", "time"], ["photos"], ["review", "\uC0B0\uD589\uC744 \uB9C8\uCE5C \uC18C\uAC10", "area"]] }
+  ];
+  const SECTIONS = [
+    { id: "s1", no: "1", title: "\uC0B0\uD589 \uAE30\uBCF8\uC815\uBCF4", key: "basic", lead: "\uC0B0\uD589 \uC804\xB7\uD6C4\uC5D0 \uCC44\uC6C1\uB2C8\uB2E4. \uC885\uB8CC \uC2DC\uAC01\uC744 \uB123\uC73C\uBA74 \uCD1D \uC18C\uC694\uC2DC\uAC04\uC744 \uACC4\uC0B0\uD574 \uB4DC\uB9BD\uB2C8\uB2E4.", fields: [
+      ["date", "\uC0B0\uD589\uC77C", "date"],
+      ["mountain", "\uC0B0\uD589\uC9C0"],
+      ["companions", "\uB3D9\uD589\uC790"],
+      ["weather", "\uB0A0\uC528"],
+      ["startTime", "\uCD9C\uBC1C \uC2DC\uAC01", "time"],
+      ["endTime", "\uC0B0\uD589 \uC885\uB8CC \uC2DC\uAC01", "time"],
+      ["course", "\uC0B0\uD589 \uCF54\uC2A4", "area", true],
+      ["distance", "\uC2E4\uC81C \uC774\uB3D9\uAC70\uB9AC", "text", false, "\uC608: 8.4km (\uD2B8\uB7AD\uAE00 \uAE30\uC900)"],
+      ["duration", "\uCD1D \uC18C\uC694\uC2DC\uAC04", "text", false, "\uC608: 5\uC2DC\uAC04 20\uBD84"]
+    ] },
+    { id: "s2", no: "2", title: "\uC0B0\uD589 \uCD9C\uBC1C", key: "depart", lead: "\uB4E4\uBA38\uB9AC\uC5D0\uC11C \uD55C \uBC88 \uC801\uC5B4 \uB461\uB2C8\uB2E4.", fields: [
+      ["place", "\uCD9C\uBC1C \uC7A5\uC18C"],
+      ["time", "\uCD9C\uBC1C \uC2DC\uAC01", "time"],
+      ["mood", "\uCD9C\uBC1C \uB2F9\uC2DC \uB0A0\uC528\uC640 \uAE30\uBD84", "area", true],
+      ["purpose", "\uC624\uB298 \uC0B0\uD589\uC758 \uBAA9\uC801", "area", true]
+    ] },
+    { id: "s3", no: "3", title: "\uC0B0\uD589 \uC911 \uD604\uC7A5 \uAE30\uB85D", key: "rec" },
+    { id: "s4", no: "4", title: "\uC624\uB298\uC758 \uCCA0\uD559\uC801 \uC131\uCC30", key: "reflect", lead: "\uD558\uC0B0 \uD6C4\uB098 \uC26C\uB294 \uC790\uB9AC\uC5D0\uC11C \uC801\uC2B5\uB2C8\uB2E4.", fields: [
+      ["scene", "\uC624\uB298 \uC0B0\uC5D0\uC11C \uAC00\uC7A5 \uC778\uC0C1 \uAE4A\uC5C8\uB358 \uC7A5\uBA74", "area", true],
+      ["question", "\uADF8 \uC7A5\uBA74\uC5D0\uC11C \uB5A0\uC624\uB978 \uC778\uC0DD\uC758 \uC9C8\uBB38", "area", true],
+      ["philosopher", "\uC5F0\uACB0\uD558\uACE0 \uC2F6\uC740 \uCCA0\uD559\uC790", "text", false, "\uC608: \uB9C8\uB974\uCFE0\uC2A4 \uC544\uC6B0\uB810\uB9AC\uC6B0\uC2A4"],
+      ["blank", ""],
+      ["link", "\uCCA0\uD559\uC790\uC758 \uC0AC\uC0C1\uACFC \uC5F0\uACB0\uD55C \uC0DD\uAC01", "area", true],
+      ["lesson", "\uC624\uB298 \uC0B0\uD589\uC774 \uB0B4\uAC8C \uB0A8\uAE34 \uAD50\uD6C8", "area", true]
+    ] },
+    { id: "s5", no: "5", title: "\uC0B0\uD589 \uC815\uBCF4 \uCD5C\uC885 \uD655\uC778", key: "check" },
+    { id: "s6", no: "6", title: "\uB124\uC774\uBC84 \uBE14\uB85C\uADF8 \uC791\uC131 \uBA54\uBAA8", key: "blog", lead: "\uC6D0\uACE0 \uC694\uCCAD \uC804\uC5D0 \uBC29\uD5A5\uC744 \uC7A1\uC544 \uB461\uB2C8\uB2E4.", fields: [
+      ["titles", "\uC81C\uBAA9 \uD6C4\uBCF4", "area", true, "\uD55C \uC904\uC5D0 \uD558\uB098\uC529"],
+      ["theme", "\uC624\uB298\uC758 \uD575\uC2EC \uC8FC\uC81C", "text", true],
+      ["mustPhotos", "\uBC18\uB4DC\uC2DC \uB123\uC744 \uC0AC\uC9C4", "text", false, "\uC608: \uC0AC\uC9C4 3, \uC0AC\uC9C4 7"],
+      ["places", "\uAF2D \uC18C\uAC1C\uD560 \uC7A5\uC18C"],
+      ["tips", "\uB3C5\uC790\uC5D0\uAC8C \uC54C\uB824\uC904 \uC0B0\uD589 \uD301", "area", true],
+      ["closing", "\uB9C8\uBB34\uB9AC \uBB38\uC7A5\uC5D0 \uB2F4\uC744 \uC0DD\uAC01", "area", true]
+    ] }
+  ];
+  const CHECKS = [["distance", "\uC2E4\uC81C \uC774\uB3D9\uAC70\uB9AC \uD655\uC778"], ["duration", "\uCD1D \uC18C\uC694\uC2DC\uAC04 \uD655\uC778"], ["route", "\uC0B0\uD589 \uACBD\uB85C \uD655\uC778"], ["photos", "\uC0AC\uC9C4\uACFC \uCD2C\uC601 \uC7A5\uC18C \uD655\uC778"], ["facts", "\uC2DD\uBB3C\xB7\uC5ED\uC0AC\xB7\uBB38\uD654 \uC815\uBCF4 \uD655\uC778"], ["unsure", "\uBD88\uD655\uC2E4\uD55C \uC0AC\uC2E4 \uAD6C\uBD84"]];
+  const PHILOSOPHERS = ["\uD5E4\uB77C\uD074\uB808\uC774\uD1A0\uC2A4", "\uC18C\uD06C\uB77C\uD14C\uC2A4", "\uD50C\uB77C\uD1A4", "\uC544\uB9AC\uC2A4\uD1A0\uD154\uB808\uC2A4", "\uB514\uC624\uAC8C\uB124\uC2A4", "\uC5D0\uD53C\uCFE0\uB85C\uC2A4", "\uB8E8\uD06C\uB808\uD2F0\uC6B0\uC2A4", "\uC138\uB124\uCE74", "\uC5D0\uD53D\uD14C\uD1A0\uC2A4", "\uB9C8\uB974\uCFE0\uC2A4 \uC544\uC6B0\uB810\uB9AC\uC6B0\uC2A4", "\uD0A4\uCF00\uB85C", "\uC544\uC6B0\uAD6C\uC2A4\uD2F0\uB204\uC2A4", "\uBABD\uD14C\uB274", "\uC2A4\uD53C\uB178\uC790", "\uB8E8\uC18C", "\uCE78\uD2B8", "\uC1FC\uD39C\uD558\uC6B0\uC5B4", "\uB2C8\uCCB4", "\uC18C\uB85C"];
+  const LS_KEY = "sangil-records-v1";
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const today = () => {
+    const d = /* @__PURE__ */ new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 10);
+  };
+  const nowHM = () => {
+    const d = /* @__PURE__ */ new Date();
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  };
+  let lsOK = true;
+  function loadAll() {
     try {
-      const d = JSON.parse($('#bkText').value); if (!d.hikes) throw new Error();
-      for (const [id, data] of Object.entries(d.photos || {})) await putPhoto(id, data);
-      Object.assign(state.hikes, d.hikes); state.current = Object.keys(d.hikes)[0]; saveAll(); render(); toast(`산행 ${Object.keys(d.hikes).length}건을 복원했습니다`);
-    } catch(err){ toast('백업 내용을 읽지 못했습니다. 백업 글 전체를 그대로 붙여넣었는지 확인하세요'); }
+      const raw = localStorage.getItem(LS_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      lsOK = false;
+      return null;
+    }
   }
-});
+  function saveAll() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
+      lsOK = true;
+      setStatus("\uC800\uC7A5\uB428 " + nowHM(), true);
+      return true;
+    } catch (e) {
+      lsOK = false;
+      $("#storeWarn").hidden = false;
+      setStatus("\uC800\uC7A5 \uC548 \uB428");
+      return false;
+    }
+  }
+  let saveTimer;
+  function queueSave() {
+    setStatus("\uC785\uB825 \uC911\u2026");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      saveAll();
+      refreshOut();
+    }, 500);
+  }
+  function setStatus(t, ok) {
+    const el = $("#saveStatus");
+    el.textContent = t;
+    el.classList.toggle("ok", !!ok);
+  }
+  const photoCache = /* @__PURE__ */ new Map();
+  let dbP = null;
+  function db() {
+    if (!dbP) dbP = new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open("sangil-photos", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("p");
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      } catch (e) {
+        rej(e);
+      }
+    });
+    return dbP;
+  }
+  function idb(mode, fn) {
+    return __async(this, null, function* () {
+      const d = yield db();
+      return new Promise((res, rej) => {
+        const tx = d.transaction("p", mode);
+        const r = fn(tx.objectStore("p"));
+        tx.oncomplete = () => res(r && r.result);
+        tx.onerror = () => rej(tx.error);
+      });
+    });
+  }
+  const putPhoto = (id, data) => {
+    photoCache.set(id, data);
+    return idb("readwrite", (s) => s.put(data, id)).catch(() => {
+      $("#storeWarn").hidden = false;
+    });
+  };
+  const delPhoto = (id) => {
+    photoCache.delete(id);
+    return idb("readwrite", (s) => s.delete(id)).catch(() => {
+    });
+  };
+  function getPhoto(id) {
+    return __async(this, null, function* () {
+      if (photoCache.has(id)) return photoCache.get(id);
+      try {
+        const v2 = yield idb("readonly", (s) => s.get(id));
+        if (v2) photoCache.set(id, v2);
+        return v2;
+      } catch (e) {
+        return null;
+      }
+    });
+  }
+  function newHike() {
+    const id = uid();
+    return { id, created: Date.now(), f: { "basic.date": today() }, checks: {}, extras: [], photos: [] };
+  }
+  let state = loadAll();
+  if (!state || !state.hikes || !Object.keys(state.hikes).length) {
+    const h = newHike();
+    state = { hikes: { [h.id]: h }, current: h.id };
+  }
+  try {
+    localStorage.setItem("sangil-test", "1");
+    localStorage.removeItem("sangil-test");
+  } catch (e) {
+    lsOK = false;
+  }
+  if (!lsOK) $("#storeWarn").hidden = false;
+  const H = () => state.hikes[state.current];
+  function fieldHTML(key, label, type, full, ph) {
+    if (key.endsWith(".blank")) return '<div class="hide-mobile"></div>';
+    const id = "f_" + key.replace(/\./g, "_");
+    const now = type === "time" ? `<button type="button" class="ribbon" data-now="${key}">\uC9C0\uAE08</button>` : "";
+    const extra = key === "basic.duration" ? '<button type="button" class="ghost dur" id="durCalc" hidden></button>' : "";
+    const list = key === "reflect.philosopher" ? ' list="philList"' : "";
+    let ctl;
+    if (type === "area") ctl = `<textarea id="${id}" data-key="${key}" placeholder="${esc(ph || "")}"></textarea>`;
+    else if (type === "time") ctl = `<div class="timebox"><input id="${id}" type="time" data-key="${key}">${now}</div>`;
+    else ctl = `<input id="${id}" type="${type === "date" ? "date" : "text"}" data-key="${key}" placeholder="${esc(ph || "")}"${list}>`;
+    return `<label class="fld${full ? " full" : ""}" for="${id}"><span>${esc(label)}${extra}</span>${ctl}</label>`;
+  }
+  function recHTML(r) {
+    const body = r.fields.map(([k, l, t]) => k === "photos" ? `<div class="photos full" data-rec="${r.id}"><div class="thumbs"></div><label class="addphoto">\uC0AC\uC9C4 \uCD94\uAC00<input type="file" accept="image/*" multiple data-photo="${r.id}"></label></div>` : fieldHTML(`rec.${r.id}.${k}`, l, t || "text", t === "area")).join("");
+    return `<div class="card rec" id="${r.id}"><h3><span class="tag">${r.tag}</span>${r.title}<span class="stamp" data-stamp="${r.id}"></span></h3><div class="grid">${body}</div></div>`;
+  }
+  function buildForm() {
+    let html = "";
+    for (const s of SECTIONS) {
+      html += `<section class="sec" id="${s.id}"><h2><span class="no">${s.no}</span>${s.title}</h2>`;
+      if (s.key === "rec") {
+        html += '<p class="lead">\uAC78\uC73C\uBA74\uC11C \uD574\uB2F9 \uC9C0\uC810\uC5D0 \uB2FF\uC744 \uB54C\uB9C8\uB2E4 \u2018\uC9C0\uAE08\u2019\uC744 \uB204\uB974\uACE0 \uC9E7\uAC8C \uC801\uC73C\uC138\uC694. \uC0AC\uC9C4\uC740 \uD734\uB300\uD3F0 \uCE74\uBA54\uB77C\uB85C \uBC14\uB85C \uCC0D\uC5B4 \uC62C\uB9B4 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p>';
+        html += RECORDS.map(recHTML).join("");
+        html += '<div id="extras"></div><div class="row" style="margin-top:12px"><button id="addExtra" class="primary">\uAE30\uB85D \uB354\uD558\uAE30 (\uC27C\uD130\xB7\uC0D8\uD130\xB7\uC804\uB9DD\uBC14\uC704 \uB4F1)</button></div>';
+      } else if (s.key === "check") {
+        html += '<p class="lead">\uC6D0\uACE0\uB97C \uC694\uCCAD\uD558\uAE30 \uC804\uC5D0 \uD655\uC778\uD55C \uD56D\uBAA9\uC5D0 \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uD45C\uC2DC\uD558\uC9C0 \uC54A\uC740 \uD56D\uBAA9\uC740 \uC694\uCCAD\uBB38\uC5D0 \u2018\uBBF8\uD655\uC778\u2019\uC73C\uB85C \uB118\uC5B4\uAC11\uB2C8\uB2E4.</p><div class="checks">';
+        html += CHECKS.map(([k, l]) => `<label><input type="checkbox" data-check="${k}"> ${l}</label>`).join("") + "</div>";
+      } else {
+        html += `<p class="lead">${s.lead}</p><div class="grid">` + s.fields.map(([k, l, t, full, ph]) => fieldHTML(`${s.key}.${k}`, l, t || "text", full || t === "area", ph)).join("") + "</div>";
+      }
+      html += "</section>";
+    }
+    html += `<datalist id="philList">${PHILOSOPHERS.map((p) => `<option value="${p}">`).join("")}</datalist>`;
+    $("#form").innerHTML = html;
+  }
+  function extraHTML(x, i) {
+    const k = (f) => `ex.${x.id}.${f}`;
+    return `<div class="card rec" id="ex_${x.id}"><h3><span class="tag">\uCD94\uAC00 ${i + 1}</span>${esc((x.f || {}).place || "\uD604\uC7A5 \uAE30\uB85D")}<span class="stamp"></span></h3><div class="grid">
+    ${fieldHTML(k("time"), "\uC2DC\uAC04", "time")}${fieldHTML(k("place"), "\uC7A5\uC18C")}
+    ${fieldHTML(k("note"), "\uBCF8 \uAC83\xB7\uB290\uB080 \uAC83", "area", true)}
+    <div class="photos full" data-rec="ex_${x.id}"><div class="thumbs"></div><label class="addphoto">\uC0AC\uC9C4 \uCD94\uAC00<input type="file" accept="image/*" multiple data-photo="ex_${x.id}"></label></div>
+    <div class="full row"><button type="button" class="ghost danger" data-delx="${x.id}">\uC774 \uAE30\uB85D \uC9C0\uC6B0\uAE30</button></div></div></div>`;
+  }
+  function renderExtras() {
+    $("#extras").innerHTML = H().extras.map(extraHTML).join("");
+  }
+  function getVal(key) {
+    if (key.startsWith("ex.")) {
+      const [, id, f] = key.split(".");
+      const x = H().extras.find((e) => e.id === id);
+      return x && x.f && x.f[f] != null ? x.f[f] : "";
+    }
+    return H().f[key] != null ? H().f[key] : "";
+  }
+  function setVal(key, v2) {
+    if (key.startsWith("ex.")) {
+      const [, id, f] = key.split(".");
+      const x = H().extras.find((e) => e.id === id);
+      if (x) {
+        x.f = x.f || {};
+        x.f[f] = v2;
+      }
+    } else H().f[key] = v2;
+    H().updated = Date.now();
+  }
+  function fillValues() {
+    document.querySelectorAll("[data-key]").forEach((el) => {
+      el.value = getVal(el.dataset.key);
+    });
+    document.querySelectorAll("[data-check]").forEach((el) => {
+      el.checked = !!H().checks[el.dataset.check];
+    });
+    RECORDS.forEach((r) => {
+      const t = H().f[`rec.${r.id}.time`];
+      const st = document.querySelector(`[data-stamp="${r.id}"]`);
+      if (st) st.textContent = t || "";
+    });
+    updateDur();
+  }
+  function hikeLabel(h) {
+    const d = h.f["basic.date"] || "";
+    const m = h.f["basic.mountain"] || "\uC0B0\uD589\uC9C0 \uBBF8\uC815";
+    return `${d} ${m}`.trim();
+  }
+  function renderSel() {
+    const hs = Object.values(state.hikes).sort((a, b) => (b.f["basic.date"] || "").localeCompare(a.f["basic.date"] || "") || b.created - a.created);
+    $("#hikeSel").innerHTML = hs.map((h) => `<option value="${h.id}"${h.id === state.current ? " selected" : ""}>${esc(hikeLabel(h))}</option>`).join("");
+  }
+  function renderPhotos() {
+    return __async(this, null, function* () {
+      const nums = photoNumbers();
+      for (const box of document.querySelectorAll(".photos[data-rec]")) {
+        const rec = box.dataset.rec;
+        const list = H().photos.filter((p) => p.rec === rec);
+        const thumbs = box.querySelector(".thumbs");
+        thumbs.innerHTML = list.map((p) => `<div class="thumb" data-pid="${p.id}"><img alt="${esc(p.caption || p.name)}"><div class="meta">
+      <div><b>\uC0AC\uC9C4 ${nums.get(p.id)}</b> \xB7 ${esc(p.name)}${p.taken ? " \xB7 " + esc(p.taken) : ""}</div>
+      <input data-cap="${p.id}" value="${esc(p.caption || "")}" placeholder="\uC0AC\uC9C4 \uC124\uBA85" aria-label="\uC0AC\uC9C4 \uC124\uBA85">
+      <button type="button" class="ghost danger x" data-delp="${p.id}">\uBE7C\uAE30</button></div></div>`).join("");
+        for (const p of list) {
+          const src = yield getPhoto(p.id);
+          const img = thumbs.querySelector(`[data-pid="${p.id}"] img`);
+          if (img && src) img.src = src;
+        }
+      }
+    });
+  }
+  function render() {
+    renderSel();
+    renderExtras();
+    fillValues();
+    renderPhotos();
+    refreshOut();
+  }
+  function minutes(t) {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(t || "");
+    return m ? +m[1] * 60 + +m[2] : null;
+  }
+  function updateDur() {
+    const b = $("#durCalc");
+    if (!b) return;
+    const s = minutes(H().f["basic.startTime"] || H().f["depart.time"]);
+    const e = minutes(H().f["basic.endTime"] || H().f["rec.r6.endTime"]);
+    if (s == null || e == null || e <= s) {
+      b.hidden = true;
+      return;
+    }
+    const d = e - s;
+    b.dataset.v = `${Math.floor(d / 60)}\uC2DC\uAC04 ${d % 60}\uBD84`;
+    b.textContent = `\uACC4\uC0B0\uAC12 ${b.dataset.v} \uB123\uAE30`;
+    b.hidden = false;
+  }
+  function compress(file) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const max = 1600, r = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * r);
+        c.height = Math.round(img.height * r);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        res(c.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        rej(new Error("\uC774\uBBF8\uC9C0\uB97C \uC77D\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4"));
+      };
+      img.src = url;
+    });
+  }
+  const recOrder = (rec) => {
+    const i = RECORDS.findIndex((r) => r.id === rec);
+    if (i >= 0) return i * 100;
+    const xi = H().extras.findIndex((x) => "ex_" + x.id === rec);
+    return 1e3 + xi;
+  };
+  function sortedPhotos() {
+    return [...H().photos].sort((a, b) => recOrder(a.rec) - recOrder(b.rec) || a.added - b.added);
+  }
+  function photoNumbers() {
+    const m = /* @__PURE__ */ new Map();
+    sortedPhotos().forEach((p, i) => m.set(p.id, i + 1));
+    return m;
+  }
+  const v = (k) => (H().f[k] || "").trim();
+  const line = (label, val) => `- ${label}: ${val || "(\uAE30\uB85D \uC5C6\uC74C)"}`;
+  function photoLines(rec, nums) {
+    return H().photos.filter((p) => p.rec === rec).map((p) => `  \xB7 [\uC0AC\uC9C4 ${nums.get(p.id)}] ${p.name}${p.taken ? ` (\uD30C\uC77C\uC2DC\uAC01 ${p.taken})` : ""}${p.caption ? " \u2014 " + p.caption : ""}`);
+  }
+  function buildNote() {
+    const nums = photoNumbers();
+    const L = [];
+    L.push("\u26F0\uFE0F \uC0B0\uD589 \uAE30\uB85D \uB178\uD2B8", "", "1. \uC0B0\uD589 \uAE30\uBCF8\uC815\uBCF4");
+    SECTIONS[0].fields.forEach(([k, l]) => L.push(line(l, v("basic." + k))));
+    L.push("", "2. \uC0B0\uD589 \uCD9C\uBC1C");
+    SECTIONS[1].fields.forEach(([k, l]) => L.push(line(l, v("depart." + k))));
+    L.push("", "3. \uC0B0\uD589 \uC911 \uD604\uC7A5 \uAE30\uB85D");
+    RECORDS.forEach((r) => {
+      L.push(`[${r.tag}] ${r.title}`);
+      r.fields.forEach(([k, l]) => {
+        if (k === "photos") {
+          const ps = photoLines(r.id, nums);
+          L.push(`- \uC0AC\uC9C4 \uD30C\uC77C: ${ps.length ? "" : "(\uC5C6\uC74C)"}`, ...ps);
+        } else L.push(line(l, v(`rec.${r.id}.${k}`)));
+      });
+    });
+    H().extras.forEach((x, i) => {
+      L.push(`[\uCD94\uAC00 \uAE30\uB85D ${i + 1}] ${(x.f || {}).place || ""}`, line("\uC2DC\uAC04", (x.f || {}).time), line("\uC7A5\uC18C", (x.f || {}).place), line("\uBCF8 \uAC83\xB7\uB290\uB080 \uAC83", (x.f || {}).note));
+      const ps = photoLines("ex_" + x.id, nums);
+      L.push(`- \uC0AC\uC9C4 \uD30C\uC77C: ${ps.length ? "" : "(\uC5C6\uC74C)"}`, ...ps);
+    });
+    L.push("", "4. \uC624\uB298\uC758 \uCCA0\uD559\uC801 \uC131\uCC30");
+    SECTIONS[3].fields.filter(([k]) => k !== "blank").forEach(([k, l]) => L.push(line(l, v("reflect." + k))));
+    L.push("", "5. \uC0B0\uD589 \uC815\uBCF4 \uCD5C\uC885 \uD655\uC778");
+    CHECKS.forEach(([k, l]) => L.push(`[${H().checks[k] ? "x" : " "}] ${l}`));
+    L.push("", "6. \uB124\uC774\uBC84 \uBE14\uB85C\uADF8 \uC791\uC131 \uBA54\uBAA8");
+    SECTIONS[5].fields.forEach(([k, l]) => L.push(line(l, v("blog." + k))));
+    return L.join("\n");
+  }
+  function missing() {
+    const m = [];
+    [["basic.date", "\uC0B0\uD589\uC77C"], ["basic.mountain", "\uC0B0\uD589\uC9C0"], ["basic.course", "\uC0B0\uD589 \uCF54\uC2A4"], ["basic.distance", "\uC2E4\uC81C \uC774\uB3D9\uAC70\uB9AC"], ["basic.duration", "\uCD1D \uC18C\uC694\uC2DC\uAC04"]].forEach(([k, l]) => {
+      if (!v(k)) m.push(l);
+    });
+    CHECKS.forEach(([k, l]) => {
+      if (!H().checks[k]) m.push(l.replace(" \uD655\uC778", "") + " (\uBBF8\uD655\uC778)");
+    });
+    return m;
+  }
+  function buildPrompt() {
+    const miss = missing();
+    return [
+      buildNote(),
+      "",
+      "7. \uBE14\uB85C\uADF8 \uC6D0\uACE0 \uC791\uC131 \uC694\uCCAD",
+      "\uC704 \uAE30\uB85D\uC744 \uBC14\uD0D5\uC73C\uB85C \uB124\uC774\uBC84 \uBE14\uB85C\uADF8\uC5D0 \uBC14\uB85C \uBD99\uC5EC\uB123\uC744 \uC218 \uC788\uB294 \uC0B0\uD589\uD6C4\uAE30\uB97C \uC791\uC131\uD574 \uC8FC\uC138\uC694.",
+      "\uC791\uC131 \uBC29\uD5A5:",
+      "\u2460 \uC2E4\uC81C \uC0B0\uD589 \uC815\uBCF4\uC640 \uD604\uC7A5\uAC10\uC744 \uCDA9\uC2E4\uD558\uAC8C \uBC18\uC601",
+      "\u2461 \uC0AC\uC9C4\uC744 \uB123\uC744 \uC704\uCE58\uC640 \uC124\uBA85 \uD45C\uC2DC (\uC704 \uAE30\uB85D\uC758 [\uC0AC\uC9C4 n] \uBC88\uD638\uB97C \uADF8\uB300\uB85C \uC0AC\uC6A9)",
+      "\u2462 \uC232\uACFC \uC790\uC5F0\uC5D0 \uB300\uD55C \uAD00\uCC30 \uD3EC\uD568",
+      "\u2463 \uD544\uC694\uD55C \uACBD\uC6B0 \uC11C\uC591\uACE0\uC804 \uCCA0\uD559\uACFC \uC5F0\uACB0",
+      "\u2464 \uD655\uC778\uB418\uC9C0 \uC54A\uC740 \uC0AC\uC2E4\uC740 \uCD94\uCE21\uD558\uC9C0 \uC54A\uAE30 \u2014 \u201C(\uAE30\uB85D \uC5C6\uC74C)\u201D\uC778 \uD56D\uBAA9\uC740 \uC9C0\uC5B4\uB0B4\uC9C0 \uB9D0\uACE0 \uBE44\uC6CC \uB450\uAC70\uB098 \uD655\uC778 \uD544\uC694\uB85C \uD45C\uC2DC",
+      "\u2465 \uC77D\uAE30 \uC26C\uC6B4 \uBB38\uB2E8\uACFC \uC790\uC5F0\uC2A4\uB7EC\uC6B4 \uBB38\uCCB4 \uC0AC\uC6A9",
+      miss.length ? `
+\uCC38\uACE0: \uC544\uC9C1 \uD655\uC778\uD558\uC9C0 \uC54A\uC740 \uC815\uBCF4 \u2014 ${miss.join(", ")}. \uC774 \uBD80\uBD84\uC758 \uC218\uCE58\xB7\uC0AC\uC2E4\uC740 \uB2E8\uC815\uD558\uC9C0 \uB9D0\uC544 \uC8FC\uC138\uC694.` : ""
+    ].join("\n").trim();
+  }
+  function buildSkeleton() {
+    const nums = photoNumbers();
+    const L = [];
+    const titles = v("blog.titles").split("\n").map((s) => s.trim()).filter(Boolean);
+    const ph = (rec) => H().photos.filter((p) => p.rec === rec).map((p) => `\u25B6 [\uC0AC\uC9C4 ${nums.get(p.id)} \uB123\uAE30] ${p.caption || p.name}`);
+    const para = (...ks) => ks.map(v).filter(Boolean).join(" ");
+    L.push(`\uC81C\uBAA9: ${titles[0] || "(\uC81C\uBAA9 \uD6C4\uBCF4\uB97C 6\uBC88\uC5D0 \uC801\uC5B4 \uC8FC\uC138\uC694)"}`);
+    if (titles.length > 1) L.push(`\uB2E4\uB978 \uC81C\uBAA9 \uD6C4\uBCF4: ${titles.slice(1).join(" / ")}`);
+    L.push(
+      "",
+      "\u25A0 \uC0B0\uD589 \uC815\uBCF4 \uD55C\uB208\uC5D0",
+      `\uC0B0\uD589\uC77C ${v("basic.date") || "-"} \xB7 \uC0B0\uD589\uC9C0 ${v("basic.mountain") || "-"} \xB7 \uB3D9\uD589 ${v("basic.companions") || "-"}`,
+      `\uCF54\uC2A4 ${v("basic.course") || "-"}`,
+      `\uAC70\uB9AC ${v("basic.distance") || "\uD655\uC778 \uD544\uC694"} \xB7 \uC18C\uC694\uC2DC\uAC04 ${v("basic.duration") || "\uD655\uC778 \uD544\uC694"} \xB7 \uB0A0\uC528 ${v("basic.weather") || "-"}`
+    );
+    L.push("", "\u25A0 \uB4E4\uC5B4\uAC00\uBA70", para("depart.mood", "depart.purpose") || "(\uCD9C\uBC1C \uB2F9\uC2DC \uAE30\uBD84\uACFC \uC0B0\uD589 \uBAA9\uC801)");
+    RECORDS.forEach((r) => {
+      const keys = r.fields.map((f) => f[0]).filter((k) => k !== "photos" && k !== "time" && k !== "endTime").map((k) => `rec.${r.id}.${k}`);
+      const t = v(`rec.${r.id}.time`);
+      L.push("", `\u25A0 ${r.title}${t ? ` (${t})` : ""}`, para(...keys) || "(\uAE30\uB85D \uC5C6\uC74C)", ...ph(r.id));
+      if (r.id === "r3") {
+        H().extras.forEach((x) => {
+          L.push("", `\u25A0 ${(x.f || {}).place || "\uC26C\uC5B4 \uAC04 \uC790\uB9AC"}${(x.f || {}).time ? ` (${x.f.time})` : ""}`, ((x.f || {}).note || "").trim() || "(\uAE30\uB85D \uC5C6\uC74C)", ...ph("ex_" + x.id));
+        });
+      }
+    });
+    L.push("", "\u25A0 \uC0B0\uC5D0\uC11C \uAC74\uC838 \uC62C\uB9B0 \uC0DD\uAC01", para("reflect.scene", "reflect.question") || "(\uC778\uC0C1 \uAE4A\uC740 \uC7A5\uBA74\uACFC \uC9C8\uBB38)");
+    if (v("reflect.philosopher")) L.push(`\u2014 ${v("reflect.philosopher")}\uC640 \uD568\uAED8: ${v("reflect.link") || "(\uC5F0\uACB0\uD55C \uC0DD\uAC01)"}`);
+    L.push(v("reflect.lesson") ? `\uC624\uB298\uC758 \uAD50\uD6C8: ${v("reflect.lesson")}` : "");
+    L.push("", "\u25A0 \uC774 \uCF54\uC2A4\uB97C \uAC78\uC744 \uBD84\uB4E4\uAED8", v("blog.tips") || "(\uC0B0\uD589 \uD301)");
+    L.push("", "\u25A0 \uB9C8\uCE58\uBA70", v("blog.closing") || v("rec.r6.review") || "(\uB9C8\uBB34\uB9AC \uBB38\uC7A5)");
+    return L.filter((s, i, a) => !(s === "" && a[i - 1] === "")).join("\n");
+  }
+  function backupText(withP) {
+    return __async(this, null, function* () {
+      const data = { app: "sangil", v: 1, hikes: state.hikes, photos: {} };
+      if (withP) for (const h of Object.values(state.hikes)) for (const p of h.photos) {
+        const d = yield getPhoto(p.id);
+        if (d) data.photos[p.id] = d;
+      }
+      return JSON.stringify(data);
+    });
+  }
+  function downloadText(text) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    a.download = `\uC0B0\uD589\uAE30\uB85D_\uBC31\uC5C5_${today()}_${nowHM().replace(":", "")}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+  function saveNow() {
+    return __async(this, null, function* () {
+      clearTimeout(saveTimer);
+      if (saveAll()) {
+        refreshOut();
+        toast("\uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4 \xB7 " + nowHM() + " (\uC774 \uD734\uB300\uD3F0\uC5D0 \uBCF4\uAD00)");
+        return;
+      }
+      try {
+        downloadText(yield backupText(true));
+        toast("\uBC31\uC5C5 \uD30C\uC77C\uB85C \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC6B4\uB85C\uB4DC \uD3F4\uB354\uB97C \uD655\uC778\uD558\uC138\uC694");
+      } catch (e) {
+        toast("\uC800\uC7A5\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uB9E8 \uC544\uB798 \u2018\uBC31\uC5C5 \uBCF5\uC0AC\u2019\uB85C \uBA54\uBAA8 \uC571\uC5D0 \uBD99\uC5EC \uB450\uC138\uC694");
+      }
+    });
+  }
+  let outMode = "prompt";
+  function refreshOut() {
+    const t = outMode === "prompt" ? buildPrompt() : outMode === "skeleton" ? buildSkeleton() : buildNote();
+    $("#outText").value = t;
+    const miss = missing();
+    const box = $("#missBox");
+    box.hidden = !miss.length;
+    box.textContent = miss.length ? "\uC544\uC9C1 \uBE44\uC5B4 \uC788\uAC70\uB098 \uD655\uC778\uD558\uC9C0 \uC54A\uC740 \uD56D\uBAA9: " + miss.join(", ") : "";
+  }
+  let toastT;
+  function toast(msg) {
+    const t = $("#toast");
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toastT);
+    toastT = setTimeout(() => t.hidden = true, 2200);
+  }
+  function copyFrom(ta, okMsg) {
+    const text = ta.value;
+    if (!text) {
+      toast("\uBCF5\uC0AC\uD560 \uB0B4\uC6A9\uC774 \uC5C6\uC2B5\uB2C8\uB2E4");
+      return;
+    }
+    const fallback = () => {
+      ta.focus();
+      ta.select();
+      toast("\uAE00\uC774 \uC120\uD0DD\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uAE38\uAC8C \uB20C\uB7EC \uBCF5\uC0AC\uD558\uC138\uC694");
+    };
+    try {
+      navigator.clipboard.writeText(text).then(() => toast(okMsg), fallback);
+    } catch (e) {
+      fallback();
+    }
+  }
+  buildForm();
+  render();
+  $("#jsWarn").hidden = true;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      clearTimeout(saveTimer);
+      saveAll();
+    }
+  });
+  window.addEventListener("pagehide", () => {
+    clearTimeout(saveTimer);
+    saveAll();
+  });
+  document.addEventListener("input", (e) => {
+    const el = e.target;
+    if (el.dataset.key) {
+      setVal(el.dataset.key, el.value);
+      queueSave();
+      if (el.dataset.key.startsWith("basic.") || el.dataset.key.endsWith("Time") || el.dataset.key.endsWith(".time")) updateDur();
+      if (el.dataset.key.startsWith("basic.")) renderSel();
+    } else if (el.dataset.cap) {
+      const p = H().photos.find((x) => x.id === el.dataset.cap);
+      if (p) {
+        p.caption = el.value;
+        queueSave();
+      }
+    }
+  });
+  document.addEventListener("change", (e) => __async(null, null, function* () {
+    const el = e.target;
+    if (el.dataset.check) {
+      H().checks[el.dataset.check] = el.checked;
+      queueSave();
+      refreshOut();
+    }
+    if (el.dataset.key) refreshOut();
+    if (el.dataset.photo && el.files.length) {
+      const rec = el.dataset.photo;
+      const files = [...el.files];
+      el.value = "";
+      toast(`\uC0AC\uC9C4 ${files.length}\uC7A5 \uB123\uB294 \uC911\u2026`);
+      for (const f of files) {
+        try {
+          const data = yield compress(f);
+          const id = uid();
+          const d = new Date(f.lastModified || Date.now());
+          H().photos.push({ id, rec, name: f.name || "\uC0AC\uC9C4.jpg", taken: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`, caption: "", added: Date.now() });
+          yield putPhoto(id, data);
+        } catch (err) {
+          toast(`${f.name}: ${err.message}`);
+        }
+      }
+      saveAll();
+      renderPhotos();
+      refreshOut();
+      toast("\uC0AC\uC9C4\uC744 \uB123\uC5C8\uC2B5\uB2C8\uB2E4");
+    }
+    if (el.id === "hikeSel") {
+      state.current = el.value;
+      saveAll();
+      render();
+      window.scrollTo(0, 0);
+    }
+    if (el.id === "bkOpen" && el.files[0]) {
+      $("#bkText").value = yield el.files[0].text();
+      el.value = "";
+      toast("\uBC31\uC5C5 \uD30C\uC77C\uC744 \uC77D\uC5C8\uC2B5\uB2C8\uB2E4. \u2018\uBCF5\uC6D0\u2019\uC744 \uB204\uB974\uC138\uC694");
+    }
+  }));
+  document.addEventListener("click", (e) => __async(null, null, function* () {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.id === "saveNow" || b.id === "saveFab") {
+      saveNow();
+    } else if (b.dataset.now) {
+      const k = b.dataset.now;
+      const t = nowHM();
+      setVal(k, t);
+      document.querySelector(`[data-key="${k}"]`).value = t;
+      const st = document.querySelector(`[data-stamp="${k.split(".")[1]}"]`);
+      if (st && k.endsWith(".time")) st.textContent = t;
+      updateDur();
+      saveAll();
+      refreshOut();
+    } else if (b.id === "durCalc") {
+      setVal("basic.duration", b.dataset.v);
+      $("#f_basic_duration").value = b.dataset.v;
+      saveAll();
+      refreshOut();
+    } else if (b.dataset.delp) {
+      const id = b.dataset.delp;
+      H().photos = H().photos.filter((p) => p.id !== id);
+      yield delPhoto(id);
+      saveAll();
+      renderPhotos();
+      refreshOut();
+    } else if (b.dataset.delx) {
+      const id = b.dataset.delx;
+      for (const p of H().photos.filter((p2) => p2.rec === "ex_" + id)) yield delPhoto(p.id);
+      H().photos = H().photos.filter((p) => p.rec !== "ex_" + id);
+      H().extras = H().extras.filter((x) => x.id !== id);
+      saveAll();
+      renderExtras();
+      fillValues();
+      renderPhotos();
+      refreshOut();
+    } else if (b.id === "addExtra") {
+      const x = { id: uid(), f: { time: nowHM() } };
+      H().extras.push(x);
+      saveAll();
+      renderExtras();
+      fillValues();
+      renderPhotos();
+      document.getElementById("ex_" + x.id).scrollIntoView({ block: "center" });
+    } else if (b.id === "newHike") {
+      const h = newHike();
+      state.hikes[h.id] = h;
+      state.current = h.id;
+      saveAll();
+      render();
+      window.scrollTo(0, 0);
+      toast("\uC0C8 \uC0B0\uD589 \uAE30\uB85D\uC744 \uC2DC\uC791\uD569\uB2C8\uB2E4");
+    } else if (b.id === "delHike") {
+      $("#delConfirm").hidden = false;
+    } else if (b.id === "delNo") {
+      $("#delConfirm").hidden = true;
+    } else if (b.id === "delYes") {
+      for (const p of H().photos) yield delPhoto(p.id);
+      delete state.hikes[state.current];
+      if (!Object.keys(state.hikes).length) {
+        const h = newHike();
+        state.hikes[h.id] = h;
+      }
+      state.current = Object.keys(state.hikes)[0];
+      $("#delConfirm").hidden = true;
+      saveAll();
+      render();
+      toast("\uC0B0\uD589 \uAE30\uB85D\uC744 \uC9C0\uC6E0\uC2B5\uB2C8\uB2E4");
+    } else if (b.dataset.out) {
+      outMode = b.dataset.out;
+      document.querySelectorAll("[data-out]").forEach((x) => x.setAttribute("aria-pressed", x === b));
+      refreshOut();
+    } else if (b.id === "copyOut") {
+      refreshOut();
+      copyFrom($("#outText"), "\uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4. Claude\uB098 \uBE14\uB85C\uADF8 \uD3B8\uC9D1\uAE30\uC5D0 \uBD99\uC5EC\uB123\uC73C\uC138\uC694");
+    } else if (b.id === "refreshOut") {
+      refreshOut();
+      toast("\uCD5C\uC2E0 \uAE30\uB85D\uC73C\uB85C \uB2E4\uC2DC \uB9CC\uB4E4\uC5C8\uC2B5\uB2C8\uB2E4");
+    } else if (b.id === "bkMake" || b.id === "bkFile" || b.id === "bkCopy") {
+      const text = yield backupText($("#bkPhotos").checked);
+      $("#bkText").value = text;
+      if (b.id === "bkCopy") copyFrom($("#bkText"), "\uBC31\uC5C5\uC744 \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4. \uBA54\uBAA8 \uC571 \uB4F1\uC5D0 \uBCF4\uAD00\uD558\uC138\uC694");
+      else if (b.id === "bkFile") {
+        try {
+          downloadText(text);
+          toast("\uD30C\uC77C \uC800\uC7A5\uC744 \uC2DC\uB3C4\uD588\uC2B5\uB2C8\uB2E4. \uC800\uC7A5\uC774 \uC548 \uB418\uBA74 \u2018\uBC31\uC5C5 \uBCF5\uC0AC\u2019\uB97C \uC4F0\uC138\uC694");
+        } catch (err) {
+          toast("\uC774 \uD654\uBA74\uC5D0\uC11C\uB294 \uD30C\uC77C \uC800\uC7A5\uC774 \uC548 \uB429\uB2C8\uB2E4. \u2018\uBC31\uC5C5 \uBCF5\uC0AC\u2019\uB97C \uC4F0\uC138\uC694");
+        }
+      } else toast("\uBC31\uC5C5\uC744 \uB9CC\uB4E4\uC5C8\uC2B5\uB2C8\uB2E4");
+    } else if (b.id === "bkRestore") {
+      try {
+        const d = JSON.parse($("#bkText").value);
+        if (!d.hikes) throw new Error();
+        for (const [id, data] of Object.entries(d.photos || {})) yield putPhoto(id, data);
+        Object.assign(state.hikes, d.hikes);
+        state.current = Object.keys(d.hikes)[0];
+        saveAll();
+        render();
+        toast(`\uC0B0\uD589 ${Object.keys(d.hikes).length}\uAC74\uC744 \uBCF5\uC6D0\uD588\uC2B5\uB2C8\uB2E4`);
+      } catch (err) {
+        toast("\uBC31\uC5C5 \uB0B4\uC6A9\uC744 \uC77D\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uBC31\uC5C5 \uAE00 \uC804\uCCB4\uB97C \uADF8\uB300\uB85C \uBD99\uC5EC\uB123\uC5C8\uB294\uC9C0 \uD655\uC778\uD558\uC138\uC694");
+      }
+    }
+  }));
 })();
 </script>
 
