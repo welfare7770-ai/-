@@ -129,7 +129,10 @@ label.fld>span{font-size:.84rem;color:var(--muted);display:flex;justify-content:
       </div>
       <div id="missBox" class="miss" hidden></div>
       <textarea id="outText" readonly aria-label="생성된 글"></textarea>
-      <div class="row"><button id="copyOut" class="primary">복사하기</button><button id="refreshOut">다시 만들기</button>
+      <div class="row"><button id="copyOut" class="primary">복사하기</button><button id="refreshOut">다시 만들기</button></div>
+      <div class="row"><button id="expTxt" class="primary">내보내기 (글 .txt)</button><button id="expAll" class="primary">내보내기 (사진 포함)</button></div>
+      <p class="hint">내보낸 파일은 휴대폰 ‘다운로드’ 폴더에 저장됩니다. Claude 대화창에 이 파일을 첨부하면 그 기록으로 블로그 원고를 씁니다. 사진을 원고에 반영하려면 ‘사진 포함’ 파일을 보내세요.</p>
+      <div class="row">
         <span class="hint">사진 파일은 블로그 편집기에서 직접 올리고, 글 속 ‘사진 n’ 표시 위치에 넣으세요.</span></div>
     </div>
   </section>
@@ -169,6 +172,30 @@ var __async = (__this, __arguments, generator) => {
     var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
     step((generator = generator.apply(__this, __arguments)).next());
   });
+};
+if (!Object.entries) Object.entries = function(o) {
+  return Object.keys(o).map(function(k) {
+    return [k, o[k]];
+  });
+};
+if (!Object.values) Object.values = function(o) {
+  return Object.keys(o).map(function(k) {
+    return o[k];
+  });
+};
+if (!String.prototype.padStart) String.prototype.padStart = function(n, c) {
+  var t = String(this);
+  c = c || " ";
+  while (t.length < n) t = c + t;
+  return t;
+};
+if (!Element.prototype.closest) Element.prototype.closest = function(q) {
+  var e = this;
+  while (e && e.nodeType === 1) {
+    if ((e.matches || e.msMatchesSelector || e.webkitMatchesSelector).call(e, q)) return e;
+    e = e.parentElement;
+  }
+  return null;
 };
 if (!Object.entries) Object.entries = function(o) {
   return Object.keys(o).map(function(k) {
@@ -637,10 +664,10 @@ window.onerror = function(m) {
       return JSON.stringify(data);
     });
   }
-  function downloadText(text) {
+  function downloadText(text, name, type) {
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
-    a.download = `\uC0B0\uD589\uAE30\uB85D_\uBC31\uC5C5_${today()}_${nowHM().replace(":", "")}.json`;
+    a.href = URL.createObjectURL(new Blob([text], { type: type || "application/json" }));
+    a.download = name || "hike-backup_" + today() + "_" + nowHM().replace(":", "") + ".json";
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -769,6 +796,24 @@ window.onerror = function(m) {
     if (!b) return;
     if (b.id === "saveNow" || b.id === "saveFab") {
       saveNow();
+    } else if (b.id === "expTxt" || b.id === "expAll") {
+      saveAll();
+      const base = "hike_" + (v("basic.date") || today()) + "_" + nowHM().replace(":", "");
+      try {
+        if (b.id === "expTxt") downloadText(buildPrompt(), base + ".txt", "text/plain");
+        else {
+          const one = { app: "sangil", v: 1, hikes: {}, photos: {} };
+          one.hikes[state.current] = H();
+          for (const p of H().photos) {
+            const d = yield getPhoto(p.id);
+            if (d) one.photos[p.id] = d;
+          }
+          downloadText(JSON.stringify(one), base + "_with-photos.json", "application/json");
+        }
+        toast("\uB0B4\uBCF4\uB0C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC6B4\uB85C\uB4DC \uD3F4\uB354\uB97C \uD655\uC778\uD558\uC138\uC694");
+      } catch (err) {
+        toast("\uD30C\uC77C \uC800\uC7A5\uC774 \uB9C9\uD600 \uC788\uC2B5\uB2C8\uB2E4. \u2018\uBCF5\uC0AC\uD558\uAE30\u2019\uB85C \uBCF5\uC0AC\uD574 \uBD99\uC5EC\uB123\uC73C\uC138\uC694");
+      }
     } else if (b.dataset.now) {
       const k = b.dataset.now;
       const t = nowHM();
