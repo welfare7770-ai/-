@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>산행 메모</title>
+<style>
+body{margin:0;padding:12px 14px 40px;font-family:sans-serif;font-size:18px;line-height:1.5;background:#f2f5f1;color:#1d2a21}
+h1{font-size:22px;margin:4px 0 8px}
+.st{font-size:15px;font-weight:bold;color:#c9531f}
+.st.ok{color:#2f7a4a}
+input[type=text],textarea{width:100%;box-sizing:border-box;font-size:18px;padding:12px;border:2px solid #b9c7bb;border-radius:10px;background:#fff;color:#1d2a21}
+textarea{min-height:110px}
+.chips{margin:10px 0}
+.chip{display:inline-block;font-size:17px;padding:10px 14px;margin:0 6px 8px 0;border:2px solid #355f43;border-radius:999px;background:#fff;color:#355f43}
+.chip.on{background:#355f43;color:#fff}
+.big{display:block;width:100%;font-size:21px;font-weight:bold;padding:16px;margin:8px 0;border:0;border-radius:12px;background:#355f43;color:#fff}
+.big.alt{background:#c9531f}
+.sub{font-size:17px;padding:12px 14px;margin:4px 6px 4px 0;border:2px solid #b9c7bb;border-radius:10px;background:#fff;color:#1d2a21}
+.item{background:#fff;border-radius:10px;padding:10px 12px;margin:8px 0;border-left:6px solid #c9531f;position:relative}
+.item b{color:#c9531f}
+.item .x{position:absolute;right:6px;top:6px;border:0;background:none;font-size:22px;color:#888}
+.item div{padding-right:30px;white-space:pre-wrap;word-wrap:break-word}
+.lab{font-size:15px;color:#566a5b;margin:14px 0 4px}
+#msg{position:fixed;left:14px;right:14px;top:10px;background:#1d2a21;color:#fff;padding:12px;border-radius:10px;font-weight:bold;display:none}
+</style>
+</head>
+<body>
+<div id="msg"></div>
+<h1>⛰️ 산행 메모 <span id="st" class="st">⚠ 기능 꺼짐</span></h1>
+
+<div class="lab">산행지</div>
+<input type="text" id="place" placeholder="예: 북한산 백운대" onkeyup="saveBase()" onchange="saveBase()">
+
+<div class="lab">어디쯤인가요? (눌러서 고르기)</div>
+<div class="chips" id="chips"></div>
+
+<div class="lab">보고 느낀 것 (키보드 마이크로 말해도 됩니다)</div>
+<textarea id="txt" placeholder="예: 소나무 숲길, 공기가 좋다"></textarea>
+
+<button class="big" type="button" onclick="addEntry(false)">기록 추가 (현재 시각 자동)</button>
+<button class="big alt" type="button" onclick="addEntry(true)">📷 사진 찍었음 표시 (시각만 기록)</button>
+
+<div class="lab">지금까지 기록</div>
+<div id="list"></div>
+
+<div class="lab">산행이 끝나면</div>
+<button class="big" type="button" onclick="copyAll()">전체 복사 → 이 글을 Claude에게 붙여넣기</button>
+<button class="sub" type="button" onclick="saveFile()">파일로 저장 (.txt)</button>
+<button class="sub" type="button" onclick="clearAll()">전부 지우기</button>
+<div class="lab">아래 글을 길게 눌러 ‘전체 선택 → 복사’ 해도 됩니다</div>
+<textarea id="all" readonly style="min-height:240px;font-size:15px"></textarea>
+
+<script>
+var KEY = 'sanhaeng-simple-v1';
+var CATS = ['초입','경유지','인상적인 장소','힘든 구간','정상','하산','쉼터','메모'];
+var cat = '메모';
+var data = { place: '', items: [] };
+var canSave = true;
+
+function $(id){ return document.getElementById(id); }
+function pad(n){ n = String(n); return n.length < 2 ? '0' + n : n; }
+function nowStr(){ var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function todayStr(){ var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function msg(t){ var m = $('msg'); m.textContent = t; m.style.display = 'block'; setTimeout(function(){ m.style.display = 'none'; }, 2500); }
+
+function load(){
+  try { var r = localStorage.getItem(KEY); if (r) data = JSON.parse(r); } catch (e) { canSave = false; }
+  if (!data.items) data.items = [];
+  if (!data.date) data.date = todayStr();
+}
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { canSave = false; }
+}
+function saveBase(){ data.place = $('place').value; save(); build(); }
+
+function drawChips(){
+  var h = '';
+  for (var i = 0; i < CATS.length; i++) {
+    h += '<span class="chip' + (CATS[i] === cat ? ' on' : '') + '" onclick="pick(' + i + ')">' + CATS[i] + '</span>';
+  }
+  $('chips').innerHTML = h;
+}
+function pick(i){ cat = CATS[i]; drawChips(); }
+
+function addEntry(photoOnly){
+  var x = $('txt').value.replace(/^\s+|\s+$/g, '');
+  if (photoOnly && !x) x = '(사진 촬영)';
+  else if (photoOnly) x = '(사진 촬영) ' + x;
+  if (!x) { msg('내용을 적거나 📷 버튼을 누르세요'); return; }
+  data.items.push({ t: nowStr(), c: cat, x: x });
+  $('txt').value = '';
+  save(); drawList(); build();
+  msg('기록했습니다 ' + nowStr());
+}
+function del(i){ data.items.splice(i, 1); save(); drawList(); build(); }
+function drawList(){
+  var h = '';
+  for (var i = data.items.length - 1; i >= 0; i--) {
+    var it = data.items[i];
+    h += '<div class="item"><button class="x" type="button" onclick="del(' + i + ')">✕</button><div><b>' + it.t + ' · ' + esc(it.c) + '</b><br>' + esc(it.x) + '</div></div>';
+  }
+  $('list').innerHTML = h || '<div class="lab">아직 기록이 없습니다</div>';
+}
+function build(){
+  var L = ['⛰️ 산행 기록', '산행일: ' + data.date, '산행지: ' + (data.place || '(미기록)'), ''];
+  for (var i = 0; i < data.items.length; i++) {
+    var it = data.items[i];
+    L.push('[' + it.t + '] ' + it.c + ' — ' + it.x);
+  }
+  L.push('', '위 기록으로 네이버 블로그 산행후기 원고를 작성해 주세요. 기록에 없는 정보는 추측하지 말고 "확인 필요"로 표시해 주세요. (사진은 따로 첨부하겠습니다)');
+  $('all').value = L.join('\n');
+}
+function copyAll(){
+  build();
+  var ta = $('all');
+  function fallback(){ ta.focus(); ta.select(); try { document.execCommand('copy'); msg('복사했습니다'); } catch (e) { msg('글이 선택되었습니다. 길게 눌러 복사하세요'); } }
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(function(){ msg('복사했습니다. Claude 대화창에 붙여넣으세요'); }, fallback);
+    else fallback();
+  } catch (e) { fallback(); }
+}
+function saveFile(){
+  build();
+  try {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([$('all').value], { type: 'text/plain' }));
+    a.download = 'hike_' + data.date + '.txt';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    msg('다운로드 폴더에 저장했습니다');
+  } catch (e) { msg('저장이 막혀 있습니다. 전체 복사를 쓰세요'); }
+}
+function clearAll(){
+  if (!window.__sure) { window.__sure = true; msg('한 번 더 누르면 전부 지워집니다'); setTimeout(function(){ window.__sure = false; }, 4000); return; }
+  window.__sure = false; data = { place: '', items: [], date: todayStr() }; save(); $('place').value = ''; drawList(); build(); msg('지웠습니다');
+}
+
+load();
+$('place').value = data.place || '';
+drawChips(); drawList(); build();
+$('st').textContent = canSave ? '✅ 작동 중' : '✅ 작동 중 (자동저장 불가: 끝나면 꼭 복사)';
+$('st').className = 'st ok';
+setInterval(function(){ if (document.activeElement && document.activeElement.id === 'txt') save(); }, 5000);
+</script>
+</body>
+</html>
