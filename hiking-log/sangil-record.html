@@ -90,7 +90,7 @@ label.fld>span{font-size:.84rem;color:var(--muted);display:flex;justify-content:
 .miss{background:var(--ribbon-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:.86rem}
 .banner{background:var(--ribbon-soft);border:1px solid var(--ribbon);border-radius:10px;padding:10px 12px;font-size:.86rem;margin-top:12px}
 .confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--ribbon-soft);border-radius:8px;padding:8px 10px;font-size:.86rem}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:.88rem;z-index:20;max-width:calc(100% - 32px)}
+.toast{position:fixed;left:50%;top:calc(150px + env(safe-area-inset-top,0px));font-weight:700;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:.88rem;z-index:20;max-width:calc(100% - 32px)}
 .hide-mobile{min-height:0}
 @media (max-width:560px){.hide-mobile{display:none}}
 .dur{font-family:var(--f-num);font-size:.78rem}
@@ -478,7 +478,8 @@ window.onerror = function(m) {
   }
   function hikeLabel(h) {
     const d = h.f["basic.date"] || "";
-    const m = h.f["basic.mountain"] || "\uC0B0\uD589\uC9C0 \uBBF8\uC815";
+    const c = new Date(h.created);
+    const m = h.f["basic.mountain"] || "\uC0C8 \uC0B0\uD589 " + String(c.getHours()).padStart(2, "0") + ":" + String(c.getMinutes()).padStart(2, "0");
     return `${d} ${m}`.trim();
   }
   function renderSel() {
@@ -866,8 +867,13 @@ window.onerror = function(m) {
       state.current = h.id;
       saveAll();
       render();
-      window.scrollTo(0, 0);
-      toast("\uC0C8 \uC0B0\uD589 \uAE30\uB85D\uC744 \uC2DC\uC791\uD569\uB2C8\uB2E4");
+      const s1 = document.getElementById("s1");
+      if (s1 && s1.scrollIntoView) s1.scrollIntoView();
+      try {
+        document.getElementById("f_basic_mountain").focus();
+      } catch (err) {
+      }
+      toast("\u2705 \uC0C8 \uC0B0\uD589 \uAE30\uB85D\uC774 \uC5F4\uB838\uC2B5\uB2C8\uB2E4. \uC0B0\uD589\uC9C0\uB97C \uC785\uB825\uD558\uC138\uC694");
     } else if (b.id === "delHike") {
       $("#delConfirm").hidden = false;
     } else if (b.id === "delNo") {
