@@ -8,8 +8,6 @@
 <body>
 <title>산길 기록장</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap">
 <style>
 /* Layout: 산행 순서대로 내려가는 한 줄 기록지. 상단 고정 띠에 산행 선택·구간 이동, 기록 카드마다 '지금' 시각 버튼과 사진 첨부. */
 :root{
@@ -36,6 +34,8 @@ header.top .wrap{padding-block:10px 8px;display:grid;gap:8px}
 .brand small{font-family:var(--f-body);font-weight:400;font-size:.78rem;color:var(--muted);margin-left:6px}
 .status{font-size:.78rem;color:var(--muted)}
 .status.ok{color:var(--ok)}
+button.save{padding:8px 18px;font-weight:700}
+.fab{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:15;border-radius:999px;padding:12px 22px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.25)}
 select,input,textarea{font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;min-width:0}
 textarea{min-height:76px;resize:vertical}
 input:focus,textarea:focus,select:focus,button:focus-visible{outline:2px solid var(--moss);outline-offset:1px}
@@ -98,6 +98,7 @@ label.fld>span{font-size:.84rem;color:var(--muted);display:flex;justify-content:
     <div class="row">
       <div class="brand">산길 기록장<small>산행 중 기록 → 블로그 원고</small></div>
       <span id="saveStatus" class="status">저장 준비</span>
+      <button id="saveNow" class="primary save">저장</button>
     </div>
     <div class="row">
       <select id="hikeSel" aria-label="산행 선택"></select>
@@ -113,7 +114,7 @@ label.fld>span{font-size:.84rem;color:var(--muted);display:flex;justify-content:
 </header>
 
 <main class="wrap">
-  <div id="storeWarn" class="banner" hidden>이 화면에서는 기록이 기기에 저장되지 않습니다. 산행을 마치면 7번에서 원고 요청문을 복사하거나 백업을 꼭 받아 두세요.</div>
+  <div id="storeWarn" class="banner" hidden>이 화면에서는 브라우저 저장이 막혀 있습니다. [저장]을 누르면 기록이 휴대폰 ‘다운로드’ 폴더에 백업 파일로 저장됩니다. 다음에 맨 아래 ‘백업 파일 열기’로 불러오세요.</div>
   <div id="jsWarn" class="banner">기록 화면을 불러오는 중입니다. 이 문구가 계속 보이고 1~6번 입력칸이 나오지 않으면, 지금 앱이 HTML 미리보기만 지원하고 기능(스크립트)은 막는 경우입니다. 파일을 <b>Chrome</b>이나 <b>삼성 인터넷</b> 브라우저로 열어 주세요.</div>
   <div id="form"></div>
 
@@ -145,6 +146,7 @@ label.fld>span{font-size:.84rem;color:var(--muted);display:flex;justify-content:
     </div>
   </section>
 </main>
+<button id="saveFab" class="primary fab">저장</button>
 <div id="toast" class="toast" hidden></div>
 
 <script>
@@ -189,8 +191,8 @@ const nowHM = () => { const d = new Date(); return String(d.getHours()).padStart
 let lsOK = true;
 function loadAll(){ try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch(e){ lsOK = false; return null; } }
 function saveAll(){
-  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); setStatus('저장됨 ' + nowHM(), true); }
-  catch(e){ lsOK = false; $('#storeWarn').hidden = false; setStatus('저장 안 됨'); }
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); lsOK = true; setStatus('저장됨 ' + nowHM(), true); return true; }
+  catch(e){ lsOK = false; $('#storeWarn').hidden = false; setStatus('저장 안 됨'); return false; }
 }
 let saveTimer;
 function queueSave(){ setStatus('입력 중…'); clearTimeout(saveTimer); saveTimer = setTimeout(() => { saveAll(); refreshOut(); }, 500); }
@@ -215,6 +217,7 @@ async function getPhoto(id){ if (photoCache.has(id)) return photoCache.get(id); 
 function newHike(){ const id = uid(); return { id, created: Date.now(), f: { 'basic.date': today() }, checks: {}, extras: [], photos: [] }; }
 let state = loadAll();
 if (!state || !state.hikes || !Object.keys(state.hikes).length){ const h = newHike(); state = { hikes: { [h.id]: h }, current: h.id }; }
+try { localStorage.setItem('sangil-test', '1'); localStorage.removeItem('sangil-test'); } catch(e){ lsOK = false; }
 if (!lsOK) $('#storeWarn').hidden = false;
 const H = () => state.hikes[state.current];
 
@@ -410,6 +413,21 @@ function buildSkeleton(){
   L.push('', '■ 마치며', v('blog.closing') || v('rec.r6.review') || '(마무리 문장)');
   return L.filter((s, i, a) => !(s === '' && a[i - 1] === '')).join('\n');
 }
+async function backupText(withP){
+  const data = { app: 'sangil', v: 1, hikes: state.hikes, photos: {} };
+  if (withP) for (const h of Object.values(state.hikes)) for (const p of h.photos){ const d = await getPhoto(p.id); if (d) data.photos[p.id] = d; }
+  return JSON.stringify(data);
+}
+function downloadText(text){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  a.download = `산행기록_백업_${today()}_${nowHM().replace(':', '')}.json`; document.body.appendChild(a); a.click(); a.remove();
+}
+async function saveNow(){
+  clearTimeout(saveTimer);
+  if (saveAll()){ refreshOut(); toast('저장했습니다 · ' + nowHM() + ' (이 휴대폰에 보관)'); return; }
+  try { downloadText(await backupText(true)); toast('백업 파일로 저장했습니다. 다운로드 폴더를 확인하세요'); }
+  catch(e){ toast('저장하지 못했습니다. 맨 아래 ‘백업 복사’로 메모 앱에 붙여 두세요'); }
+}
 let outMode = 'prompt';
 function refreshOut(){
   const t = outMode === 'prompt' ? buildPrompt() : outMode === 'skeleton' ? buildSkeleton() : buildNote();
@@ -429,6 +447,8 @@ function copyFrom(ta, okMsg){
 
 /* ---------- 이벤트 ---------- */
 buildForm(); render(); $('#jsWarn').hidden = true;
+document.addEventListener('visibilitychange', () => { if (document.hidden){ clearTimeout(saveTimer); saveAll(); } });
+window.addEventListener('pagehide', () => { clearTimeout(saveTimer); saveAll(); });
 
 document.addEventListener('input', e => {
   const el = e.target;
@@ -457,7 +477,8 @@ document.addEventListener('change', async e => {
 });
 document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.now){ const k = b.dataset.now; const t = nowHM(); setVal(k, t); document.querySelector(`[data-key="${k}"]`).value = t; const st = document.querySelector(`[data-stamp="${k.split('.')[1]}"]`); if (st && k.endsWith('.time')) st.textContent = t; updateDur(); saveAll(); refreshOut(); }
+  if (b.id === 'saveNow' || b.id === 'saveFab'){ saveNow(); }
+  else if (b.dataset.now){ const k = b.dataset.now; const t = nowHM(); setVal(k, t); document.querySelector(`[data-key="${k}"]`).value = t; const st = document.querySelector(`[data-stamp="${k.split('.')[1]}"]`); if (st && k.endsWith('.time')) st.textContent = t; updateDur(); saveAll(); refreshOut(); }
   else if (b.id === 'durCalc'){ setVal('basic.duration', b.dataset.v); $('#f_basic_duration').value = b.dataset.v; saveAll(); refreshOut(); }
   else if (b.dataset.delp){ const id = b.dataset.delp; H().photos = H().photos.filter(p => p.id !== id); await delPhoto(id); saveAll(); renderPhotos(); refreshOut(); }
   else if (b.dataset.delx){ const id = b.dataset.delx; for (const p of H().photos.filter(p => p.rec === 'ex_' + id)) await delPhoto(p.id); H().photos = H().photos.filter(p => p.rec !== 'ex_' + id); H().extras = H().extras.filter(x => x.id !== id); saveAll(); renderExtras(); fillValues(); renderPhotos(); refreshOut(); }
@@ -475,12 +496,10 @@ document.addEventListener('click', async e => {
   else if (b.id === 'copyOut'){ refreshOut(); copyFrom($('#outText'), '복사했습니다. Claude나 블로그 편집기에 붙여넣으세요'); }
   else if (b.id === 'refreshOut'){ refreshOut(); toast('최신 기록으로 다시 만들었습니다'); }
   else if (b.id === 'bkMake' || b.id === 'bkFile' || b.id === 'bkCopy'){
-    const withP = $('#bkPhotos').checked; const data = { app: 'sangil', v: 1, hikes: state.hikes, photos: {} };
-    if (withP) for (const h of Object.values(state.hikes)) for (const p of h.photos){ const d = await getPhoto(p.id); if (d) data.photos[p.id] = d; }
-    const text = JSON.stringify(data); $('#bkText').value = text;
+    const text = await backupText($('#bkPhotos').checked); $('#bkText').value = text;
     if (b.id === 'bkCopy') copyFrom($('#bkText'), '백업을 복사했습니다. 메모 앱 등에 보관하세요');
     else if (b.id === 'bkFile'){
-      try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = `산행기록_백업_${today()}.json`; document.body.appendChild(a); a.click(); a.remove(); toast('파일 저장을 시도했습니다. 저장이 안 되면 ‘백업 복사’를 쓰세요'); } catch(err){ toast('이 화면에서는 파일 저장이 안 됩니다. ‘백업 복사’를 쓰세요'); }
+      try { downloadText(text); toast('파일 저장을 시도했습니다. 저장이 안 되면 ‘백업 복사’를 쓰세요'); } catch(err){ toast('이 화면에서는 파일 저장이 안 됩니다. ‘백업 복사’를 쓰세요'); }
     } else toast('백업을 만들었습니다');
   }
   else if (b.id === 'bkRestore'){
