@@ -35,7 +35,7 @@ textarea{min-height:110px}
 <div class="lab">산행지</div>
 <input type="text" id="place" placeholder="예: 북한산 백운대" onkeyup="saveBase()" onchange="saveBase()">
 
-<div class="lab">어디쯤인가요? (눌러서 고르기)</div>
+<div class="lab">어디쯤인가요? (눌러서 고르기) → 선택: <b id="cur" style="color:#c9531f;font-size:19px">메모</b></div>
 <div class="chips" id="chips"></div>
 
 <div class="lab">보고 느낀 것 (키보드 마이크로 말해도 됩니다)</div>
@@ -90,7 +90,7 @@ function drawChips(){
   for (var i = 0; i < CATS.length; i++) {
     h += '<span class="chip' + (CATS[i] === cat ? ' on' : '') + '" onclick="pick(' + i + ')">' + CATS[i] + '</span>';
   }
-  $('chips').innerHTML = h;
+  $('chips').innerHTML = h; $('cur').textContent = cat;
 }
 function pick(i){ cat = CATS[i]; drawChips(); }
 
