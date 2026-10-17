@@ -114,6 +114,7 @@ label.fld>span{font-size:.84rem;color:var(--muted);display:flex;justify-content:
 
 <main class="wrap">
   <div id="storeWarn" class="banner" hidden>이 화면에서는 기록이 기기에 저장되지 않습니다. 산행을 마치면 7번에서 원고 요청문을 복사하거나 백업을 꼭 받아 두세요.</div>
+  <div id="jsWarn" class="banner">기록 화면을 불러오는 중입니다. 이 문구가 계속 보이고 1~6번 입력칸이 나오지 않으면, 지금 앱이 HTML 미리보기만 지원하고 기능(스크립트)은 막는 경우입니다. 파일을 <b>Chrome</b>이나 <b>삼성 인터넷</b> 브라우저로 열어 주세요.</div>
   <div id="form"></div>
 
   <section class="sec" id="s7">
@@ -147,6 +148,7 @@ label.fld>span{font-size:.84rem;color:var(--muted);display:flex;justify-content:
 <div id="toast" class="toast" hidden></div>
 
 <script>
+window.onerror = function(m){ var w = document.getElementById('jsWarn'); if (w){ w.hidden = false; w.textContent = '기능을 실행하지 못했습니다(' + m + '). Chrome이나 삼성 인터넷 최신 버전으로 열어 주세요.'; } };
 (() => {
 const RECORDS = [
   {id:'r1', tag:'기록 1', title:'산행 초입', fields:[['time','시간','time'],['place','장소'],['scenery','풍경·숲의 모습','area'],['photos'],['feeling','느낌·생각','area']]},
@@ -178,7 +180,7 @@ const CHECKS = [['distance','실제 이동거리 확인'],['duration','총 소�
 const PHILOSOPHERS = ['헤라클레이토스','소크라테스','플라톤','아리스토텔레스','디오게네스','에피쿠로스','루크레티우스','세네카','에픽테토스','마르쿠스 아우렐리우스','키케로','아우구스티누스','몽테뉴','스피노자','루소','칸트','쇼펜하우어','니체','소로'];
 const LS_KEY = 'sangil-records-v1';
 const $ = s => document.querySelector(s);
-const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const nowHM = () => { const d = new Date(); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
@@ -191,7 +193,7 @@ function saveAll(){
   catch(e){ lsOK = false; $('#storeWarn').hidden = false; setStatus('저장 안 됨'); }
 }
 let saveTimer;
-function queueSave(){ setStatus('입력 중…'); clearTimeout(saveTimer); saveTimer = setTimeout(saveAll, 500); }
+function queueSave(){ setStatus('입력 중…'); clearTimeout(saveTimer); saveTimer = setTimeout(() => { saveAll(); refreshOut(); }, 500); }
 function setStatus(t, ok){ const el = $('#saveStatus'); el.textContent = t; el.classList.toggle('ok', !!ok); }
 
 const photoCache = new Map();
@@ -256,7 +258,7 @@ function buildForm(){
 }
 function extraHTML(x, i){
   const k = f => `ex.${x.id}.${f}`;
-  return `<div class="card rec" id="ex_${x.id}"><h3><span class="tag">추가 ${i + 1}</span>${esc(x.f?.place || '현장 기록')}<span class="stamp"></span></h3><div class="grid">
+  return `<div class="card rec" id="ex_${x.id}"><h3><span class="tag">추가 ${i + 1}</span>${esc((x.f||{}).place || '현장 기록')}<span class="stamp"></span></h3><div class="grid">
     ${fieldHTML(k('time'), '시간', 'time')}${fieldHTML(k('place'), '장소')}
     ${fieldHTML(k('note'), '본 것·느낀 것', 'area', true)}
     <div class="photos full" data-rec="ex_${x.id}"><div class="thumbs"></div><label class="addphoto">사진 추가<input type="file" accept="image/*" multiple data-photo="ex_${x.id}"></label></div>
@@ -265,8 +267,8 @@ function extraHTML(x, i){
 function renderExtras(){ $('#extras').innerHTML = H().extras.map(extraHTML).join(''); }
 
 function getVal(key){
-  if (key.startsWith('ex.')){ const [, id, f] = key.split('.'); const x = H().extras.find(e => e.id === id); return x?.f?.[f] ?? ''; }
-  return H().f[key] ?? '';
+  if (key.startsWith('ex.')){ const [, id, f] = key.split('.'); const x = H().extras.find(e => e.id === id); return (x && x.f && x.f[f] != null) ? x.f[f] : ''; }
+  return H().f[key] != null ? H().f[key] : '';
 }
 function setVal(key, v){
   if (key.startsWith('ex.')){ const [, id, f] = key.split('.'); const x = H().extras.find(e => e.id === id); if (x){ x.f = x.f || {}; x.f[f] = v; } }
@@ -349,7 +351,7 @@ function buildNote(){
     });
   });
   H().extras.forEach((x, i) => {
-    L.push(`[추가 기록 ${i + 1}] ${x.f?.place || ''}`, line('시간', x.f?.time), line('장소', x.f?.place), line('본 것·느낀 것', x.f?.note));
+    L.push(`[추가 기록 ${i + 1}] ${(x.f||{}).place || ''}`, line('시간', (x.f||{}).time), line('장소', (x.f||{}).place), line('본 것·느낀 것', (x.f||{}).note));
     const ps = photoLines('ex_' + x.id, nums); L.push(`- 사진 파일: ${ps.length ? '' : '(없음)'}`, ...ps);
   });
   L.push('', '4. 오늘의 철학적 성찰');
@@ -397,7 +399,7 @@ function buildSkeleton(){
     L.push('', `■ ${r.title}${t ? ` (${t})` : ''}`, para(...keys) || '(기록 없음)', ...ph(r.id));
     if (r.id === 'r3'){
       H().extras.forEach(x => {
-        L.push('', `■ ${x.f?.place || '쉬어 간 자리'}${x.f?.time ? ` (${x.f.time})` : ''}`, (x.f?.note || '').trim() || '(기록 없음)', ...ph('ex_' + x.id));
+        L.push('', `■ ${(x.f||{}).place || '쉬어 간 자리'}${(x.f||{}).time ? ` (${x.f.time})` : ''}`, ((x.f||{}).note || '').trim() || '(기록 없음)', ...ph('ex_' + x.id));
       });
     }
   });
@@ -426,7 +428,7 @@ function copyFrom(ta, okMsg){
 }
 
 /* ---------- 이벤트 ---------- */
-buildForm(); render();
+buildForm(); render(); $('#jsWarn').hidden = true;
 
 document.addEventListener('input', e => {
   const el = e.target;
