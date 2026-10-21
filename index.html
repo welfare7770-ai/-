@@ -187,6 +187,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .detail h2::before{display:none}
 .notice a{color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline}
 #restoreBox{display:none;margin-top:10px}
+.toast{display:flex;align-items:center;gap:14px;width:max-content;max-width:calc(100% - 32px);bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+.toast.act{pointer-events:auto}
+.toast button{border:0;background:transparent;color:var(--gold);font:700 14px var(--gothic);cursor:pointer;padding:2px 2px;white-space:nowrap}
+.editbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 14px;padding:9px 12px;border-radius:10px;background:var(--pm-soft);color:var(--pm);font:700 13.5px var(--gothic)}
+.editbar span{flex:1;min-width:0}
 </style>
 </head>
 <body>
@@ -214,6 +219,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
       <input type="hidden" name="id">
       <div class="card">
         <h2 id="formTitle">새 설교 기록</h2>
+        <div class="editbar" id="editBar" hidden><span id="editInfo"></span><button type="button" class="btn sm danger" id="delEdit">이 기록 삭제</button></div>
         <div class="form-top">
           <div class="date-wrap">
             <label>날짜</label>
@@ -252,7 +258,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
       <div class="card">
         <h2>설교 내용</h2>
         <div class="grid">
-          <div><label>제목</label><input name="title" placeholder="설교 제목" required></div>
+          <div><label>제목</label><input name="title" placeholder="설교 제목"></div>
           <div><label>주제</label><input name="theme" placeholder="한 줄 주제 (예: 고난 중에도 신실하신 하나님)"></div>
         </div>
         <h3 style="margin-top:16px">대지 (1~4)</h3>
@@ -271,7 +277,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 
       <div class="row end savebar">
         <button type="button" class="btn ghost" id="resetForm">새로 쓰기</button>
-        <button type="submit" class="btn primary">저장</button>
+        <button type="submit" class="btn primary" id="saveBtn">저장</button>
       </div>
     </form>
   </section>
@@ -319,7 +325,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
   <!-- 행사 -->
   <section class="view" id="v-events">
     <form class="card" id="eventForm" autocomplete="off">
-      <h2>행사 소감 기록</h2>
+      <h2 id="eventTitle">행사 소감 기록</h2>
       <input type="hidden" name="id">
       <div class="grid g2">
         <div><label>날짜</label><input type="date" name="date" min="2006-01-01" required></div>
@@ -328,7 +334,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
       <div style="margin-top:10px"><label>소감</label><textarea name="reflection" rows="4" placeholder="느낀 점, 받은 은혜, 기억할 장면"></textarea></div>
       <div class="row end" style="margin-top:10px">
         <button type="button" class="btn ghost" id="eventReset">새로 쓰기</button>
-        <button class="btn primary">저장</button>
+        <button class="btn primary" id="eventSave">저장</button>
       </div>
     </form>
     <div class="list" id="eventList"></div>
@@ -373,7 +379,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 </div>
 
 <div class="modal" id="modal"><div class="card"><div id="modalBody"></div></div></div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span><button type="button" id="toastUndo" hidden>되돌리기</button></div>
 
 <script>
 // ───────── 성경 66권 (분류 · 장 수) ─────────
@@ -430,7 +436,13 @@ function fmtPassage(p){
 const passagesText = s => (s.passages || []).map(fmtPassage).filter(Boolean).join(', ');
 const PREACHER = {'강':'강현복','이':'이대영','김':'김광채'};
 const preacherName = s => s.preacher === '기타' ? (s.preacherOther || '그 외') : (PREACHER[s.preacher] || s.preacher);
-function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 1800); }
+function toast(msg, undo){
+  const t = $('#toast'), b = $('#toastUndo');
+  $('#toastMsg').textContent = msg; b.hidden = !undo; b.onclick = undo ? () => { t.classList.remove('on', 'act'); undo(); } : null;
+  t.classList.add('on'); t.classList.toggle('act', !!undo);
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on', 'act'), undo ? 6000 : 2000);
+}
+const titleOf = s => s.title || '(제목 없음)';
 function today(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function lastSunday(){ const d = new Date(); d.setDate(d.getDate() - d.getDay()); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
@@ -439,7 +451,11 @@ $('#tabs').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   showView(b.dataset.v);
 });
-function showView(v){
+function showView(v, fromPop){
+  if (!fromPop) {
+    if (v === 'write') { if (history.state?.view) history.replaceState(null, ''); }
+    else if (history.state?.view) history.replaceState({view:v}, ''); else history.pushState({view:v}, '');
+  }
   $$('#tabs button').forEach(x => x.classList.toggle('on', x.dataset.v === v));
   $$('section.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
   if (v === 'weekly') renderWeekly();
@@ -512,6 +528,10 @@ function fillForm(s){
   (s?.passages?.length ? s.passages : [{}]).forEach(p => $('#passages').append(passageRow(p)));
   pointsHtml(s?.points);
   $('#formTitle').textContent = s?.id ? '설교 기록 수정' : '새 설교 기록';
+  $('#editBar').hidden = !s?.id;
+  if (s?.id) $('#editInfo').textContent = `✎ 수정 중 · ${s.date.replace(/-/g,'.')} ${s.service} 「${titleOf(s)}」`;
+  $('#resetForm').textContent = s?.id ? '수정 취소' : '새로 쓰기';
+  $('#saveBtn').textContent = s?.id ? '수정 완료' : '저장';
   updateDateInfo();
 }
 const DRAFT = KEY + '-draft';
@@ -535,12 +555,18 @@ form.addEventListener('input', () => {
   clearTimeout(draftTimer);
   draftTimer = setTimeout(() => { if (form.elements.id.value) return; try { localStorage.setItem(DRAFT, JSON.stringify(collectForm())); } catch(e) {} }, 500);
 });
-$('#resetForm').onclick = () => { clearDraft(); fillForm(); };
+$('#resetForm').onclick = () => {
+  const editing = form.elements.id.value;
+  if (!editing) clearDraft();
+  fillForm(); if (editing) toast('수정을 취소했습니다');
+};
+$('#delEdit').onclick = () => removeSermon(form.elements.id.value);
 form.addEventListener('submit', e => {
   e.preventDefault();
   const s = Object.assign(collectForm(), {id: form.elements.id.value || uid(), updatedAt: new Date().toISOString()});
+  if (!s.title && !s.passages.length && !s.summary && !s.points.some(p => p.h || p.body)) { toast('제목이나 본문 중 하나는 입력해 주세요'); form.elements.title.focus(); return; }
   const dup = db.sermons.find(x => x.id !== s.id && x.date === s.date && x.service === s.service);
-  if (dup && !confirm(`${s.date} ${s.service} 설교가 이미 있습니다 (「${dup.title}」). 그래도 따로 저장할까요?`)) return;
+  if (dup && !confirm(`${s.date} ${s.service} 설교가 이미 있습니다 (「${titleOf(dup)}」). 그래도 따로 저장할까요?`)) return;
   const idx = db.sermons.findIndex(x => x.id === s.id);
   if (idx >= 0) db.sermons[idx] = s; else db.sermons.push(s);
   clearDraft(); save(); renderStats(); updateBackupNote(); toast('저장했습니다');
@@ -548,11 +574,46 @@ form.addEventListener('submit', e => {
   if (idx < 0 && s.service === '오전' && !db.sermons.some(x => x.date === s.date && x.service === '오후')) {
     fillForm({date:s.date, service:'오후', preacher:s.preacher});
     toast('저장했습니다 · 이어서 오후 말씀을 기록하세요');
-  } else fillForm();
+  } else if (idx >= 0) { fillForm(); toast('수정했습니다'); openDetail(s.id); }
+  else fillForm();
   window.scrollTo({top:0});
 });
 
+function removeSermon(id){
+  const i = db.sermons.findIndex(x => x.id === id); if (i < 0) return;
+  const [gone] = db.sermons.splice(i, 1); save(); renderStats();
+  if (form.elements.id.value === id) fillForm();
+  closeModal(); refreshCurrent();
+  toast(`「${titleOf(gone)}」을(를) 삭제했습니다`, () => { db.sermons.splice(i, 0, gone); save(); renderStats(); refreshCurrent(); toast('되돌렸습니다'); });
+}
+function shareText(s){
+  const i = dinfo(s.date), pts = (s.points||[]).filter(p => p.h || p.body);
+  return [`[${s.date.replace(/-/g,'.')} ${weekLabel(s.date)} ${s.service}] ${preacherName(s)}`,
+    `제목: ${titleOf(s)}`, passagesText(s) && `본문: ${passagesText(s)}`, s.theme && `주제: ${s.theme}`,
+    pts.length && pts.map((p,k) => `${k+1}. ${p.h}${p.body ? '\n   ' + p.body : ''}`).join('\n'),
+    s.summary && `요약: ${s.summary}`, s.application && `적용: ${s.application}`, s.practice && `실천: ${s.practice}`
+  ].filter(Boolean).join('\n');
+}
+async function shareSermon(id){
+  const s = db.sermons.find(x => x.id === id); if (!s) return;
+  const text = shareText(s);
+  if (navigator.share) { try { await navigator.share({text}); return; } catch(e) { if (e.name === 'AbortError') return; } }
+  try { await navigator.clipboard.writeText(text); toast('복사했습니다 · 카톡 등에 붙여넣으세요'); } catch(e) { toast('복사할 수 없는 환경입니다'); }
+}
+
 // ───────── 상세 보기 모달 ─────────
+// 안드로이드 뒤로가기 버튼으로 창이 닫히도록 방문 기록을 하나 쌓습니다.
+let skipPop = false;
+function closeModal(){
+  if (!$('#modal').classList.contains('on')) return;
+  $('#modal').classList.remove('on');
+  if (history.state?.modal) { skipPop = true; history.back(); }
+}
+window.addEventListener('popstate', e => {
+  if (skipPop) { skipPop = false; return; }
+  if ($('#modal').classList.contains('on')) { $('#modal').classList.remove('on'); return; }
+  showView(e.state?.view || 'write', true);
+});
 function openDetail(id){
   const s = db.sermons.find(x => x.id === id); if (!s) return;
   const i = dinfo(s.date);
@@ -568,7 +629,7 @@ function openDetail(id){
         </div>
         <button class="xbtn noprint" data-close aria-label="닫기">✕</button>
       </div>
-      <h2>${esc(s.title)}</h2>
+      <h2>${esc(titleOf(s))}</h2>
       ${s.theme ? `<p class="theme">주제 · ${esc(s.theme)}</p>` : ''}
       <div class="sec"><h4>본문</h4><div style="color:var(--accent);font-weight:700">${esc(passagesText(s)) || '-'}</div>
         <div class="hint">${[...new Set((s.passages||[]).map(p => BOOK[p.book] && `${BOOK[p.book].testament} · ${BOOK[p.book].cat}`).filter(Boolean))].join(' / ')}</div></div>
@@ -578,23 +639,22 @@ function openDetail(id){
       ${s.memo ? `<div class="sec"><h4>기도 제목 / 메모</h4><div class="pre">${esc(s.memo)}</div></div>` : ''}
       <div class="row end noprint" style="margin-top:16px">
         <button class="btn danger sm" data-del="${s.id}">삭제</button>
-        <button class="btn sm" onclick="window.print()">인쇄</button>
+        <button class="btn sm" data-share="${s.id}">공유·복사</button>
         <button class="btn primary sm" data-edit="${s.id}">수정</button>
       </div>
     </div>`;
   $('#modal').classList.add('on');
+  if (!history.state?.modal) history.pushState({modal:1, view:history.state?.view}, '');
 }
 $('#modal').addEventListener('click', e => {
-  if (e.target.id === 'modal' || e.target.closest('[data-close]')) return $('#modal').classList.remove('on');
+  if (e.target.id === 'modal' || e.target.closest('[data-close]')) return closeModal();
+  const sh = e.target.closest('[data-share]'); if (sh) return shareSermon(sh.dataset.share);
   const ed = e.target.closest('[data-edit]');
-  if (ed) { $('#modal').classList.remove('on'); fillForm(db.sermons.find(x => x.id === ed.dataset.edit)); showView('write'); }
+  if (ed) { closeModal(); fillForm(db.sermons.find(x => x.id === ed.dataset.edit)); showView('write'); }
   const del = e.target.closest('[data-del]');
-  if (del && confirm('이 설교 기록을 삭제할까요?')) {
-    db.sermons = db.sermons.filter(x => x.id !== del.dataset.del); save(); renderStats();
-    $('#modal').classList.remove('on'); refreshCurrent(); toast('삭제했습니다');
-  }
+  if (del) removeSermon(del.dataset.del);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#modal').classList.remove('on'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 document.addEventListener('click', e => { const it = e.target.closest('[data-open]'); if (it) openDetail(it.dataset.open); });
 function refreshCurrent(){ const v = $('#tabs .on')?.dataset.v; if (v && v !== 'write') showView(v); }
 
@@ -605,7 +665,7 @@ function itemHtml(s){
       <span class="pill ${s.service==='오전'?'am':'pm'}">${s.service}</span>
       <span class="pill">${esc(preacherName(s))}</span>
     </div>
-    <div class="t">${esc(s.title)}</div>
+    <div class="t">${esc(titleOf(s))}</div>
     <div class="p">${esc(passagesText(s))}</div>
     ${s.theme ? `<div class="s">${esc(s.theme)}</div>` : ''}
   </div>`;
@@ -645,7 +705,7 @@ function renderWeekly(){
       if (!ss.length) return `<div class="slot"><span class="hint">${svc} 기록 없음</span></div>`;
       return ss.map(s => `<div class="slot ${svc==='오전'?'am':'pm'} item" data-open="${s.id}" style="cursor:pointer">
         <div class="hint">${svc} · ${esc(preacherName(s))}${s.date !== k ? ' · ' + s.date.slice(5).replace('-','.') : ''}</div>
-        <b>${esc(s.title)}</b>
+        <b>${esc(titleOf(s))}</b>
         <div class="p" style="font-size:13px">${esc(passagesText(s))}</div>
         ${s.theme ? `<div>${esc(s.theme)}</div>` : ''}
         ${s.application || s.practice ? `<div class="apply">✔ ${esc(s.practice || s.application)}</div>` : ''}
@@ -659,12 +719,14 @@ function renderWeekly(){
   }).join('');
 }
 $('#wYear').onchange = $('#wMonth').onchange = renderWeekly;
-$('#weekList').addEventListener('change', e => {
-  const k = e.target.dataset.week; if (!k) return;
-  const v = e.target.value.trim();
+function saveWeekNote(el){
+  const k = el.dataset.week, v = el.value.trim();
   if (v) db.weekNotes[k] = v; else delete db.weekNotes[k];
-  save(); toast('주간 메모 저장');
-});
+  save();
+}
+let weekTimer;
+$('#weekList').addEventListener('input', e => { if (!e.target.dataset.week) return; clearTimeout(weekTimer); weekTimer = setTimeout(() => saveWeekNote(e.target), 500); });
+$('#weekList').addEventListener('change', e => { if (!e.target.dataset.week) return; clearTimeout(weekTimer); saveWeekNote(e.target); toast('주간 메모를 저장했습니다'); });
 
 // ───────── 검색 ─────────
 function fillBookFilter(){
@@ -749,14 +811,19 @@ function renderBookDetail(){
 
 // ───────── 행사 소감 ─────────
 const ef = $('#eventForm');
-function resetEvent(ev){ ef.reset(); ef.elements.id.value = ev?.id || ''; ef.elements.date.value = ev?.date || today(); ef.elements.name.value = ev?.name || ''; ef.elements.reflection.value = ev?.reflection || ''; }
+function resetEvent(ev){
+  ef.reset(); ef.elements.id.value = ev?.id || ''; ef.elements.date.value = ev?.date || today(); ef.elements.name.value = ev?.name || ''; ef.elements.reflection.value = ev?.reflection || '';
+  $('#eventTitle').textContent = ev?.id ? '행사 소감 수정' : '행사 소감 기록';
+  $('#eventSave').textContent = ev?.id ? '수정 완료' : '저장';
+  $('#eventReset').textContent = ev?.id ? '수정 취소' : '새로 쓰기';
+}
 $('#eventReset').onclick = () => resetEvent();
 ef.addEventListener('submit', e => {
   e.preventDefault();
   const ev = {id: ef.elements.id.value || uid(), date: ef.elements.date.value, name: ef.elements.name.value.trim(), reflection: ef.elements.reflection.value.trim()};
   const i = db.events.findIndex(x => x.id === ev.id);
   if (i >= 0) db.events[i] = ev; else db.events.push(ev);
-  save(); resetEvent(); renderEvents(); toast('저장했습니다');
+  save(); resetEvent(); renderEvents(); toast(i >= 0 ? '수정했습니다' : '저장했습니다');
 });
 function renderEvents(){
   const list = [...db.events].sort((a,b) => b.date.localeCompare(a.date));
@@ -771,7 +838,12 @@ function renderEvents(){
 $('#eventList').addEventListener('click', e => {
   const ed = e.target.closest('[data-eedit]'), del = e.target.closest('[data-edel]');
   if (ed) { resetEvent(db.events.find(x => x.id === ed.dataset.eedit)); window.scrollTo({top:0, behavior:'smooth'}); }
-  if (del && confirm('이 행사 소감을 삭제할까요?')) { db.events = db.events.filter(x => x.id !== del.dataset.edel); save(); renderEvents(); }
+  if (del) {
+    const i = db.events.findIndex(x => x.id === del.dataset.edel); if (i < 0) return;
+    const [gone] = db.events.splice(i, 1); save(); renderEvents();
+    if (ef.elements.id.value === gone.id) resetEvent();
+    toast(`「${gone.name}」 소감을 삭제했습니다`, () => { db.events.splice(i, 0, gone); save(); renderEvents(); toast('되돌렸습니다'); });
+  }
 });
 
 // ───────── 백업 · 내보내기 ─────────
@@ -864,7 +936,7 @@ yearOptions($('#fYear')); monthOptions($('#fMonth')); fillBookFilter();
   const real = d && [d.title, d.theme, d.summary, d.application, d.practice, d.memo, ...(d.points||[]).flatMap(p => [p.h, p.body])].some(Boolean);
   if (real) { fillForm(d); toast('작성 중이던 내용을 불러왔습니다'); } else fillForm();
 })();
-renderStats(); updateBackupNote();
+renderStats(); updateBackupNote(); resetEvent();
 if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
