@@ -14,7 +14,7 @@
 <title>설교 노트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f6f4ef; --surface:#ffffff; --surface-2:#f0ede6; --line:#e2ddd2;
@@ -23,46 +23,51 @@
   --danger:#a83a32; --ok:#2e7d4f;
   --c-law:#8b5e34; --c-hist:#5d7a3a; --c-poet:#7a4f8a; --c-proph:#a34a3c;
   --c-gosp:#2f6f8f; --c-acts:#3b7f7a; --c-epis:#4a5a9a; --c-rev:#6b6b6b;
-  --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.04);
+  --radius:14px; --shadow:0 1px 2px rgba(60,40,20,.05),0 6px 18px rgba(60,40,20,.06);
+  --on-accent:#fff; --hero-a:#6b4024; --hero-b:#9a6a3f; --gold:#e9c98f;
+  --gothic:"Noto Sans KR","Malgun Gothic",system-ui,sans-serif; --myeongjo:"Noto Serif KR","Batang",serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#191816; --surface:#22201d; --surface-2:#2b2925; --line:#3a3731;
     --text:#ece8df; --muted:#a59f92; --accent:#d9a77c; --accent-soft:#3a2d22;
     --am:#7fbcdb; --am-soft:#1f3440; --pm:#e0ad6a; --pm-soft:#3b2e1d;
-    --danger:#e2766c; --ok:#6cc495; --shadow:none;
+    --danger:#e2766c; --ok:#6cc495; --shadow:none; --on-accent:#1b1a17; --hero-a:#3a2616; --hero-b:#5b3d24; --gold:#e0b877;
   }
 }
 :root[data-theme="dark"]{
   --bg:#191816; --surface:#22201d; --surface-2:#2b2925; --line:#3a3731;
   --text:#ece8df; --muted:#a59f92; --accent:#d9a77c; --accent-soft:#3a2d22;
   --am:#7fbcdb; --am-soft:#1f3440; --pm:#e0ad6a; --pm-soft:#3b2e1d;
-  --danger:#e2766c; --ok:#6cc495; --shadow:none;
+  --danger:#e2766c; --ok:#6cc495; --shadow:none; --on-accent:#1b1a17; --hero-a:#3a2616; --hero-b:#5b3d24; --gold:#e0b877;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--text);font:15px/1.6 "Noto Sans KR",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font:15px/1.6 var(--gothic);-webkit-text-size-adjust:100%}
 .wrap{max-width:1080px;margin:0 auto;padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) 80px max(16px,env(safe-area-inset-left,0px))}
-header.top{padding:24px 0 8px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
-header.top h1{font:700 26px/1.2 "Noto Serif KR",serif;margin:0;color:var(--accent)}
-header.top p{margin:4px 0 0;color:var(--muted);font-size:13px}
+header.top{position:relative;overflow:hidden;margin:14px 0 6px;padding:22px 20px 18px;border-radius:18px;color:#fff;background:linear-gradient(135deg,var(--hero-a),var(--hero-b));display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;box-shadow:var(--shadow)}
+header.top .deco{position:absolute;right:-18px;top:-22px;width:190px;height:190px;opacity:.16;pointer-events:none}
+header.top>*{position:relative}
+header.top h1{font:700 27px/1.2 var(--gothic);letter-spacing:-.01em;margin:0;color:#fff}
+header.top p{margin:6px 0 0;color:#f1e3d0;font-size:13px}
 .stats{display:flex;gap:8px;flex-wrap:wrap}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 12px;text-align:center;min-width:76px}
-.stat b{display:block;font-size:18px}
-.stat span{font-size:11px;color:var(--muted)}
+.stat{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:6px 12px;text-align:center;min-width:76px}
+.stat b{display:block;font-size:19px;color:#fff}
+.stat span{font-size:11px;color:#f1e3d0}
 nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:4px;overflow-x:auto;padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:18px;scrollbar-width:none}
-nav.tabs button{flex:0 0 auto;border:0;background:transparent;color:var(--muted);font:500 14px "Noto Sans KR",sans-serif;padding:8px 14px;border-radius:999px;cursor:pointer}
-nav.tabs button.on{background:var(--accent);color:#fff}
+nav.tabs button{flex:0 0 auto;border:0;background:transparent;color:var(--muted);font:500 14px var(--gothic);padding:8px 14px;border-radius:999px;cursor:pointer}
+nav.tabs button.on{background:var(--accent);color:var(--on-accent);font-weight:700}
 :root[data-theme="dark"] nav.tabs button.on{color:#1b1a17}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) nav.tabs button.on{color:#1b1a17}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 section.view{display:none}
 section.view.on{display:block}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
-.card h2{font:700 17px "Noto Serif KR",serif;margin:0 0 12px}
+.card h2{font:700 17px var(--gothic);margin:0 0 14px;display:flex;align-items:center;gap:8px}
+.card h2::before{content:"";width:5px;height:18px;border-radius:3px;background:linear-gradient(var(--accent),var(--gold))}
 .card h3{font-size:14px;margin:0 0 8px;color:var(--muted);font-weight:500}
-label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px;font-weight:500}
-input,select,textarea{width:100%;font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+label{display:block;font-size:12px;color:var(--muted);margin:0 0 5px;font-weight:700;letter-spacing:.02em}
+input,select,textarea{width:100%;font:inherit;font-family:var(--myeongjo);color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
 textarea{resize:vertical;min-height:70px}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
 .grid{display:grid;gap:12px}
@@ -75,19 +80,35 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
 .pill.am{background:var(--am-soft);color:var(--am)}
 .pill.pm{background:var(--pm-soft);color:var(--pm)}
-.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg label{flex:1;margin:0;text-align:center;cursor:pointer;padding:9px 4px;font-size:14px;color:var(--text);border-right:1px solid var(--line)}
-.seg label:last-child{border-right:0}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:3px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.seg label{margin:0;text-align:center;cursor:pointer;padding:6px 2px;font-size:13px;font-weight:500;letter-spacing:0;color:var(--muted);border-radius:7px;white-space:nowrap}
 .seg input{display:none}
-.seg input:checked+span{font-weight:700;color:var(--accent)}
-.seg label:has(input:checked){background:var(--accent-soft)}
-.passage{display:grid;grid-template-columns:minmax(0,2.2fr) repeat(4,minmax(0,1fr)) auto;gap:6px;align-items:end;margin-bottom:8px}
-.passage .x{border:0;background:transparent;color:var(--danger);font-size:20px;cursor:pointer;padding:6px}
-@media (max-width:620px){.passage{grid-template-columns:repeat(4,minmax(0,1fr)) auto}.passage .bk{grid-column:1/-1}}
+.seg label:has(input:checked){background:var(--accent);color:var(--on-accent);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.seg input:checked+span{color:inherit}
+.seg.sm label{padding:5px 2px;font-size:12.5px}
+.form-top{display:grid;gap:14px}
+.form-top .r2{display:flex;flex-wrap:wrap;gap:14px}
+.form-top .r2>div{min-width:0}
+.form-top .svc{flex:0 0 118px}
+.form-top .prc{flex:1 1 250px}
+.date-wrap input[type=date]{font-size:16px;min-height:44px}
+.dateline{display:inline-block;margin-top:8px;padding:3px 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font:700 13px var(--gothic);white-space:nowrap}
+.passage{position:relative;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:linear-gradient(var(--surface),var(--surface-2))}
+.passage .top{display:flex;gap:8px;align-items:center}
+.passage .top select{flex:1;min-width:0;font-weight:600}
+.passage .x{flex:0 0 auto;width:32px;height:32px;border:0;border-radius:50%;background:var(--surface-2);color:var(--danger);font-size:18px;line-height:1;cursor:pointer}
+.passage .ref{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:10px}
+.passage .grp{display:flex;align-items:center;gap:6px}
+.passage .grp>b{font:700 11px var(--gothic);color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.passage .num{display:flex;align-items:center;gap:3px;font:500 13px var(--gothic);color:var(--muted)}
+.passage .num input{width:58px;text-align:center;padding:7px 4px;font-weight:600}
+.passage .tilde{font:700 16px var(--gothic);color:var(--accent)}
+.passage .pv{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);font:600 15px var(--myeongjo);color:var(--accent);min-height:1.6em}
+.passage .pv:empty::before{content:"본문이 여기에 표시됩니다";color:var(--muted);font-weight:400;font-size:13px}
 .point{border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin-bottom:12px}
 .point input{font-weight:500;margin-bottom:6px}
-.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:500 14px "Noto Sans KR",sans-serif;padding:9px 16px;border-radius:8px;cursor:pointer}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:500 14px var(--gothic);padding:9px 16px;border-radius:8px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
 :root[data-theme="dark"] .btn.primary{color:#1b1a17}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:#1b1a17}}
 .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
@@ -104,7 +125,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .item .p{font-size:13px;color:var(--accent);font-weight:500}
 .empty{text-align:center;color:var(--muted);padding:32px 12px;font-size:14px}
 .week{margin-bottom:22px}
-.week>h3{font:700 15px "Noto Serif KR",serif;margin:0 0 8px;color:var(--text)}
+.week>h3{font:700 15px var(--gothic);margin:0 0 8px;color:var(--text)}
 .week .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media (max-width:620px){.week .pair{grid-template-columns:1fr}}
 .week .slot{border-radius:10px;padding:12px 14px;border:1px dashed var(--line);font-size:13px}
@@ -147,11 +168,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
   .modal .card{border:0;box-shadow:none}
   .modal .noprint{display:none!important}
 }
+.item .t,.item .s,.item .p,.pre,.detail h2,.detail .theme,.detail .pt,.detail .box,.week .slot,.week .apply,.week textarea{font-family:var(--myeongjo)}
+.item .t,.detail h2{font-weight:700}
+.week .slot .hint,.item .datebadge,.detail .datebadge,.detail .hint,.detail .sec h4{font-family:var(--gothic)}
+.point input{font-weight:600}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
+    <svg class="deco" viewBox="0 0 100 100" fill="#fff" aria-hidden="true"><rect x="44" y="6" width="12" height="62" rx="2"/><rect x="26" y="22" width="48" height="12" rx="2"/><path d="M6 78c14-6 30-6 44 2 14-8 30-8 44-2v14c-14-6-30-6-44 2-14-8-30-8-44-2z"/></svg>
     <div>
       <h1>설교 노트</h1>
       <p>주일 오전·오후 말씀 요약 · 실천 적용 · 성경 66권 색인 (2006년~)</p>
@@ -174,28 +200,30 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
       <input type="hidden" name="id">
       <div class="card">
         <h2 id="formTitle">새 설교 기록</h2>
-        <div class="grid g3">
-          <div>
+        <div class="form-top">
+          <div class="date-wrap">
             <label>날짜</label>
             <input type="date" name="date" min="2006-01-01" required>
-            <div class="datebadge" id="dateInfo"></div>
+            <div id="dateInfo"></div>
           </div>
-          <div>
-            <label>예배 구분</label>
-            <div class="seg">
-              <label><input type="radio" name="service" value="오전" checked><span>오전</span></label>
-              <label><input type="radio" name="service" value="오후"><span>오후</span></label>
+          <div class="r2">
+            <div class="svc">
+              <label>예배 구분</label>
+              <div class="seg sm">
+                <label><input type="radio" name="service" value="오전" checked><span>오전</span></label>
+                <label><input type="radio" name="service" value="오후"><span>오후</span></label>
+              </div>
             </div>
-          </div>
-          <div>
-            <label>말씀 인도자</label>
-            <div class="seg">
-              <label><input type="radio" name="preacher" value="강" checked><span>강</span></label>
-              <label><input type="radio" name="preacher" value="이"><span>이</span></label>
-              <label><input type="radio" name="preacher" value="김"><span>김</span></label>
-              <label><input type="radio" name="preacher" value="기타"><span>그 외</span></label>
+            <div class="prc">
+              <label>말씀 인도자</label>
+              <div class="seg sm">
+                <label><input type="radio" name="preacher" value="강" checked><span>강현복</span></label>
+                <label><input type="radio" name="preacher" value="이"><span>이대영</span></label>
+                <label><input type="radio" name="preacher" value="김"><span>김광채</span></label>
+                <label><input type="radio" name="preacher" value="기타"><span>그 외</span></label>
+              </div>
+              <input name="preacherOther" placeholder="그 외 인도자 이름" style="margin-top:6px;display:none">
             </div>
-            <input name="preacherOther" placeholder="그 외 인도자 이름" style="margin-top:6px;display:none">
           </div>
         </div>
       </div>
@@ -204,7 +232,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
         <h2>본문 성경구절</h2>
         <div id="passages"></div>
         <button type="button" class="btn sm" id="addPassage">+ 본문 추가</button>
-        <span class="hint">&nbsp; 끝 장을 비우면 같은 장으로 봅니다. 절을 비우면 장 단위로 기록됩니다.</span>
+        <div class="hint" style="margin-top:8px">끝 장·절은 비워 두면 시작 장으로 봅니다. 절을 비우면 장 전체로 기록됩니다.</div>
       </div>
 
       <div class="card">
@@ -253,7 +281,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
         <div><label>연도</label><select id="fYear"><option value="">전체</option></select></div>
         <div><label>월</label><select id="fMonth"><option value="">전체</option></select></div>
         <div><label>예배</label><select id="fService"><option value="">전체</option><option>오전</option><option>오후</option></select></div>
-        <div><label>인도자</label><select id="fPreacher"><option value="">전체</option><option>강</option><option>이</option><option>김</option><option value="기타">그 외</option></select></div>
+        <div><label>인도자</label><select id="fPreacher"><option value="">전체</option><option value="강">강현복</option><option value="이">이대영</option><option value="김">김광채</option><option value="기타">그 외</option></select></div>
         <div><label>성경 분류</label><select id="fCat"><option value="">전체</option></select></div>
         <div><label>성경 권</label><select id="fBook"><option value="">전체</option></select></div>
         <div><label>정렬</label><select id="fSort"><option value="desc">최신순</option><option value="asc">오래된순</option><option value="bible">성경 순서</option></select></div>
@@ -380,7 +408,8 @@ function fmtPassage(p){
   return v2 && v2 != v1 ? `${p.book} ${c1}:${v1}~${v2}` : `${p.book} ${c1}:${v1}`;
 }
 const passagesText = s => (s.passages || []).map(fmtPassage).filter(Boolean).join(', ');
-const preacherName = s => s.preacher === '기타' ? (s.preacherOther || '그 외') : s.preacher;
+const PREACHER = {'강':'강현복','이':'이대영','김':'김광채'};
+const preacherName = s => s.preacher === '기타' ? (s.preacherOther || '그 외') : (PREACHER[s.preacher] || s.preacher);
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 1800); }
 function today(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function lastSunday(){ const d = new Date(); d.setDate(d.getDate() - d.getDay()); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -407,17 +436,27 @@ function passageRow(p={}){
   const div = document.createElement('div');
   div.className = 'passage';
   div.innerHTML = `
-    <div class="bk"><label>성경</label><select data-k="book">${bookOptions}</select></div>
-    <div><label>장</label><input data-k="ch1" type="number" min="1" inputmode="numeric"></div>
-    <div><label>절</label><input data-k="v1" type="number" min="1" inputmode="numeric"></div>
-    <div><label>~ 장</label><input data-k="ch2" type="number" min="1" inputmode="numeric"></div>
-    <div><label>~ 절</label><input data-k="v2" type="number" min="1" inputmode="numeric"></div>
-    <button type="button" class="x" title="삭제">×</button>`;
+    <div class="top"><select data-k="book" aria-label="성경">${bookOptions}</select><button type="button" class="x" title="삭제">×</button></div>
+    <div class="ref">
+      <div class="grp"><b>시작</b>
+        <span class="num"><input data-k="ch1" type="number" min="1" inputmode="numeric">장</span>
+        <span class="num"><input data-k="v1" type="number" min="1" inputmode="numeric">절</span></div>
+      <span class="tilde">~</span>
+      <div class="grp"><b>끝</b>
+        <span class="num"><input data-k="ch2" type="number" min="1" inputmode="numeric">장</span>
+        <span class="num"><input data-k="v2" type="number" min="1" inputmode="numeric">절</span></div>
+    </div>
+    <div class="pv"></div>`;
   $$('[data-k]', div).forEach(el => el.value = p[el.dataset.k] ?? '');
   $('[data-k=book]', div).addEventListener('change', e => {
     const b = BOOK[e.target.value];
     $$('input[data-k^=ch]', div).forEach(i => i.max = b ? b.chapters : '');
   });
+  const pv = () => {
+    const q = {}; $$('[data-k]', div).forEach(el => { const v = el.value.trim(); if (v) q[el.dataset.k] = el.dataset.k === 'book' ? v : +v; });
+    $('.pv', div).textContent = fmtPassage(q);
+  };
+  div.addEventListener('input', pv); div.addEventListener('change', pv); pv();
   $('.x', div).onclick = () => { div.remove(); if (!$$('#passages .passage').length) $('#passages').append(passageRow()); };
   return div;
 }
@@ -435,7 +474,7 @@ function updateDateInfo(){
   const v = form.elements.date.value, el = $('#dateInfo');
   if (!v) { el.innerHTML = ''; return; }
   const i = dinfo(v);
-  el.innerHTML = `<span class="pill">${i.y}년</span><span class="pill">${i.m}월</span><span class="pill">${i.nthName} 주</span><span class="pill">${i.wdName}요일</span>`;
+  el.innerHTML = `<span class="dateline">${i.y}년 ${i.m}월 ${i.nthName} 주 ${i.wdName}요일</span>`;
 }
 form.elements.date.addEventListener('change', updateDateInfo);
 form.addEventListener('change', e => {
@@ -550,7 +589,7 @@ function renderStats(){
   $('#stats').innerHTML = `
     <div class="stat"><b>${db.sermons.length}</b><span>설교 기록</span></div>
     <div class="stat"><b>${years.size}</b><span>기록 연도</span></div>
-    <div class="stat"><b>${books.size}<small style="font-size:12px;color:var(--muted)">/66</small></b><span>다룬 성경</span></div>`;
+    <div class="stat"><b>${books.size}<small style="font-size:12px;opacity:.7">/66</small></b><span>다룬 성경</span></div>`;
 }
 function yearOptions(sel, withAll=true){
   const cur = new Date().getFullYear();
