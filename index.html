@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#7a4b2a">
+<meta name="theme-color" content="#14284a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="설교 노트">
@@ -17,45 +17,47 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f4ef; --surface:#ffffff; --surface-2:#f0ede6; --line:#e2ddd2;
-  --text:#24221d; --muted:#6d685d; --accent:#7a4b2a; --accent-soft:#f3e7dc;
+  --bg:#f5f3ee; --surface:#ffffff; --surface-2:#f1eee8; --line:#d6d0c4;
+  --text:#16140f; --muted:#4f4a41; --ph:#8c8579; --accent:#7a4b2a; --accent-soft:#f3e7dc;
   --am:#2f6f8f; --am-soft:#e3f0f6; --pm:#8a5a1f; --pm-soft:#f7ecdb;
   --danger:#a83a32; --ok:#2e7d4f;
   --c-law:#8b5e34; --c-hist:#5d7a3a; --c-poet:#7a4f8a; --c-proph:#a34a3c;
   --c-gosp:#2f6f8f; --c-acts:#3b7f7a; --c-epis:#4a5a9a; --c-rev:#6b6b6b;
   --radius:14px; --shadow:0 1px 2px rgba(60,40,20,.05),0 6px 18px rgba(60,40,20,.06);
-  --on-accent:#fff; --hero-a:#6b4024; --hero-b:#9a6a3f; --gold:#e9c98f;
+  --on-accent:#fff; --hero-a:#14284a; --hero-b:#2c5282; --gold:#e3c27e;
   --gothic:"Noto Sans KR","Malgun Gothic",system-ui,sans-serif; --myeongjo:"Noto Serif KR","Batang",serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#191816; --surface:#22201d; --surface-2:#2b2925; --line:#3a3731;
-    --text:#ece8df; --muted:#a59f92; --accent:#d9a77c; --accent-soft:#3a2d22;
+    --bg:#191816; --surface:#22201d; --surface-2:#2b2925; --line:#4a463f;
+    --text:#f5f1e8; --muted:#c3bcae; --ph:#8f897d; --accent:#d9a77c; --accent-soft:#3a2d22;
     --am:#7fbcdb; --am-soft:#1f3440; --pm:#e0ad6a; --pm-soft:#3b2e1d;
-    --danger:#e2766c; --ok:#6cc495; --shadow:none; --on-accent:#1b1a17; --hero-a:#3a2616; --hero-b:#5b3d24; --gold:#e0b877;
+    --danger:#e2766c; --ok:#6cc495; --shadow:none; --on-accent:#1b1a17; --hero-a:#0e1b33; --hero-b:#1f3b63; --gold:#e0b877;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#191816; --surface:#22201d; --surface-2:#2b2925; --line:#3a3731;
-  --text:#ece8df; --muted:#a59f92; --accent:#d9a77c; --accent-soft:#3a2d22;
+  --bg:#191816; --surface:#22201d; --surface-2:#2b2925; --line:#4a463f;
+  --text:#f5f1e8; --muted:#c3bcae; --ph:#8f897d; --accent:#d9a77c; --accent-soft:#3a2d22;
   --am:#7fbcdb; --am-soft:#1f3440; --pm:#e0ad6a; --pm-soft:#3b2e1d;
-  --danger:#e2766c; --ok:#6cc495; --shadow:none; --on-accent:#1b1a17; --hero-a:#3a2616; --hero-b:#5b3d24; --gold:#e0b877;
+  --danger:#e2766c; --ok:#6cc495; --shadow:none; --on-accent:#1b1a17; --hero-a:#0e1b33; --hero-b:#1f3b63; --gold:#e0b877;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--text);font:15px/1.6 var(--gothic);-webkit-text-size-adjust:100%}
 .wrap{max-width:1080px;margin:0 auto;padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) 80px max(16px,env(safe-area-inset-left,0px))}
 header.top{position:relative;overflow:hidden;margin:14px 0 6px;padding:22px 20px 18px;border-radius:18px;color:#fff;background:linear-gradient(135deg,var(--hero-a),var(--hero-b));display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;box-shadow:var(--shadow)}
-header.top .deco{position:absolute;right:-18px;top:-22px;width:190px;height:190px;opacity:.16;pointer-events:none}
+header.top .deco{position:absolute;right:-18px;top:-22px;width:190px;height:190px;opacity:.42;pointer-events:none}
 header.top>*{position:relative}
 header.top h1{font:700 27px/1.2 var(--gothic);letter-spacing:-.01em;margin:0;color:#fff}
-header.top p{margin:6px 0 0;color:#f1e3d0;font-size:13px}
+header.top p{margin:6px 0 0;color:#dfe8f5;font-size:13.5px}
+header.top h1{color:#fff}
+header.top .deco{fill:var(--gold)}
 .stats{display:flex;gap:8px;flex-wrap:wrap}
 .stat{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:6px 12px;text-align:center;min-width:76px}
 .stat b{display:block;font-size:19px;color:#fff}
-.stat span{font-size:11px;color:#f1e3d0}
+.stat span{font-size:11.5px;color:#dfe8f5}
 nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:4px;overflow-x:auto;padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:18px;scrollbar-width:none}
-nav.tabs button{flex:0 0 auto;border:0;background:transparent;color:var(--muted);font:500 14px var(--gothic);padding:8px 14px;border-radius:999px;cursor:pointer}
+nav.tabs button{flex:0 0 auto;border:0;background:transparent;color:var(--muted);font:600 14.5px var(--gothic);padding:8px 14px;border-radius:999px;cursor:pointer}
 nav.tabs button.on{background:var(--accent);color:var(--on-accent);font-weight:700}
 :root[data-theme="dark"] nav.tabs button.on{color:#1b1a17}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) nav.tabs button.on{color:#1b1a17}}
@@ -65,9 +67,10 @@ section.view.on{display:block}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
 .card h2{font:700 17px var(--gothic);margin:0 0 14px;display:flex;align-items:center;gap:8px}
 .card h2::before{content:"";width:5px;height:18px;border-radius:3px;background:linear-gradient(var(--accent),var(--gold))}
-.card h3{font-size:14px;margin:0 0 8px;color:var(--muted);font-weight:500}
-label{display:block;font-size:12px;color:var(--muted);margin:0 0 5px;font-weight:700;letter-spacing:.02em}
-input,select,textarea{width:100%;font:inherit;font-family:var(--myeongjo);color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+.card h3{font-size:14px;margin:0 0 8px;color:var(--text);font-weight:700}
+label{display:block;font-size:13px;color:var(--text);margin:0 0 5px;font-weight:700;letter-spacing:.02em}
+input,select,textarea{width:100%;font:inherit;font-family:var(--myeongjo);font-size:16px;font-weight:500;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+::placeholder{color:var(--ph);opacity:1;font-weight:400}
 textarea{resize:vertical;min-height:70px}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
 .grid{display:grid;gap:12px}
@@ -77,15 +80,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 @media (max-width:720px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:460px){.g2{grid-template-columns:1fr}}
 .datebadge{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:500;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
 .pill.am{background:var(--am-soft);color:var(--am)}
 .pill.pm{background:var(--pm-soft);color:var(--pm)}
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:3px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
-.seg label{margin:0;text-align:center;cursor:pointer;padding:6px 2px;font-size:13px;font-weight:500;letter-spacing:0;color:var(--muted);border-radius:7px;white-space:nowrap}
+.seg label{margin:0;text-align:center;cursor:pointer;padding:6px 2px;font-size:14px;font-weight:600;letter-spacing:0;color:var(--text);border-radius:7px;white-space:nowrap}
 .seg input{display:none}
 .seg label:has(input:checked){background:var(--accent);color:var(--on-accent);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .seg input:checked+span{color:inherit}
-.seg.sm label{padding:5px 2px;font-size:12.5px}
+.seg.sm label{padding:7px 2px;font-size:14px}
 .form-top{display:grid;gap:14px}
 .form-top .r2{display:flex;flex-wrap:wrap;gap:14px}
 .form-top .r2>div{min-width:0}
@@ -93,18 +96,18 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .form-top .prc{flex:1 1 250px}
 .date-wrap input[type=date]{font-size:16px;min-height:44px}
 .dateline{display:inline-block;margin-top:8px;padding:3px 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font:700 13px var(--gothic);white-space:nowrap}
-.passage{position:relative;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:linear-gradient(var(--surface),var(--surface-2))}
+.passage{position:relative;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--surface)}
 .passage .top{display:flex;gap:8px;align-items:center}
 .passage .top select{flex:1;min-width:0;font-weight:600}
 .passage .x{flex:0 0 auto;width:32px;height:32px;border:0;border-radius:50%;background:var(--surface-2);color:var(--danger);font-size:18px;line-height:1;cursor:pointer}
-.passage .ref{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:10px}
+.passage .ref{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin-top:10px}
 .passage .grp{display:flex;align-items:center;gap:6px}
-.passage .grp>b{font:700 11px var(--gothic);color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
-.passage .num{display:flex;align-items:center;gap:3px;font:500 13px var(--gothic);color:var(--muted)}
-.passage .num input{width:58px;text-align:center;padding:7px 4px;font-weight:600}
+.passage .grp>b{min-width:44px;text-align:center;font:700 12px var(--gothic);color:var(--text);background:transparent;border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.passage .num{display:flex;align-items:center;gap:4px;font:700 14px var(--gothic);color:var(--text)}
+.passage .num input{width:60px;text-align:center;padding:8px 4px;font-weight:700}
 .passage .tilde{font:700 16px var(--gothic);color:var(--accent)}
-.passage .pv{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);font:600 15px var(--myeongjo);color:var(--accent);min-height:1.6em}
-.passage .pv:empty::before{content:"본문이 여기에 표시됩니다";color:var(--muted);font-weight:400;font-size:13px}
+.passage .pv{margin-top:12px;padding:10px 12px;border-radius:9px;background:var(--accent-soft);font:700 16px var(--myeongjo);color:var(--accent);min-height:1.6em}
+.passage .pv:empty::before{content:"본문이 여기에 표시됩니다";color:var(--muted);font-weight:500;font-size:14px}
 .point{border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin-bottom:12px}
 .point input{font-weight:500;margin-bottom:6px}
 .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:500 14px var(--gothic);padding:9px 16px;border-radius:8px;cursor:pointer}
@@ -116,19 +119,19 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .btn.sm{padding:5px 10px;font-size:13px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row.end{justify-content:flex-end}
-.hint{font-size:12px;color:var(--muted)}
+.hint{font-size:13px;color:var(--muted)}
 .list{display:grid;gap:10px}
 .item{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;display:block}
 .item:hover{border-color:var(--accent)}
 .item .t{font-weight:700;font-size:15px;margin:4px 0 2px}
-.item .s{font-size:13px;color:var(--muted)}
-.item .p{font-size:13px;color:var(--accent);font-weight:500}
+.item .s{font-size:14px;color:var(--muted)}
+.item .p{font-size:14px;color:var(--accent);font-weight:700}
 .empty{text-align:center;color:var(--muted);padding:32px 12px;font-size:14px}
 .week{margin-bottom:22px}
 .week>h3{font:700 15px var(--gothic);margin:0 0 8px;color:var(--text)}
 .week .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media (max-width:620px){.week .pair{grid-template-columns:1fr}}
-.week .slot{border-radius:10px;padding:12px 14px;border:1px dashed var(--line);font-size:13px}
+.week .slot{border-radius:10px;padding:12px 14px;border:1px dashed var(--line);font-size:14px}
 .week .slot.am{background:var(--am-soft);border-style:solid;border-color:transparent}
 .week .slot.pm{background:var(--pm-soft);border-style:solid;border-color:transparent}
 .week .slot b{font-size:14px}
@@ -172,7 +175,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .item .t,.detail h2{font-weight:700}
 .week .slot .hint,.item .datebadge,.detail .datebadge,.detail .hint,.detail .sec h4{font-family:var(--gothic)}
 .point input{font-weight:600}
-.savebar{position:sticky;bottom:0;z-index:4;margin:0 calc(-1*max(16px,env(safe-area-inset-right,0px))) 0 calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(to bottom,transparent,var(--bg) 35%);}
+.savebar{position:sticky;bottom:0;z-index:4;margin:0 calc(-1*max(16px,env(safe-area-inset-right,0px))) 0 calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:var(--bg);border-top:1px solid var(--line);}
 .savebar .btn.primary{min-width:120px;justify-content:center;padding:11px 22px;box-shadow:0 4px 12px rgba(0,0,0,.18)}
 .detail .head{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
 .detail .head .datebadge{flex:1;min-width:0;margin:0}
@@ -185,7 +188,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 <body>
 <div class="wrap">
   <header class="top">
-    <svg class="deco" viewBox="0 0 100 100" fill="#fff" aria-hidden="true"><rect x="44" y="6" width="12" height="62" rx="2"/><rect x="26" y="22" width="48" height="12" rx="2"/><path d="M6 78c14-6 30-6 44 2 14-8 30-8 44-2v14c-14-6-30-6-44 2-14-8-30-8-44-2z"/></svg>
+    <svg class="deco" viewBox="0 0 100 100" aria-hidden="true"><rect x="44" y="6" width="12" height="62" rx="2"/><rect x="26" y="22" width="48" height="12" rx="2"/><path d="M6 78c14-6 30-6 44 2 14-8 30-8 44-2v14c-14-6-30-6-44 2-14-8-30-8-44-2z"/></svg>
     <div>
       <h1>설교 노트</h1>
       <p>주일 오전·오후 말씀 요약 · 실천 적용 · 성경 66권 색인 (2006년~)</p>
@@ -456,8 +459,7 @@ function passageRow(p={}){
       <div class="grp"><b>시작</b>
         <span class="num"><input data-k="ch1" type="number" min="1" inputmode="numeric">장</span>
         <span class="num"><input data-k="v1" type="number" min="1" inputmode="numeric">절</span></div>
-      <span class="tilde">~</span>
-      <div class="grp"><b>끝</b>
+      <div class="grp"><b>~ 끝</b>
         <span class="num"><input data-k="ch2" type="number" min="1" inputmode="numeric">장</span>
         <span class="num"><input data-k="v2" type="number" min="1" inputmode="numeric">절</span></div>
     </div>
