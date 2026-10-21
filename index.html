@@ -172,6 +172,14 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .item .t,.detail h2{font-weight:700}
 .week .slot .hint,.item .datebadge,.detail .datebadge,.detail .hint,.detail .sec h4{font-family:var(--gothic)}
 .point input{font-weight:600}
+.savebar{position:sticky;bottom:0;z-index:4;margin:0 calc(-1*max(16px,env(safe-area-inset-right,0px))) 0 calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(to bottom,transparent,var(--bg) 35%);}
+.savebar .btn.primary{min-width:120px;justify-content:center;padding:11px 22px;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.detail .head{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.detail .head .datebadge{flex:1;min-width:0;margin:0}
+.detail .xbtn{flex:0 0 auto;width:32px;height:32px;border-radius:50%;border:0;background:var(--surface-2);color:var(--muted);font-size:16px;cursor:pointer}
+.detail h2::before{display:none}
+.notice a{color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline}
+#restoreBox{display:none;margin-top:10px}
 </style>
 </head>
 <body>
@@ -196,6 +204,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 
   <!-- 설교 기록 -->
   <section class="view on" id="v-write">
+    <div class="notice" id="backupNote" hidden></div>
     <form id="sermonForm" autocomplete="off">
       <input type="hidden" name="id">
       <div class="card">
@@ -255,7 +264,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
         </div>
       </div>
 
-      <div class="row end">
+      <div class="row end savebar">
         <button type="button" class="btn ghost" id="resetForm">새로 쓰기</button>
         <button type="submit" class="btn primary">저장</button>
       </div>
@@ -331,7 +340,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
         <button class="btn primary" id="exportJson">백업 파일 받기 (JSON)</button>
         <label class="btn" style="margin:0">백업 파일 불러오기<input type="file" id="importJson" accept=".json,application/json" style="display:none"></label>
       </div>
-      <p class="hint">불러오기는 기존 기록과 합쳐집니다(같은 기록은 덮어씀).</p>
+      <p class="hint" id="backupStatus" style="margin:10px 0 0"></p>
+      <div class="row" style="margin-top:8px">
+        <button class="btn sm" id="copyJson">백업 내용 복사</button>
+        <button class="btn sm" id="toggleRestore">붙여넣어 복원</button>
+      </div>
+      <div id="restoreBox"><textarea id="restoreText" rows="4" placeholder="복사해 둔 백업 내용을 여기에 붙여넣고 [복원]을 누르세요"></textarea><div class="row end" style="margin-top:6px"><button class="btn sm primary" id="restoreGo">복원</button></div></div>
+      <p class="hint">파일 저장이 잘 안 되는 휴대폰은 「백업 내용 복사」를 눌러 카톡 "나와의 채팅"에 붙여넣어 보관하세요. 불러오기는 기존 기록과 합쳐집니다.</p>
     </div>
     <div class="card">
       <h2>엑셀용 내보내기</h2>
@@ -495,26 +510,36 @@ function fillForm(s){
   $('#formTitle').textContent = s?.id ? '설교 기록 수정' : '새 설교 기록';
   updateDateInfo();
 }
-$('#resetForm').onclick = () => fillForm();
-form.addEventListener('submit', e => {
-  e.preventDefault();
+const DRAFT = KEY + '-draft';
+function collectForm(){
   const passages = $$('#passages .passage').map(row => {
     const p = {}; $$('[data-k]', row).forEach(el => { const v = el.value.trim(); if (v) p[el.dataset.k] = el.dataset.k === 'book' ? v : +v; }); return p;
   }).filter(p => p.book);
   const points = [0,1,2,3].map(i => ({h: $(`[data-pt="${i}"][data-f=h]`).value.trim(), body: $(`[data-pt="${i}"][data-f=body]`).value.trim()}));
-  const s = {
-    id: form.elements.id.value || uid(), date: form.elements.date.value, service: form.elements.service.value,
-    preacher: form.elements.preacher.value, preacherOther: form.elements.preacher.value === '기타' ? form.elements.preacherOther.value.trim() : '',
+  const f = form.elements;
+  return {
+    date: f.date.value, service: f.service.value,
+    preacher: f.preacher.value, preacherOther: f.preacher.value === '기타' ? f.preacherOther.value.trim() : '',
     passages, points,
-    title: form.elements.title.value.trim(), theme: form.elements.theme.value.trim(), summary: form.elements.summary.value.trim(),
-    application: form.elements.application.value.trim(), practice: form.elements.practice.value.trim(), memo: form.elements.memo.value.trim(),
-    updatedAt: new Date().toISOString(),
+    title: f.title.value.trim(), theme: f.theme.value.trim(), summary: f.summary.value.trim(),
+    application: f.application.value.trim(), practice: f.practice.value.trim(), memo: f.memo.value.trim(),
   };
+}
+const clearDraft = () => { try { localStorage.removeItem(DRAFT); } catch(e) {} };
+let draftTimer;
+form.addEventListener('input', () => {
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(() => { if (form.elements.id.value) return; try { localStorage.setItem(DRAFT, JSON.stringify(collectForm())); } catch(e) {} }, 500);
+});
+$('#resetForm').onclick = () => { clearDraft(); fillForm(); };
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const s = Object.assign(collectForm(), {id: form.elements.id.value || uid(), updatedAt: new Date().toISOString()});
   const dup = db.sermons.find(x => x.id !== s.id && x.date === s.date && x.service === s.service);
   if (dup && !confirm(`${s.date} ${s.service} 설교가 이미 있습니다 (「${dup.title}」). 그래도 따로 저장할까요?`)) return;
   const idx = db.sermons.findIndex(x => x.id === s.id);
   if (idx >= 0) db.sermons[idx] = s; else db.sermons.push(s);
-  save(); renderStats(); toast('저장했습니다');
+  clearDraft(); save(); renderStats(); updateBackupNote(); toast('저장했습니다');
   // 오전을 저장하면 같은 날 오후 입력으로 자연스럽게 이어지게
   if (idx < 0 && s.service === '오전' && !db.sermons.some(x => x.date === s.date && x.service === '오후')) {
     fillForm({date:s.date, service:'오후', preacher:s.preacher});
@@ -530,14 +555,14 @@ function openDetail(id){
   const pts = (s.points || []).filter(p => p.h || p.body);
   $('#modalBody').innerHTML = `
     <div class="detail">
-      <div class="row" style="justify-content:space-between">
-        <div class="datebadge" style="margin:0">
+      <div class="head">
+        <div class="datebadge">
           <span class="pill">${s.date.replace(/-/g,'.')} (${i.wdName})</span>
           <span class="pill">${weekLabel(s.date)}</span>
           <span class="pill ${s.service==='오전'?'am':'pm'}">${s.service}</span>
           <span class="pill">인도: ${esc(preacherName(s))}</span>
         </div>
-        <button class="btn ghost sm noprint" data-close>닫기 ✕</button>
+        <button class="xbtn noprint" data-close aria-label="닫기">✕</button>
       </div>
       <h2>${esc(s.title)}</h2>
       ${s.theme ? `<p class="theme">주제 · ${esc(s.theme)}</p>` : ''}
@@ -751,16 +776,33 @@ function download(name, text, type){
   a.href = URL.createObjectURL(new Blob([text], {type}));
   a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
-$('#exportJson').onclick = () => download(`설교노트_백업_${today()}.json`, JSON.stringify(db, null, 1), 'application/json');
+function daysSinceBackup(){ if (!db.lastBackup) return null; return Math.floor((new Date(today()) - new Date(db.lastBackup)) / 864e5); }
+function updateBackupNote(){
+  const d = daysSinceBackup(), n = $('#backupNote'), st = $('#backupStatus');
+  if (st) st.textContent = d === null ? '아직 백업한 적이 없습니다.' : `마지막 백업: ${db.lastBackup.replace(/-/g,'.')} (${d === 0 ? '오늘' : d + '일 전'})`;
+  const need = db.sermons.length >= 3 && (d === null || d >= 30);
+  n.hidden = !need;
+  if (need) n.innerHTML = `${d === null ? '아직 백업한 적이 없습니다.' : '마지막 백업 후 ' + d + '일이 지났습니다.'} 기록이 사라지지 않도록 <a data-gobackup>지금 백업하기</a>`;
+}
+$('#backupNote').addEventListener('click', e => { if (e.target.closest('[data-gobackup]')) showView('backup'); });
+const backupText = () => { db.lastBackup = today(); save(); updateBackupNote(); return JSON.stringify(db, null, 1); };
+$('#exportJson').onclick = () => download(`설교노트_백업_${today()}.json`, backupText(), 'application/json');
+$('#copyJson').onclick = async () => {
+  const t = backupText();
+  try { await navigator.clipboard.writeText(t); toast('복사했습니다 · 메모나 카톡 "나와의 채팅"에 붙여넣어 보관하세요'); }
+  catch(e) { const ta = $('#restoreText'); $('#restoreBox').style.display = 'block'; ta.value = t; ta.select(); toast('아래 내용을 길게 눌러 복사하세요'); }
+};
+$('#toggleRestore').onclick = () => { const b = $('#restoreBox'); b.style.display = b.style.display === 'block' ? 'none' : 'block'; };
+function importData(d){
+  const merge = (a, b) => { const m = new Map(a.map(x => [x.id, x])); (b||[]).forEach(x => m.set(x.id, x)); return [...m.values()]; };
+  db.sermons = merge(db.sermons, d.sermons); db.events = merge(db.events, d.events);
+  db.weekNotes = Object.assign({}, db.weekNotes, d.weekNotes);
+  save(); renderStats(); updateBackupNote(); toast(`불러왔습니다 (설교 ${d.sermons?.length || 0}건)`);
+}
+$('#restoreGo').onclick = () => { try { importData(JSON.parse($('#restoreText').value)); $('#restoreText').value = ''; } catch(e) { toast('내용을 읽을 수 없습니다. 백업 내용 전체를 붙여넣었는지 확인하세요'); } };
 $('#importJson').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
-  try {
-    const d = JSON.parse(await f.text());
-    const merge = (a, b) => { const m = new Map(a.map(x => [x.id, x])); (b||[]).forEach(x => m.set(x.id, x)); return [...m.values()]; };
-    db.sermons = merge(db.sermons, d.sermons); db.events = merge(db.events, d.events);
-    db.weekNotes = Object.assign({}, db.weekNotes, d.weekNotes);
-    save(); renderStats(); toast(`불러왔습니다 (설교 ${d.sermons?.length || 0}건)`);
-  } catch(err) { alert('백업 파일을 읽을 수 없습니다.'); }
+  try { importData(JSON.parse(await f.text())); } catch(err) { toast('백업 파일을 읽을 수 없습니다'); }
   e.target.value = '';
 };
 const csvCell = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
@@ -812,7 +854,15 @@ load();
 try { const t = localStorage.getItem(KEY + '-theme'); if (t) document.documentElement.dataset.theme = t; } catch(e) {}
 yearOptions($('#wYear'), false); monthOptions($('#wMonth'));
 yearOptions($('#fYear')); monthOptions($('#fMonth')); fillBookFilter();
-fillForm(); renderStats();
+(function(){
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); } catch(e) {}
+  const real = d && [d.title, d.theme, d.summary, d.application, d.practice, d.memo, ...(d.points||[]).flatMap(p => [p.h, p.body])].some(Boolean);
+  if (real) { fillForm(d); toast('작성 중이던 내용을 불러왔습니다'); } else fillForm();
+})();
+renderStats(); updateBackupNote();
+if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
 </html>
