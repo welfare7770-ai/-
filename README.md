@@ -5,3 +5,10 @@
 - `index.html`을 브라우저로 열면 바로 사용할 수 있습니다.
 - 기록은 그 브라우저에만 저장되므로 「백업·내보내기」에서 JSON 백업을 정기적으로 받아 두세요.
 - 엑셀용 CSV 내보내기를 지원합니다.
+
+## 휴대폰 홈 화면에 설치하기
+
+1. GitHub 저장소 **Settings → General → Danger Zone → Change visibility → Public** (코드만 공개되고 기록 데이터는 각자 휴대폰에만 저장됨)
+2. **Settings → Pages → Build and deployment → Source: Deploy from a branch**, Branch에서 이 브랜치와 `/ (root)` 선택 → Save
+3. 1~2분 뒤 표시되는 주소(https://welfare7770-ai.github.io/-/)를 휴대폰에서 열기
+4. 아이폰: 사파리 공유(□↑) → 홈 화면에 추가 / 안드로이드: 크롬 ⋮ → 홈 화면에 추가

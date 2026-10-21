@@ -2,7 +2,15 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7a4b2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="설교 노트">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
 <title>설교 노트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,7 +42,7 @@
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--text);font:15px/1.6 "Noto Sans KR",system-ui,sans-serif;-webkit-text-size-adjust:100%}
-.wrap{max-width:1080px;margin:0 auto;padding:0 16px 80px}
+.wrap{max-width:1080px;margin:0 auto;padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) 80px max(16px,env(safe-area-inset-left,0px))}
 header.top{padding:24px 0 8px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
 header.top h1{font:700 26px/1.2 "Noto Serif KR",serif;margin:0;color:var(--accent)}
 header.top p{margin:4px 0 0;color:var(--muted);font-size:13px}
@@ -42,11 +50,12 @@ header.top p{margin:4px 0 0;color:var(--muted);font-size:13px}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 12px;text-align:center;min-width:76px}
 .stat b{display:block;font-size:18px}
 .stat span{font-size:11px;color:var(--muted)}
-nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:4px;overflow-x:auto;padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:18px;scrollbar-width:none}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:4px;overflow-x:auto;padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:18px;scrollbar-width:none}
 nav.tabs button{flex:0 0 auto;border:0;background:transparent;color:var(--muted);font:500 14px "Noto Sans KR",sans-serif;padding:8px 14px;border-radius:999px;cursor:pointer}
 nav.tabs button.on{background:var(--accent);color:#fff}
 :root[data-theme="dark"] nav.tabs button.on{color:#1b1a17}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) nav.tabs button.on{color:#1b1a17}}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 section.view{display:none}
 section.view.on{display:block}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
