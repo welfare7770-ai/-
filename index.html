@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>설교 노트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#ffffff; --surface-2:#f0ede6; --line:#e2ddd2;
+  --text:#24221d; --muted:#6d685d; --accent:#7a4b2a; --accent-soft:#f3e7dc;
+  --am:#2f6f8f; --am-soft:#e3f0f6; --pm:#8a5a1f; --pm-soft:#f7ecdb;
+  --danger:#a83a32; --ok:#2e7d4f;
+  --c-law:#8b5e34; --c-hist:#5d7a3a; --c-poet:#7a4f8a; --c-proph:#a34a3c;
+  --c-gosp:#2f6f8f; --c-acts:#3b7f7a; --c-epis:#4a5a9a; --c-rev:#6b6b6b;
+  --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#191816; --surface:#22201d; --surface-2:#2b2925; --line:#3a3731;
+    --text:#ece8df; --muted:#a59f92; --accent:#d9a77c; --accent-soft:#3a2d22;
+    --am:#7fbcdb; --am-soft:#1f3440; --pm:#e0ad6a; --pm-soft:#3b2e1d;
+    --danger:#e2766c; --ok:#6cc495; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#191816; --surface:#22201d; --surface-2:#2b2925; --line:#3a3731;
+  --text:#ece8df; --muted:#a59f92; --accent:#d9a77c; --accent-soft:#3a2d22;
+  --am:#7fbcdb; --am-soft:#1f3440; --pm:#e0ad6a; --pm-soft:#3b2e1d;
+  --danger:#e2766c; --ok:#6cc495; --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.6 "Noto Sans KR",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px 80px}
+header.top{padding:24px 0 8px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+header.top h1{font:700 26px/1.2 "Noto Serif KR",serif;margin:0;color:var(--accent)}
+header.top p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 12px;text-align:center;min-width:76px}
+.stat b{display:block;font-size:18px}
+.stat span{font-size:11px;color:var(--muted)}
+nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:4px;overflow-x:auto;padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:18px;scrollbar-width:none}
+nav.tabs button{flex:0 0 auto;border:0;background:transparent;color:var(--muted);font:500 14px "Noto Sans KR",sans-serif;padding:8px 14px;border-radius:999px;cursor:pointer}
+nav.tabs button.on{background:var(--accent);color:#fff}
+:root[data-theme="dark"] nav.tabs button.on{color:#1b1a17}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) nav.tabs button.on{color:#1b1a17}}
+section.view{display:none}
+section.view.on{display:block}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
+.card h2{font:700 17px "Noto Serif KR",serif;margin:0 0 12px}
+.card h3{font-size:14px;margin:0 0 8px;color:var(--muted);font-weight:500}
+label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px;font-weight:500}
+input,select,textarea{width:100%;font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+textarea{resize:vertical;min-height:70px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:720px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:460px){.g2{grid-template-columns:1fr}}
+.datebadge{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.am{background:var(--am-soft);color:var(--am)}
+.pill.pm{background:var(--pm-soft);color:var(--pm)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg label{flex:1;margin:0;text-align:center;cursor:pointer;padding:9px 4px;font-size:14px;color:var(--text);border-right:1px solid var(--line)}
+.seg label:last-child{border-right:0}
+.seg input{display:none}
+.seg input:checked+span{font-weight:700;color:var(--accent)}
+.seg label:has(input:checked){background:var(--accent-soft)}
+.passage{display:grid;grid-template-columns:minmax(0,2.2fr) repeat(4,minmax(0,1fr)) auto;gap:6px;align-items:end;margin-bottom:8px}
+.passage .x{border:0;background:transparent;color:var(--danger);font-size:20px;cursor:pointer;padding:6px}
+@media (max-width:620px){.passage{grid-template-columns:repeat(4,minmax(0,1fr)) auto}.passage .bk{grid-column:1/-1}}
+.point{border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin-bottom:12px}
+.point input{font-weight:500;margin-bottom:6px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:500 14px "Noto Sans KR",sans-serif;padding:9px 16px;border-radius:8px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .btn.primary{color:#1b1a17}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:#1b1a17}}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.danger{color:var(--danger)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.end{justify-content:flex-end}
+.hint{font-size:12px;color:var(--muted)}
+.list{display:grid;gap:10px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;display:block}
+.item:hover{border-color:var(--accent)}
+.item .t{font-weight:700;font-size:15px;margin:4px 0 2px}
+.item .s{font-size:13px;color:var(--muted)}
+.item .p{font-size:13px;color:var(--accent);font-weight:500}
+.empty{text-align:center;color:var(--muted);padding:32px 12px;font-size:14px}
+.week{margin-bottom:22px}
+.week>h3{font:700 15px "Noto Serif KR",serif;margin:0 0 8px;color:var(--text)}
+.week .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:620px){.week .pair{grid-template-columns:1fr}}
+.week .slot{border-radius:10px;padding:12px 14px;border:1px dashed var(--line);font-size:13px}
+.week .slot.am{background:var(--am-soft);border-style:solid;border-color:transparent}
+.week .slot.pm{background:var(--pm-soft);border-style:solid;border-color:transparent}
+.week .slot b{font-size:14px}
+.week .apply{margin-top:6px;padding-top:6px;border-top:1px solid rgba(0,0,0,.08)}
+.week textarea{margin-top:8px;min-height:56px;font-size:14px}
+.cat{margin-bottom:18px}
+.cat h3{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text);margin:0 0 8px}
+.cat h3 i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.books{display:flex;flex-wrap:wrap;gap:6px}
+.book{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;color:var(--muted)}
+.book.has{color:var(--text);font-weight:500}
+.book b{display:inline-block;min-width:18px;margin-left:4px;padding:0 5px;border-radius:999px;font-size:11px;color:#fff;text-align:center}
+.book.sel{outline:2px solid var(--accent)}
+.chgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px;margin:10px 0 14px}
+.chgrid span{font-size:12px;text-align:center;padding:5px 0;border-radius:6px;background:var(--surface-2);color:var(--muted)}
+.chgrid span.on{background:var(--accent);color:#fff;font-weight:700}
+:root[data-theme="dark"] .chgrid span.on{color:#1b1a17}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chgrid span.on{color:#1b1a17}}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;z-index:20}
+.modal.on{display:flex}
+.modal .card{max-width:720px;width:100%;margin:0}
+.detail h2{font-size:21px;margin:6px 0 4px}
+.detail .theme{color:var(--muted);margin:0 0 12px}
+.detail .sec{margin:14px 0}
+.detail .sec h4{font-size:12px;color:var(--muted);margin:0 0 4px;letter-spacing:.04em}
+.detail .pt{border-left:3px solid var(--accent);padding-left:12px;margin:10px 0}
+.detail .pt b{display:block}
+.detail .box{background:var(--accent-soft);border-radius:10px;padding:12px 14px;white-space:pre-wrap}
+.pre{white-space:pre-wrap}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30}
+.toast.on{opacity:1}
+.notice{background:var(--accent-soft);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px}
+@media print{
+  body{background:#fff}
+  .wrap,nav,header,.toast{display:none!important}
+  .modal{position:static;display:block!important;background:none;padding:0}
+  .modal .card{border:0;box-shadow:none}
+  .modal .noprint{display:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>설교 노트</h1>
+      <p>주일 오전·오후 말씀 요약 · 실천 적용 · 성경 66권 색인 (2006년~)</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-v="write" class="on">✎ 설교 기록</button>
+    <button data-v="weekly">주별 말씀요약</button>
+    <button data-v="search">검색·목록</button>
+    <button data-v="bible">성경 66권 색인</button>
+    <button data-v="events">행사 소감</button>
+    <button data-v="backup">백업·내보내기</button>
+  </nav>
+
+  <!-- 설교 기록 -->
+  <section class="view on" id="v-write">
+    <form id="sermonForm" autocomplete="off">
+      <input type="hidden" name="id">
+      <div class="card">
+        <h2 id="formTitle">새 설교 기록</h2>
+        <div class="grid g3">
+          <div>
+            <label>날짜</label>
+            <input type="date" name="date" min="2006-01-01" required>
+            <div class="datebadge" id="dateInfo"></div>
+          </div>
+          <div>
+            <label>예배 구분</label>
+            <div class="seg">
+              <label><input type="radio" name="service" value="오전" checked><span>오전</span></label>
+              <label><input type="radio" name="service" value="오후"><span>오후</span></label>
+            </div>
+          </div>
+          <div>
+            <label>말씀 인도자</label>
+            <div class="seg">
+              <label><input type="radio" name="preacher" value="강" checked><span>강</span></label>
+              <label><input type="radio" name="preacher" value="이"><span>이</span></label>
+              <label><input type="radio" name="preacher" value="김"><span>김</span></label>
+              <label><input type="radio" name="preacher" value="기타"><span>그 외</span></label>
+            </div>
+            <input name="preacherOther" placeholder="그 외 인도자 이름" style="margin-top:6px;display:none">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>본문 성경구절</h2>
+        <div id="passages"></div>
+        <button type="button" class="btn sm" id="addPassage">+ 본문 추가</button>
+        <span class="hint">&nbsp; 끝 장을 비우면 같은 장으로 봅니다. 절을 비우면 장 단위로 기록됩니다.</span>
+      </div>
+
+      <div class="card">
+        <h2>설교 내용</h2>
+        <div class="grid">
+          <div><label>제목</label><input name="title" placeholder="설교 제목" required></div>
+          <div><label>주제</label><input name="theme" placeholder="한 줄 주제 (예: 고난 중에도 신실하신 하나님)"></div>
+        </div>
+        <h3 style="margin-top:16px">대지 (1~4)</h3>
+        <div id="points"></div>
+        <div><label>말씀 요약</label><textarea name="summary" rows="4" placeholder="설교 전체를 내 말로 요약"></textarea></div>
+      </div>
+
+      <div class="card">
+        <h2>말씀 적용 · 실천</h2>
+        <div class="grid">
+          <div><label>내 삶에 적용할 점</label><textarea name="application" rows="3" placeholder="이 말씀이 나에게 하시는 말씀은?"></textarea></div>
+          <div><label>이번 주 실천 다짐 (구체적으로)</label><textarea name="practice" rows="2" placeholder="언제, 무엇을, 어떻게 실천할지"></textarea></div>
+          <div><label>기도 제목 / 메모</label><textarea name="memo" rows="2"></textarea></div>
+        </div>
+      </div>
+
+      <div class="row end">
+        <button type="button" class="btn ghost" id="resetForm">새로 쓰기</button>
+        <button type="submit" class="btn primary">저장</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- 주별 -->
+  <section class="view" id="v-weekly">
+    <div class="card">
+      <div class="row">
+        <div style="flex:1;min-width:120px"><label>연도</label><select id="wYear"></select></div>
+        <div style="flex:1;min-width:120px"><label>월</label><select id="wMonth"><option value="">전체</option></select></div>
+      </div>
+    </div>
+    <div id="weekList"></div>
+  </section>
+
+  <!-- 검색 -->
+  <section class="view" id="v-search">
+    <div class="card">
+      <div class="grid"><div><label>검색어 (제목·주제·대지·요약·적용)</label><input id="q" placeholder="예: 은혜, 믿음, 시편 23"></div></div>
+      <div class="grid g4" style="margin-top:10px">
+        <div><label>연도</label><select id="fYear"><option value="">전체</option></select></div>
+        <div><label>월</label><select id="fMonth"><option value="">전체</option></select></div>
+        <div><label>예배</label><select id="fService"><option value="">전체</option><option>오전</option><option>오후</option></select></div>
+        <div><label>인도자</label><select id="fPreacher"><option value="">전체</option><option>강</option><option>이</option><option>김</option><option value="기타">그 외</option></select></div>
+        <div><label>성경 분류</label><select id="fCat"><option value="">전체</option></select></div>
+        <div><label>성경 권</label><select id="fBook"><option value="">전체</option></select></div>
+        <div><label>정렬</label><select id="fSort"><option value="desc">최신순</option><option value="asc">오래된순</option><option value="bible">성경 순서</option></select></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn" id="fClear" style="width:100%">조건 초기화</button></div>
+      </div>
+    </div>
+    <p class="hint" id="resultCount"></p>
+    <div class="list" id="results"></div>
+  </section>
+
+  <!-- 성경 색인 -->
+  <section class="view" id="v-bible">
+    <div class="card">
+      <h2>성경 66권별 설교 색인</h2>
+      <p class="hint" style="margin-top:-6px">숫자는 해당 권을 본문으로 한 설교 수입니다. 권을 누르면 장별 설교 현황과 목록이 나옵니다.</p>
+      <div id="bibleIdx"></div>
+    </div>
+    <div class="card" id="bookDetail" style="display:none"></div>
+  </section>
+
+  <!-- 행사 -->
+  <section class="view" id="v-events">
+    <form class="card" id="eventForm" autocomplete="off">
+      <h2>행사 소감 기록</h2>
+      <input type="hidden" name="id">
+      <div class="grid g2">
+        <div><label>날짜</label><input type="date" name="date" min="2006-01-01" required></div>
+        <div><label>행사명</label><input name="name" placeholder="예: 부활절 연합예배, 여름수련회, 성탄 발표회" required></div>
+      </div>
+      <div style="margin-top:10px"><label>소감</label><textarea name="reflection" rows="4" placeholder="느낀 점, 받은 은혜, 기억할 장면"></textarea></div>
+      <div class="row end" style="margin-top:10px">
+        <button type="button" class="btn ghost" id="eventReset">새로 쓰기</button>
+        <button class="btn primary">저장</button>
+      </div>
+    </form>
+    <div class="list" id="eventList"></div>
+  </section>
+
+  <!-- 백업 -->
+  <section class="view" id="v-backup">
+    <div class="notice">
+      기록은 <b>지금 사용하는 이 브라우저</b>에만 저장됩니다. 다른 기기·브라우저에서는 보이지 않고, 브라우저 데이터 삭제 시 함께 지워질 수 있으니 <b>정기적으로 백업 파일(JSON)을 내려받아</b> 두세요.
+    </div>
+    <div class="card">
+      <h2>백업 / 복원</h2>
+      <div class="row">
+        <button class="btn primary" id="exportJson">백업 파일 받기 (JSON)</button>
+        <label class="btn" style="margin:0">백업 파일 불러오기<input type="file" id="importJson" accept=".json,application/json" style="display:none"></label>
+      </div>
+      <p class="hint">불러오기는 기존 기록과 합쳐집니다(같은 기록은 덮어씀).</p>
+    </div>
+    <div class="card">
+      <h2>엑셀용 내보내기</h2>
+      <div class="row">
+        <button class="btn" id="exportCsv">설교 목록 CSV (엑셀에서 열기)</button>
+        <button class="btn" id="exportEventCsv">행사 소감 CSV</button>
+      </div>
+      <p class="hint">연도·월·주차·요일·예배·인도자·성경분류·권·장·절·제목·주제·대지1~4·요약·적용이 열로 나뉩니다.</p>
+    </div>
+    <div class="card">
+      <h2>기타</h2>
+      <div class="row">
+        <button class="btn" id="loadSample">예시 기록 넣어보기</button>
+        <button class="btn" id="themeToggle">화면 밝기 전환</button>
+        <button class="btn danger" id="wipe">모든 기록 삭제</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="modal"><div class="card"><div id="modalBody"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ───────── 성경 66권 (분류 · 장 수) ─────────
+const CATS = [
+  {key:'율법서', color:'var(--c-law)', books:[['창세기',50],['출애굽기',40],['레위기',27],['민수기',36],['신명기',34]]},
+  {key:'역사서', color:'var(--c-hist)', books:[['여호수아',24],['사사기',21],['룻기',4],['사무엘상',31],['사무엘하',24],['열왕기상',22],['열왕기하',25],['역대상',29],['역대하',36],['에스라',10],['느헤미야',13],['에스더',10]]},
+  {key:'시가서', color:'var(--c-poet)', books:[['욥기',42],['시편',150],['잠언',31],['전도서',12],['아가',8]]},
+  {key:'선지서', color:'var(--c-proph)', books:[['이사야',66],['예레미야',52],['예레미야애가',5],['에스겔',48],['다니엘',12],['호세아',14],['요엘',3],['아모스',9],['오바댜',1],['요나',4],['미가',7],['나훔',3],['하박국',3],['스바냐',3],['학개',2],['스가랴',14],['말라기',4]]},
+  {key:'복음서', color:'var(--c-gosp)', books:[['마태복음',28],['마가복음',16],['누가복음',24],['요한복음',21]]},
+  {key:'사도행전', color:'var(--c-acts)', books:[['사도행전',28]]},
+  {key:'서신서', color:'var(--c-epis)', books:[['로마서',16],['고린도전서',16],['고린도후서',13],['갈라디아서',6],['에베소서',6],['빌립보서',4],['골로새서',4],['데살로니가전서',5],['데살로니가후서',3],['디모데전서',6],['디모데후서',4],['디도서',3],['빌레몬서',1],['히브리서',13],['야고보서',5],['베드로전서',5],['베드로후서',3],['요한일서',5],['요한이서',1],['요한삼서',1],['유다서',1]]},
+  {key:'요한계시록', color:'var(--c-rev)', books:[['요한계시록',22]]},
+];
+const BOOK = {}; let order = 0;
+CATS.forEach(c => c.books.forEach(([name, chapters]) => {
+  BOOK[name] = {name, chapters, cat:c.key, color:c.color, order:order++, testament: order <= 39 ? '구약' : '신약'};
+}));
+
+// ───────── 저장소 ─────────
+const KEY = 'sermon-notes-v1';
+let db = {sermons:[], events:[], weekNotes:{}};
+function load(){ try { const s = localStorage.getItem(KEY); if (s) db = Object.assign(db, JSON.parse(s)); } catch(e) {} }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e) { toast('저장 실패: 백업 파일로 내려받아 두세요'); } }
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+// ───────── 유틸 ─────────
+const $ = (s, el=document) => el.querySelector(s);
+const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const WD = ['일','월','화','수','목','금','토'];
+const NTH = ['','첫째','둘째','셋째','넷째','다섯째'];
+function dinfo(ds){
+  const [y,m,d] = ds.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  const wd = dt.getDay();
+  const nth = Math.ceil(d/7);               // 그 달의 몇 번째 같은 요일인지 (주일이면 '셋째 주일')
+  const sun = new Date(y, m-1, d - wd);     // 그 주의 주일
+  const sunKey = `${sun.getFullYear()}-${String(sun.getMonth()+1).padStart(2,'0')}-${String(sun.getDate()).padStart(2,'0')}`;
+  return {y, m, d, wd, wdName:WD[wd], nth, nthName:NTH[nth], sunKey};
+}
+function weekLabel(ds){
+  const i = dinfo(ds);
+  return i.wd === 0 ? `${i.m}월 ${i.nthName} 주일` : `${i.m}월 ${i.nthName} ${i.wdName}요일`;
+}
+function fmtPassage(p){
+  if (!p.book) return '';
+  const unit = p.book === '시편' ? '편' : '장';
+  const c1 = p.ch1, v1 = p.v1, c2 = p.ch2 || p.ch1, v2 = p.v2;
+  if (!c1) return p.book;
+  if (!v1) return c2 && c2 != c1 ? `${p.book} ${c1}~${c2}${unit}` : `${p.book} ${c1}${unit}`;
+  if (c2 != c1) return `${p.book} ${c1}:${v1}~${c2}:${v2 || ''}`.replace(/:$/, '');
+  return v2 && v2 != v1 ? `${p.book} ${c1}:${v1}~${v2}` : `${p.book} ${c1}:${v1}`;
+}
+const passagesText = s => (s.passages || []).map(fmtPassage).filter(Boolean).join(', ');
+const preacherName = s => s.preacher === '기타' ? (s.preacherOther || '그 외') : s.preacher;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 1800); }
+function today(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function lastSunday(){ const d = new Date(); d.setDate(d.getDate() - d.getDay()); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+// ───────── 탭 ─────────
+$('#tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  showView(b.dataset.v);
+});
+function showView(v){
+  $$('#tabs button').forEach(x => x.classList.toggle('on', x.dataset.v === v));
+  $$('section.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
+  if (v === 'weekly') renderWeekly();
+  if (v === 'search') renderSearch();
+  if (v === 'bible') renderBible();
+  if (v === 'events') renderEvents();
+  window.scrollTo({top:0});
+}
+
+// ───────── 설교 입력 폼 ─────────
+const bookOptions = '<option value="">성경 선택</option>' + CATS.map(c =>
+  `<optgroup label="${c.key}">${c.books.map(([n]) => `<option>${n}</option>`).join('')}</optgroup>`).join('');
+function passageRow(p={}){
+  const div = document.createElement('div');
+  div.className = 'passage';
+  div.innerHTML = `
+    <div class="bk"><label>성경</label><select data-k="book">${bookOptions}</select></div>
+    <div><label>장</label><input data-k="ch1" type="number" min="1" inputmode="numeric"></div>
+    <div><label>절</label><input data-k="v1" type="number" min="1" inputmode="numeric"></div>
+    <div><label>~ 장</label><input data-k="ch2" type="number" min="1" inputmode="numeric"></div>
+    <div><label>~ 절</label><input data-k="v2" type="number" min="1" inputmode="numeric"></div>
+    <button type="button" class="x" title="삭제">×</button>`;
+  $$('[data-k]', div).forEach(el => el.value = p[el.dataset.k] ?? '');
+  $('[data-k=book]', div).addEventListener('change', e => {
+    const b = BOOK[e.target.value];
+    $$('input[data-k^=ch]', div).forEach(i => i.max = b ? b.chapters : '');
+  });
+  $('.x', div).onclick = () => { div.remove(); if (!$$('#passages .passage').length) $('#passages').append(passageRow()); };
+  return div;
+}
+function pointsHtml(points=[]){
+  $('#points').innerHTML = [0,1,2,3].map(i => `
+    <div class="point">
+      <input data-pt="${i}" data-f="h" placeholder="${i+1}대지 제목" value="${esc(points[i]?.h)}">
+      <textarea data-pt="${i}" data-f="body" rows="2" placeholder="${i+1}대지 내용 요약">${esc(points[i]?.body)}</textarea>
+    </div>`).join('');
+}
+$('#addPassage').onclick = () => $('#passages').append(passageRow());
+
+const form = $('#sermonForm');
+function updateDateInfo(){
+  const v = form.elements.date.value, el = $('#dateInfo');
+  if (!v) { el.innerHTML = ''; return; }
+  const i = dinfo(v);
+  el.innerHTML = `<span class="pill">${i.y}년</span><span class="pill">${i.m}월</span><span class="pill">${i.nthName} 주</span><span class="pill">${i.wdName}요일</span>`;
+}
+form.elements.date.addEventListener('change', updateDateInfo);
+form.addEventListener('change', e => {
+  if (e.target.name === 'preacher') form.elements.preacherOther.style.display = form.elements.preacher.value === '기타' ? 'block' : 'none';
+});
+function fillForm(s){
+  form.reset();
+  form.elements.id.value = s?.id || '';
+  form.elements.date.value = s?.date || lastSunday();
+  form.elements.service.value = s?.service || '오전';
+  form.elements.preacher.value = s?.preacher || '강';
+  form.elements.preacherOther.value = s?.preacherOther || '';
+  form.elements.preacherOther.style.display = form.elements.preacher.value === '기타' ? 'block' : 'none';
+  ['title','theme','summary','application','practice','memo'].forEach(k => form.elements[k].value = s?.[k] || '');
+  $('#passages').innerHTML = '';
+  (s?.passages?.length ? s.passages : [{}]).forEach(p => $('#passages').append(passageRow(p)));
+  pointsHtml(s?.points);
+  $('#formTitle').textContent = s?.id ? '설교 기록 수정' : '새 설교 기록';
+  updateDateInfo();
+}
+$('#resetForm').onclick = () => fillForm();
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const passages = $$('#passages .passage').map(row => {
+    const p = {}; $$('[data-k]', row).forEach(el => { const v = el.value.trim(); if (v) p[el.dataset.k] = el.dataset.k === 'book' ? v : +v; }); return p;
+  }).filter(p => p.book);
+  const points = [0,1,2,3].map(i => ({h: $(`[data-pt="${i}"][data-f=h]`).value.trim(), body: $(`[data-pt="${i}"][data-f=body]`).value.trim()}));
+  const s = {
+    id: form.elements.id.value || uid(), date: form.elements.date.value, service: form.elements.service.value,
+    preacher: form.elements.preacher.value, preacherOther: form.elements.preacher.value === '기타' ? form.elements.preacherOther.value.trim() : '',
+    passages, points,
+    title: form.elements.title.value.trim(), theme: form.elements.theme.value.trim(), summary: form.elements.summary.value.trim(),
+    application: form.elements.application.value.trim(), practice: form.elements.practice.value.trim(), memo: form.elements.memo.value.trim(),
+    updatedAt: new Date().toISOString(),
+  };
+  const dup = db.sermons.find(x => x.id !== s.id && x.date === s.date && x.service === s.service);
+  if (dup && !confirm(`${s.date} ${s.service} 설교가 이미 있습니다 (「${dup.title}」). 그래도 따로 저장할까요?`)) return;
+  const idx = db.sermons.findIndex(x => x.id === s.id);
+  if (idx >= 0) db.sermons[idx] = s; else db.sermons.push(s);
+  save(); renderStats(); toast('저장했습니다');
+  // 오전을 저장하면 같은 날 오후 입력으로 자연스럽게 이어지게
+  if (idx < 0 && s.service === '오전' && !db.sermons.some(x => x.date === s.date && x.service === '오후')) {
+    fillForm({date:s.date, service:'오후', preacher:s.preacher});
+    toast('저장했습니다 · 이어서 오후 말씀을 기록하세요');
+  } else fillForm();
+  window.scrollTo({top:0});
+});
+
+// ───────── 상세 보기 모달 ─────────
+function openDetail(id){
+  const s = db.sermons.find(x => x.id === id); if (!s) return;
+  const i = dinfo(s.date);
+  const pts = (s.points || []).filter(p => p.h || p.body);
+  $('#modalBody').innerHTML = `
+    <div class="detail">
+      <div class="row" style="justify-content:space-between">
+        <div class="datebadge" style="margin:0">
+          <span class="pill">${s.date.replace(/-/g,'.')} (${i.wdName})</span>
+          <span class="pill">${weekLabel(s.date)}</span>
+          <span class="pill ${s.service==='오전'?'am':'pm'}">${s.service}</span>
+          <span class="pill">인도: ${esc(preacherName(s))}</span>
+        </div>
+        <button class="btn ghost sm noprint" data-close>닫기 ✕</button>
+      </div>
+      <h2>${esc(s.title)}</h2>
+      ${s.theme ? `<p class="theme">주제 · ${esc(s.theme)}</p>` : ''}
+      <div class="sec"><h4>본문</h4><div style="color:var(--accent);font-weight:700">${esc(passagesText(s)) || '-'}</div>
+        <div class="hint">${[...new Set((s.passages||[]).map(p => BOOK[p.book] && `${BOOK[p.book].testament} · ${BOOK[p.book].cat}`).filter(Boolean))].join(' / ')}</div></div>
+      ${pts.length ? `<div class="sec"><h4>대지</h4>${s.points.map((p,k) => (p.h||p.body) ? `<div class="pt"><b>${k+1}. ${esc(p.h)}</b><div class="pre">${esc(p.body)}</div></div>` : '').join('')}</div>` : ''}
+      ${s.summary ? `<div class="sec"><h4>말씀 요약</h4><div class="pre">${esc(s.summary)}</div></div>` : ''}
+      ${s.application || s.practice ? `<div class="sec"><h4>말씀 적용 · 실천</h4><div class="box">${esc(s.application)}${s.application && s.practice ? '\n\n' : ''}${s.practice ? '▶ 이번 주 실천: ' + esc(s.practice) : ''}</div></div>` : ''}
+      ${s.memo ? `<div class="sec"><h4>기도 제목 / 메모</h4><div class="pre">${esc(s.memo)}</div></div>` : ''}
+      <div class="row end noprint" style="margin-top:16px">
+        <button class="btn danger sm" data-del="${s.id}">삭제</button>
+        <button class="btn sm" onclick="window.print()">인쇄</button>
+        <button class="btn primary sm" data-edit="${s.id}">수정</button>
+      </div>
+    </div>`;
+  $('#modal').classList.add('on');
+}
+$('#modal').addEventListener('click', e => {
+  if (e.target.id === 'modal' || e.target.closest('[data-close]')) return $('#modal').classList.remove('on');
+  const ed = e.target.closest('[data-edit]');
+  if (ed) { $('#modal').classList.remove('on'); fillForm(db.sermons.find(x => x.id === ed.dataset.edit)); showView('write'); }
+  const del = e.target.closest('[data-del]');
+  if (del && confirm('이 설교 기록을 삭제할까요?')) {
+    db.sermons = db.sermons.filter(x => x.id !== del.dataset.del); save(); renderStats();
+    $('#modal').classList.remove('on'); refreshCurrent(); toast('삭제했습니다');
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#modal').classList.remove('on'); });
+document.addEventListener('click', e => { const it = e.target.closest('[data-open]'); if (it) openDetail(it.dataset.open); });
+function refreshCurrent(){ const v = $('#tabs .on')?.dataset.v; if (v && v !== 'write') showView(v); }
+
+function itemHtml(s){
+  return `<div class="item" data-open="${s.id}">
+    <div class="datebadge" style="margin:0">
+      <span class="pill">${s.date.replace(/-/g,'.')} (${dinfo(s.date).wdName})</span>
+      <span class="pill ${s.service==='오전'?'am':'pm'}">${s.service}</span>
+      <span class="pill">${esc(preacherName(s))}</span>
+    </div>
+    <div class="t">${esc(s.title)}</div>
+    <div class="p">${esc(passagesText(s))}</div>
+    ${s.theme ? `<div class="s">${esc(s.theme)}</div>` : ''}
+  </div>`;
+}
+
+// ───────── 통계 ─────────
+function renderStats(){
+  const books = new Set(db.sermons.flatMap(s => (s.passages||[]).map(p => p.book)));
+  const years = new Set(db.sermons.map(s => s.date.slice(0,4)));
+  $('#stats').innerHTML = `
+    <div class="stat"><b>${db.sermons.length}</b><span>설교 기록</span></div>
+    <div class="stat"><b>${years.size}</b><span>기록 연도</span></div>
+    <div class="stat"><b>${books.size}<small style="font-size:12px;color:var(--muted)">/66</small></b><span>다룬 성경</span></div>`;
+}
+function yearOptions(sel, withAll=true){
+  const cur = new Date().getFullYear();
+  const ys = new Set(db.sermons.map(s => +s.date.slice(0,4)));
+  for (let y = 2006; y <= cur + 1; y++) ys.add(y);
+  const prev = sel.value;
+  sel.innerHTML = (withAll ? '<option value="">전체</option>' : '') + [...ys].sort((a,b) => b-a).map(y => `<option value="${y}">${y}년</option>`).join('');
+  sel.value = prev || (withAll ? '' : String(cur));
+}
+function monthOptions(sel){ sel.innerHTML = '<option value="">전체</option>' + Array.from({length:12}, (_,i) => `<option value="${i+1}">${i+1}월</option>`).join(''); }
+
+// ───────── 주별 말씀요약 ─────────
+function renderWeekly(){
+  const y = $('#wYear').value, m = $('#wMonth').value;
+  const weeks = {};
+  db.sermons.filter(s => s.date.startsWith(y) && (!m || +s.date.slice(5,7) === +m))
+    .forEach(s => (weeks[dinfo(s.date).sunKey] ||= []).push(s));
+  const keys = Object.keys(weeks).sort().reverse();
+  if (!keys.length) { $('#weekList').innerHTML = `<div class="empty">${y}년${m ? ' ' + m + '월' : ''}에 기록된 설교가 없습니다.</div>`; return; }
+  $('#weekList').innerHTML = keys.map(k => {
+    const list = weeks[k].sort((a,b) => a.date.localeCompare(b.date) || a.service.localeCompare(b.service));
+    const slot = svc => {
+      const ss = list.filter(s => s.service === svc);
+      if (!ss.length) return `<div class="slot"><span class="hint">${svc} 기록 없음</span></div>`;
+      return ss.map(s => `<div class="slot ${svc==='오전'?'am':'pm'} item" data-open="${s.id}" style="cursor:pointer">
+        <div class="hint">${svc} · ${esc(preacherName(s))}${s.date !== k ? ' · ' + s.date.slice(5).replace('-','.') : ''}</div>
+        <b>${esc(s.title)}</b>
+        <div class="p" style="font-size:13px">${esc(passagesText(s))}</div>
+        ${s.theme ? `<div>${esc(s.theme)}</div>` : ''}
+        ${s.application || s.practice ? `<div class="apply">✔ ${esc(s.practice || s.application)}</div>` : ''}
+      </div>`).join('');
+    };
+    return `<div class="week">
+      <h3>${weekLabel(k)} <span class="hint">(${k.replace(/-/g,'.')})</span></h3>
+      <div class="pair">${slot('오전')}${slot('오후')}</div>
+      <textarea data-week="${k}" placeholder="이번 주 말씀 묵상 · 실천 점검 (한 주를 돌아보며)">${esc(db.weekNotes[k])}</textarea>
+    </div>`;
+  }).join('');
+}
+$('#wYear').onchange = $('#wMonth').onchange = renderWeekly;
+$('#weekList').addEventListener('change', e => {
+  const k = e.target.dataset.week; if (!k) return;
+  const v = e.target.value.trim();
+  if (v) db.weekNotes[k] = v; else delete db.weekNotes[k];
+  save(); toast('주간 메모 저장');
+});
+
+// ───────── 검색 ─────────
+function fillBookFilter(){
+  const c = $('#fCat').value, prev = $('#fBook').value;
+  $('#fBook').innerHTML = '<option value="">전체</option>' + CATS.filter(x => !c || x.key === c)
+    .map(x => `<optgroup label="${x.key}">${x.books.map(([n]) => `<option>${n}</option>`).join('')}</optgroup>`).join('');
+  if (!c || BOOK[prev]?.cat === c) $('#fBook').value = prev;
+}
+$('#fCat').innerHTML += '<option value="구약">구약 전체</option><option value="신약">신약 전체</option>' + CATS.map(c => `<option>${c.key}</option>`).join('');
+function renderSearch(){
+  const q = $('#q').value.trim().toLowerCase();
+  const y = $('#fYear').value, m = $('#fMonth').value, sv = $('#fService').value, pr = $('#fPreacher').value;
+  const cat = $('#fCat').value, book = $('#fBook').value, sort = $('#fSort').value;
+  let list = db.sermons.filter(s => {
+    if (y && !s.date.startsWith(y)) return false;
+    if (m && +s.date.slice(5,7) !== +m) return false;
+    if (sv && s.service !== sv) return false;
+    if (pr && s.preacher !== pr) return false;
+    const bs = (s.passages||[]).map(p => BOOK[p.book]).filter(Boolean);
+    if (cat && !bs.some(b => b.cat === cat || b.testament === cat)) return false;
+    if (book && !bs.some(b => b.name === book)) return false;
+    if (q) {
+      const hay = [s.title, s.theme, s.summary, s.application, s.practice, s.memo, passagesText(s), preacherName(s),
+        ...(s.points||[]).flatMap(p => [p.h, p.body])].join(' ').toLowerCase();
+      if (!q.split(/\s+/).every(w => hay.includes(w))) return false;
+    }
+    return true;
+  });
+  const firstRef = s => { const p = (s.passages||[])[0] || {}; return [BOOK[p.book]?.order ?? 99, p.ch1 || 0, p.v1 || 0]; };
+  list.sort((a,b) => {
+    if (sort === 'bible') { const A = firstRef(a), B = firstRef(b); return A[0]-B[0] || A[1]-B[1] || A[2]-B[2]; }
+    const r = a.date.localeCompare(b.date) || a.service.localeCompare(b.service);
+    return sort === 'asc' ? r : -r;
+  });
+  $('#resultCount').textContent = `${list.length}건`;
+  $('#results').innerHTML = list.length ? list.map(itemHtml).join('') : '<div class="empty">조건에 맞는 설교가 없습니다.</div>';
+}
+['#q','#fYear','#fMonth','#fService','#fPreacher','#fBook','#fSort'].forEach(s => $(s).addEventListener('input', renderSearch));
+$('#fCat').addEventListener('input', () => { fillBookFilter(); renderSearch(); });
+$('#fClear').onclick = () => { ['#q','#fYear','#fMonth','#fService','#fPreacher','#fCat'].forEach(s => $(s).value = ''); fillBookFilter(); $('#fBook').value = ''; renderSearch(); };
+
+// ───────── 성경 66권 색인 ─────────
+let selBook = '';
+function bookCounts(){
+  const cnt = {};
+  db.sermons.forEach(s => new Set((s.passages||[]).map(p => p.book)).forEach(b => cnt[b] = (cnt[b]||0) + 1));
+  return cnt;
+}
+function renderBible(){
+  const cnt = bookCounts();
+  $('#bibleIdx').innerHTML = ['구약','신약'].map(t => `<h3 style="font:700 15px 'Noto Serif KR',serif;margin:6px 0 10px">${t}</h3>` +
+    CATS.filter(c => BOOK[c.books[0][0]].testament === t).map(c => {
+      const total = c.books.reduce((a,[n]) => a + (cnt[n]||0), 0);
+      return `<div class="cat"><h3><i style="background:${c.color}"></i>${c.key} <span class="hint">${c.books.length}권 · 설교 ${total}편</span></h3>
+        <div class="books">${c.books.map(([n]) => `<button class="book ${cnt[n]?'has':''} ${selBook===n?'sel':''}" data-book="${n}">${n}${cnt[n] ? `<b style="background:${c.color}">${cnt[n]}</b>` : ''}</button>`).join('')}</div></div>`;
+    }).join('')).join('');
+  renderBookDetail();
+}
+$('#bibleIdx').addEventListener('click', e => {
+  const b = e.target.closest('[data-book]'); if (!b) return;
+  selBook = selBook === b.dataset.book ? '' : b.dataset.book; renderBible();
+  if (selBook) $('#bookDetail').scrollIntoView({behavior:'smooth', block:'start'});
+});
+function renderBookDetail(){
+  const el = $('#bookDetail');
+  if (!selBook) { el.style.display = 'none'; return; }
+  const b = BOOK[selBook];
+  const list = db.sermons.filter(s => (s.passages||[]).some(p => p.book === selBook));
+  const covered = new Set();
+  list.forEach(s => s.passages.filter(p => p.book === selBook && p.ch1).forEach(p => {
+    for (let c = p.ch1; c <= (p.ch2 || p.ch1); c++) covered.add(c);
+  }));
+  const ref = s => s.passages.find(p => p.book === selBook) || {};
+  list.sort((a,c) => (ref(a).ch1||0) - (ref(c).ch1||0) || (ref(a).v1||0) - (ref(c).v1||0) || a.date.localeCompare(c.date));
+  const unit = selBook === '시편' ? '편' : '장';
+  el.style.display = 'block';
+  el.innerHTML = `<h2>${b.name} <span class="hint">${b.testament} · ${b.cat} · 전체 ${b.chapters}${unit}</span></h2>
+    <div class="hint">설교한 ${unit}: ${covered.size} / ${b.chapters}</div>
+    <div class="chgrid">${Array.from({length:b.chapters}, (_,i) => `<span class="${covered.has(i+1)?'on':''}">${i+1}</span>`).join('')}</div>
+    <div class="list">${list.length ? list.map(itemHtml).join('') : '<div class="empty">아직 이 책으로 기록된 설교가 없습니다.</div>'}</div>`;
+}
+
+// ───────── 행사 소감 ─────────
+const ef = $('#eventForm');
+function resetEvent(ev){ ef.reset(); ef.elements.id.value = ev?.id || ''; ef.elements.date.value = ev?.date || today(); ef.elements.name.value = ev?.name || ''; ef.elements.reflection.value = ev?.reflection || ''; }
+$('#eventReset').onclick = () => resetEvent();
+ef.addEventListener('submit', e => {
+  e.preventDefault();
+  const ev = {id: ef.elements.id.value || uid(), date: ef.elements.date.value, name: ef.elements.name.value.trim(), reflection: ef.elements.reflection.value.trim()};
+  const i = db.events.findIndex(x => x.id === ev.id);
+  if (i >= 0) db.events[i] = ev; else db.events.push(ev);
+  save(); resetEvent(); renderEvents(); toast('저장했습니다');
+});
+function renderEvents(){
+  const list = [...db.events].sort((a,b) => b.date.localeCompare(a.date));
+  $('#eventList').innerHTML = list.length ? list.map(ev => `<div class="card" style="margin:0">
+      <div class="row" style="justify-content:space-between">
+        <div><span class="pill">${ev.date.replace(/-/g,'.')} (${dinfo(ev.date).wdName})</span> <b style="margin-left:6px">${esc(ev.name)}</b></div>
+        <div><button class="btn ghost sm" data-eedit="${ev.id}">수정</button><button class="btn ghost sm danger" data-edel="${ev.id}">삭제</button></div>
+      </div>
+      <div class="pre" style="margin-top:8px">${esc(ev.reflection)}</div>
+    </div>`).join('') : '<div class="empty">기록된 행사 소감이 없습니다.</div>';
+}
+$('#eventList').addEventListener('click', e => {
+  const ed = e.target.closest('[data-eedit]'), del = e.target.closest('[data-edel]');
+  if (ed) { resetEvent(db.events.find(x => x.id === ed.dataset.eedit)); window.scrollTo({top:0, behavior:'smooth'}); }
+  if (del && confirm('이 행사 소감을 삭제할까요?')) { db.events = db.events.filter(x => x.id !== del.dataset.edel); save(); renderEvents(); }
+});
+
+// ───────── 백업 · 내보내기 ─────────
+function download(name, text, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type}));
+  a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$('#exportJson').onclick = () => download(`설교노트_백업_${today()}.json`, JSON.stringify(db, null, 1), 'application/json');
+$('#importJson').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    const merge = (a, b) => { const m = new Map(a.map(x => [x.id, x])); (b||[]).forEach(x => m.set(x.id, x)); return [...m.values()]; };
+    db.sermons = merge(db.sermons, d.sermons); db.events = merge(db.events, d.events);
+    db.weekNotes = Object.assign({}, db.weekNotes, d.weekNotes);
+    save(); renderStats(); toast(`불러왔습니다 (설교 ${d.sermons?.length || 0}건)`);
+  } catch(err) { alert('백업 파일을 읽을 수 없습니다.'); }
+  e.target.value = '';
+};
+const csvCell = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
+$('#exportCsv').onclick = () => {
+  const head = ['날짜','연도','월','주차','요일','예배','인도자','구약/신약','성경분류','성경','장','절','끝장','끝절','본문','제목','주제','대지1','대지1 내용','대지2','대지2 내용','대지3','대지3 내용','대지4','대지4 내용','요약','적용','실천','메모'];
+  const rows = [];
+  [...db.sermons].sort((a,b) => a.date.localeCompare(b.date) || a.service.localeCompare(b.service)).forEach(s => {
+    const i = dinfo(s.date), pts = s.points || [];
+    (s.passages?.length ? s.passages : [{}]).forEach(p => {   // 본문이 여럿이면 줄을 나눠 권별 정렬이 되게
+      const b = BOOK[p.book] || {};
+      rows.push([s.date, i.y, i.m, i.nthName + ' 주', i.wdName, s.service, preacherName(s), b.testament, b.cat, p.book, p.ch1, p.v1, p.ch2, p.v2, fmtPassage(p),
+        s.title, s.theme, ...[0,1,2,3].flatMap(k => [pts[k]?.h, pts[k]?.body]), s.summary, s.application, s.practice, s.memo]);
+    });
+  });
+  download(`설교목록_${today()}.csv`, '﻿' + [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv');
+};
+$('#exportEventCsv').onclick = () => {
+  const rows = [...db.events].sort((a,b) => a.date.localeCompare(b.date)).map(e => [e.date, e.name, e.reflection]);
+  download(`행사소감_${today()}.csv`, '﻿' + [['날짜','행사명','소감'], ...rows].map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv');
+};
+$('#wipe').onclick = () => {
+  if (!confirm('모든 설교·행사 기록을 삭제합니다. 백업은 받아 두셨나요?')) return;
+  if (prompt('정말 삭제하려면 "삭제"라고 입력하세요') !== '삭제') return;
+  db = {sermons:[], events:[], weekNotes:{}}; save(); renderStats(); toast('모두 삭제했습니다');
+};
+$('#loadSample').onclick = () => {
+  const d = lastSunday();
+  db.sermons.push(
+    {id:uid(), date:d, service:'오전', preacher:'강', passages:[{book:'시편', ch1:23, v1:1, v2:6}],
+     title:'나의 목자 되신 여호와', theme:'부족함이 없는 삶의 비밀',
+     points:[{h:'인도하시는 목자', body:'쉴 만한 물가로 인도하신다 (1-2절)'},{h:'회복시키시는 목자', body:'영혼을 소생시키신다 (3절)'},{h:'함께하시는 목자', body:'사망의 음침한 골짜기에서도 (4절)'},{h:'잔치를 베푸시는 목자', body:'원수의 목전에서 상을 차리신다 (5-6절)'}],
+     summary:'목자 되신 하나님이 함께하시기에 결핍의 자리에서도 부족함이 없다.', application:'불안할 때 내가 해결하려 하기보다 먼저 목자를 신뢰한다.', practice:'매일 아침 시편 23편을 소리 내어 읽고 하루를 시작한다.', memo:''},
+    {id:uid(), date:d, service:'오후', preacher:'이', passages:[{book:'요한복음', ch1:10, v1:11, v2:18}],
+     title:'선한 목자', theme:'양을 위해 목숨을 버리시는 예수님',
+     points:[{h:'목숨을 버리는 목자', body:''},{h:'양을 아는 목자', body:''},{h:'한 무리를 만드는 목자', body:''},{h:'', body:''}],
+     summary:'', application:'', practice:'이번 주 한 사람에게 먼저 안부를 묻는다.', memo:''}
+  );
+  save(); renderStats(); toast('예시 2건을 넣었습니다 · 주별/검색/색인 탭에서 확인하세요');
+};
+$('#themeToggle').onclick = () => {
+  const r = document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.dataset.theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem(KEY + '-theme', r.dataset.theme); } catch(e) {}
+};
+
+// ───────── 시작 ─────────
+load();
+try { const t = localStorage.getItem(KEY + '-theme'); if (t) document.documentElement.dataset.theme = t; } catch(e) {}
+yearOptions($('#wYear'), false); monthOptions($('#wMonth'));
+yearOptions($('#fYear')); monthOptions($('#fMonth')); fillBookFilter();
+fillForm(); renderStats();
+</script>
+</body>
+</html>
