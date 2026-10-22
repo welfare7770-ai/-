@@ -236,11 +236,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .pray button.on{background:var(--fill);border-color:var(--fill);color:var(--on-fill)}
 .pray button.on small{color:var(--on-fill)}
 .ptimes{display:grid;gap:8px;margin-bottom:14px}
-.ptrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;border-radius:10px;background:var(--surface-2)}
-.ptrow>b{flex:0 0 48px;font:700 13.5px var(--gothic)}
-.ptrow input[type=time]{width:auto;min-width:0;flex:0 1 112px;padding:5px 6px;font:600 15px var(--gothic)}
+.ptrow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 8px;padding:8px 10px;border-radius:10px;background:var(--surface-2)}
+.ptrow .ptin{grid-column:1/-1;display:flex;align-items:center;gap:6px}
+.ptrow .ptend{display:flex;align-items:center;gap:6px}
+.ptrow>b{font:700 13.5px var(--gothic)}
+.ptrow input[type=time]{flex:1 1 0;width:0;min-width:0;padding:6px 4px;text-align:center;font:600 15px var(--gothic);letter-spacing:-.02em}
 .ptrow .til{font-weight:700;color:var(--muted)}
-.ptrow .mins{margin-left:auto;font:700 13px var(--gothic);color:var(--accent);white-space:nowrap}
+.ptrow .mins{font:700 13px var(--gothic);color:var(--accent);white-space:nowrap}
 .ptrow .now{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font:700 12.5px var(--gothic);color:var(--text);cursor:pointer}
 .ptsum{text-align:right;font:700 14px var(--gothic);color:var(--accent)}
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
@@ -1064,10 +1066,9 @@ function renderDaily(){
   const checked = PRAY.filter(([k]) => day.prayers?.[k]), total = checked.reduce((a,[k]) => a + prayMins(day.prayers[k]), 0);
   $('#dPrayTimes').innerHTML = checked.map(([k]) => { const p = prayOf(day.prayers[k]), m = prayMins(day.prayers[k]);
     return `<div class="ptrow" data-slot="${k}"><b>${k}</b>
-      <input type="time" data-ptime="start" value="${p.start}" aria-label="${k} 시작 시각"><span class="til">~</span>
-      <input type="time" data-ptime="end" value="${p.end}" aria-label="${k} 마친 시각">
-      ${!p.end && isToday ? `<button type="button" class="now" data-now>지금 마침</button>` : ''}
-      <span class="mins">${m ? fmtMins(m) : ''}</span></div>`; }).join('')
+      <span class="ptend">${!p.end && isToday ? `<button type="button" class="now" data-now>지금 마침</button>` : ''}<span class="mins">${m ? fmtMins(m) : ''}</span></span>
+      <div class="ptin"><input type="time" data-ptime="start" value="${p.start}" aria-label="${k} 시작 시각"><span class="til">~</span>
+      <input type="time" data-ptime="end" value="${p.end}" aria-label="${k} 마친 시각"></div></div>`; }).join('')
     + (total ? `<div class="ptsum">오늘 기도 합계 ${fmtMins(total)}</div>` : '');
   $('#dNote').value = day.note || '';
   renderCal(); renderProgress();
