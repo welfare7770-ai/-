@@ -208,6 +208,45 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .editbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 14px;padding:9px 12px;border-radius:10px;background:var(--pm-soft);color:var(--pm);font:700 13.5px var(--gothic)}
 .editbar span{flex:1;min-width:0}
 .editbar[hidden]{display:none}
+.daynav{display:flex;align-items:center;gap:8px;padding:12px 14px}
+.daynav input{flex:1;min-width:0;text-align:center}
+.daynav .btn{padding:8px 12px}
+.daylabel{text-align:center;font:700 16px var(--gothic);margin:-4px 0 12px}
+.daylabel small{display:block;font:500 12.5px var(--gothic);color:var(--muted);margin-top:2px}
+.nextread{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:var(--accent-soft);margin-bottom:12px}
+.nextread b{font:700 17px var(--myeongjo);color:var(--accent)}
+.nextread span{font-size:12.5px;color:var(--muted);display:block}
+.quick{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px;font:600 14px var(--gothic)}
+.quick button{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:999px;padding:7px 14px;font:700 14px var(--gothic);cursor:pointer}
+.quick button:active{background:var(--fill)}
+.rrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.rrow>b{flex:0 0 44px;text-align:center;font:700 12px var(--gothic);border:1px solid var(--line);border-radius:6px;padding:2px 0}
+.rrow .num{display:flex;align-items:center;gap:4px;font:700 14px var(--gothic)}
+.rrow .num input{width:64px;text-align:center;padding:8px 4px;font-weight:700}
+.readlist{display:grid;gap:6px;margin-top:12px}
+.readitem{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:var(--surface-2);font:600 15px var(--myeongjo)}
+.readitem span{flex:1;min-width:0}
+.readitem small{font:500 12px var(--gothic);color:var(--muted)}
+.readitem button{border:0;background:transparent;color:var(--danger);font-size:18px;cursor:pointer;padding:0 4px}
+.pray{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-bottom:8px}
+.pray button{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 6px;cursor:pointer;color:var(--text);font:700 14px var(--gothic);display:grid;gap:2px;justify-items:center}
+.pray button small{font:500 11.5px var(--gothic);color:var(--muted)}
+.pray button.on{background:var(--fill);border-color:var(--fill);color:var(--on-fill)}
+.pray button.on small{color:var(--on-fill)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.cal .wd{font:700 11.5px var(--gothic);color:var(--muted);padding:2px 0}
+.cal .wd:first-child{color:var(--danger)}
+.cal button{border:1px solid transparent;background:var(--surface-2);border-radius:9px;padding:5px 0 4px;min-height:46px;cursor:pointer;color:var(--text);font:600 13px var(--gothic);display:grid;align-content:start;justify-items:center;gap:2px}
+.cal button.sel{border-color:var(--accent)}
+.cal button.today{background:var(--accent-soft)}
+.cal button i{font-style:normal;font-size:10.5px;line-height:1.2;color:var(--accent)}
+.cal button i.p{color:var(--pm)}
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font:700 15px var(--gothic)}
+.bar{height:12px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin:6px 0 4px}
+.bar>i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--fill),var(--gold))}
+.progbook{border:1px solid var(--line);border-radius:8px;padding:4px 9px;font:500 13px var(--gothic);cursor:pointer;color:var(--text)}
+.progbook.done{font-weight:700}
+.progbook.done::after{content:" ✓";color:var(--ok)}
 </style>
 </head>
 <body>
@@ -221,6 +260,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 
   <nav class="tabs" id="tabs">
     <button data-v="write" class="on">✎ 설교 기록</button>
+    <button data-v="daily">매일 경건</button>
     <button data-v="weekly">주별 말씀요약</button>
     <button data-v="search">검색·목록</button>
     <button data-v="bible">성경 66권 색인</button>
@@ -299,6 +339,47 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
   </section>
 
   <!-- 주별 -->
+  <section class="view" id="v-daily">
+    <div class="card daynav">
+      <button type="button" class="btn" id="dPrev" aria-label="전날">‹</button>
+      <input type="date" id="dDate" min="2006-01-01">
+      <button type="button" class="btn" id="dNextDay" aria-label="다음날">›</button>
+      <button type="button" class="btn" id="dToday">오늘</button>
+    </div>
+    <div class="daylabel" id="dLabel"></div>
+
+    <div class="card">
+      <h2>말씀 읽기</h2>
+      <div class="nextread"><div><span>이어 읽을 곳</span><b id="dNext"></b></div></div>
+      <div class="quick">이어서 <button type="button" data-q="1">1장</button><button type="button" data-q="2">2장</button><button type="button" data-q="3">3장</button><button type="button" data-q="5">5장</button> 읽음</div>
+      <h3>읽은 범위 직접 입력</h3>
+      <div class="rrow"><b>시작</b><input type="hidden" id="rFromBook"><button type="button" class="bookbtn" id="rFromBtn"><span></span><i>▼</i></button><span class="num"><input id="rFromCh" type="number" min="1" inputmode="numeric">장</span></div>
+      <div class="rrow"><b>~ 끝</b><input type="hidden" id="rToBook"><button type="button" class="bookbtn" id="rToBtn"><span></span><i>▼</i></button><span class="num"><input id="rToCh" type="number" min="1" inputmode="numeric">장</span></div>
+      <div class="row end"><button type="button" class="btn primary sm" id="rAdd">읽은 범위 추가</button></div>
+      <div class="readlist" id="dReadList"></div>
+    </div>
+
+    <div class="card">
+      <h2>기도 시간</h2>
+      <div class="pray" id="dPray"></div>
+      <p class="hint" style="margin:0 0 12px">누르면 체크되고 그때 시각이 기록됩니다. 다시 누르면 해제됩니다.</p>
+      <label for="dNote">오늘의 기도 제목 · 묵상</label>
+      <textarea id="dNote" rows="2" placeholder="기도 제목이나 오늘 받은 말씀 한 줄"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="calhead"><button type="button" class="btn ghost sm" id="cPrev">‹</button><span id="cTitle"></span><button type="button" class="btn ghost sm" id="cNext">›</button></div>
+      <div class="cal" id="dCal"></div>
+      <p class="hint" style="margin:8px 0 0">숫자는 그날 읽은 장 수, 🙏는 기도 횟수입니다. 날짜를 누르면 그날로 이동합니다.</p>
+    </div>
+
+    <div class="card">
+      <h2>성경 통독 현황 (66권)</h2>
+      <div id="dProg"></div>
+      <div id="dBookDetail"></div>
+    </div>
+  </section>
+
   <section class="view" id="v-weekly">
     <div class="card">
       <div class="row">
@@ -380,6 +461,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
       <div class="row">
         <button class="btn" id="exportCsv">설교 목록 CSV (엑셀에서 열기)</button>
         <button class="btn" id="exportEventCsv">행사 소감 CSV</button>
+        <button class="btn" id="exportDailyCsv">매일 경건 CSV</button>
       </div>
       <p class="hint">연도·월·주차·요일·예배·인도자·성경분류·권·장·절·제목·주제·대지1~4·요약·적용이 열로 나뉩니다.</p>
     </div>
@@ -421,7 +503,7 @@ CATS.forEach(c => c.books.forEach(([name, chapters]) => {
 
 // ───────── 저장소 ─────────
 const KEY = 'sermon-notes-v1';
-let db = {sermons:[], events:[], weekNotes:{}};
+let db = {sermons:[], events:[], weekNotes:{}, daily:{}};
 function load(){ try { const s = localStorage.getItem(KEY); if (s) db = Object.assign(db, JSON.parse(s)); } catch(e) {} }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e) { toast('저장 실패: 백업 파일로 내려받아 두세요'); } }
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -483,6 +565,7 @@ function showView(v, fromPop){
   if (v === 'search') renderSearch();
   if (v === 'bible') renderBible();
   if (v === 'events') renderEvents();
+  if (v === 'daily') renderDaily();
   window.scrollTo({top:0});
 }
 
@@ -509,7 +592,7 @@ function passageRow(p={}){
     $$('input[data-k^=ch]', div).forEach(i => i.max = b ? b.chapters : '');
   };
   $('[data-k=book]', div).addEventListener('change', showBook); showBook();
-  $('.bookbtn', div).onclick = () => openBookSheet(div);
+  $('.bookbtn', div).onclick = () => openBookSheet($('[data-k=book]', div), () => $('input[data-k=ch1]', div).focus({preventScroll:true}));
   const pv = () => {
     const q = {}; $$('[data-k]', div).forEach(el => { const v = el.value.trim(); if (v) q[el.dataset.k] = el.dataset.k === 'book' ? v : +v; });
     $('.pv', div).textContent = fmtPassage(q);
@@ -518,9 +601,9 @@ function passageRow(p={}){
   $('.x', div).onclick = () => { div.remove(); if (!$$('#passages .passage').length) $('#passages').append(passageRow()); };
   return div;
 }
-let pickRow = null;
+let pickInput = null, pickDone = null;
 function renderBookSheet(){
-  const q = $('#bookFind').value.trim(), cur = pickRow ? $('[data-k=book]', pickRow).value : '';
+  const q = $('#bookFind').value.trim(), cur = pickInput ? pickInput.value : '';
   $('#bookSheetList').innerHTML = ['구약','신약'].map(t => {
     const cats = CATS.filter(c => BOOK[c.books[0][0]].testament === t).map(c => {
       const bs = c.books.filter(([n]) => !q || n.includes(q));
@@ -529,8 +612,8 @@ function renderBookSheet(){
     return cats ? `<div class="tt">${t}</div>${cats}` : '';
   }).join('') || '<div class="empty">찾는 성경이 없습니다.</div>';
 }
-function openBookSheet(row){
-  pickRow = row; $('#bookFind').value = ''; renderBookSheet();
+function openBookSheet(input, done){
+  pickInput = input; pickDone = done; $('#bookFind').value = ''; renderBookSheet();
   $('#bookSheet').classList.add('on'); $('.sheet-card').scrollTop = 0;
   history.pushState({sheet:1, view:history.state?.view}, '');
 }
@@ -542,12 +625,12 @@ function closeBookSheet(){
 $('#bookFind').addEventListener('input', renderBookSheet);
 $('#bookSheet').addEventListener('click', e => {
   if (e.target.id === 'bookSheet' || e.target.closest('[data-sheetclose]')) return closeBookSheet();
-  const b = e.target.closest('[data-pick]'); if (!b || !pickRow) return;
-  const inp = $('[data-k=book]', pickRow);
+  const b = e.target.closest('[data-pick]'); if (!b || !pickInput) return;
+  const inp = pickInput;
   inp.value = b.dataset.pick;
   inp.dispatchEvent(new Event('change', {bubbles:true})); inp.dispatchEvent(new Event('input', {bubbles:true}));
   closeBookSheet();
-  $('input[data-k=ch1]', pickRow).focus({preventScroll:true});
+  pickDone?.();
 });
 function pointsHtml(points=[]){
   $('#points').innerHTML = [0,1,2,3].map(i => `
@@ -901,6 +984,125 @@ $('#eventList').addEventListener('click', e => {
   }
 });
 
+// ───────── 매일 경건 ─────────
+// 성경 전체 1,189장을 창세기 1장 = 0 부터 차례로 번호를 매겨 범위 계산에 씁니다.
+const BOOKS = Object.values(BOOK).sort((a,b) => a.order - b.order);
+let TOTAL = 0; BOOKS.forEach(b => { b.start = TOTAL; TOTAL += b.chapters; });
+const gIdx = (book, ch) => BOOK[book].start + ch - 1;
+const gRef = i => { const b = BOOKS.find(b => i >= b.start && i < b.start + b.chapters); return {book:b.name, ch:i - b.start + 1}; };
+const unitOf = book => book === '시편' ? '편' : '장';
+function fmtRange(r){
+  const a = gRef(r.from), b = gRef(r.to);
+  if (a.book === b.book) return a.ch === b.ch ? `${a.book} ${a.ch}${unitOf(a.book)}` : `${a.book} ${a.ch}~${b.ch}${unitOf(a.book)}`;
+  return `${a.book} ${a.ch}${unitOf(a.book)} ~ ${b.book} ${b.ch}${unitOf(b.book)}`;
+}
+const PRAY = [['새벽','4~7시'],['아침','7~10시'],['낮','11~14시'],['저녁','17~20시'],['자기 전','21시~']];
+let dSel = today(), calMonth = today().slice(0,7);
+const dayOf = d => db.daily[d] || {readings:[], prayers:{}, note:''};
+function putDay(d, day){
+  if (!day.readings.length && !Object.keys(day.prayers).length && !day.note) delete db.daily[d]; else db.daily[d] = day;
+  save();
+}
+function readCounts(){
+  const c = new Uint16Array(TOTAL);
+  Object.values(db.daily).forEach(day => (day.readings||[]).forEach(r => { for (let i = r.from; i <= r.to; i++) c[i]++; }));
+  return c;
+}
+function nextStart(upto){
+  const days = Object.keys(db.daily).filter(d => d <= upto).sort();
+  for (let k = days.length - 1; k >= 0; k--) { const rs = db.daily[days[k]].readings || []; if (rs.length) return (rs[rs.length-1].to + 1) % TOTAL; }
+  return 0;
+}
+function addReading(from, to){
+  if (from > to) return toast('끝이 시작보다 앞에 있습니다. 범위를 확인해 주세요');
+  const day = dayOf(dSel); day.readings = [...(day.readings||[]), {from, to}];
+  putDay(dSel, day); renderDaily(); toast(`${fmtRange({from, to})} 읽음으로 체크했습니다`);
+}
+function setRangeBtn(which, book){
+  const inp = $(`#r${which}Book`), btn = $(`#r${which}Btn`), b = BOOK[book];
+  inp.value = book || '';
+  btn.classList.toggle('empty', !b);
+  $('span', btn).innerHTML = b ? `${esc(book)}<small>${b.cat}</small>` : '성경 선택';
+  $(`#r${which}Ch`).max = b ? b.chapters : '';
+}
+function renderDaily(){
+  const i = dinfo(dSel), isToday = dSel === today();
+  $('#dDate').value = dSel;
+  $('#dLabel').innerHTML = `${i.y}년 ${i.m}월 ${i.d}일 ${i.wdName}요일${isToday ? ' · 오늘' : ''}`;
+  const day = dayOf(dSel), nx = gRef(nextStart(dSel));
+  $('#dNext').textContent = `${nx.book} ${nx.ch}${unitOf(nx.book)}`;
+  if (!$('#rFromBook').value) { setRangeBtn('From', nx.book); $('#rFromCh').value = nx.ch; setRangeBtn('To', nx.book); $('#rToCh').value = ''; }
+  $('#dReadList').innerHTML = (day.readings||[]).map((r,k) => `<div class="readitem"><span>📖 ${esc(fmtRange(r))}</span><small>${r.to - r.from + 1}장</small><button type="button" data-rdel="${k}" aria-label="삭제">×</button></div>`).join('')
+    || '<div class="hint">아직 오늘 읽은 말씀이 없습니다. 위의 「이어서 ○장 읽음」을 누르거나 범위를 직접 넣으세요.</div>';
+  $('#dPray').innerHTML = PRAY.map(([k,t]) => { const v = day.prayers?.[k]; return `<button type="button" class="${v ? 'on' : ''}" data-pray="${k}">${v ? '✓ ' : ''}${k}<small>${v && v !== true ? v : t}</small></button>`; }).join('');
+  $('#dNote').value = day.note || '';
+  renderCal(); renderProgress();
+}
+function renderCal(){
+  const [y, m] = calMonth.split('-').map(Number);
+  const first = new Date(y, m-1, 1).getDay(), last = new Date(y, m, 0).getDate(), td = today();
+  $('#cTitle').textContent = `${y}년 ${m}월 경건 달력`;
+  let h = WD.map(w => `<div class="wd">${w}</div>`).join('') + '<div></div>'.repeat(first);
+  for (let d = 1; d <= last; d++) {
+    const key = `${calMonth}-${String(d).padStart(2,'0')}`, day = db.daily[key];
+    const ch = (day?.readings||[]).reduce((a,r) => a + r.to - r.from + 1, 0), pr = Object.keys(day?.prayers||{}).length;
+    h += `<button type="button" data-day="${key}" class="${key===dSel?'sel':''} ${key===td?'today':''}">${d}${ch ? `<i>📖${ch}</i>` : ''}${pr ? `<i class="p">🙏${pr}</i>` : ''}</button>`;
+  }
+  $('#dCal').innerHTML = h;
+}
+let progBook = '';
+function renderProgress(){
+  const c = readCounts(); let cycle = c.reduce((a,v) => Math.min(a,v), 65535);
+  const done = i => c[i] > cycle, total = c.reduce((a,v,i) => a + (done(i) ? 1 : 0), 0);
+  const pct = (total / TOTAL * 100).toFixed(1);
+  $('#dProg').innerHTML = `<div class="row" style="justify-content:space-between"><b>${cycle + 1}독째 진행 중</b><span class="hint">${total.toLocaleString()} / ${TOTAL.toLocaleString()}장 · ${pct}%</span></div>
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    ${cycle ? `<p class="hint" style="margin:0 0 8px">지금까지 성경 전체를 ${cycle}번 읽으셨습니다.</p>` : ''}` +
+    ['구약','신약'].map(t => `<div class="tt" style="font:700 13px var(--gothic);color:var(--muted);margin:12px 0 6px">${t}</div>` +
+      CATS.filter(cg => BOOK[cg.books[0][0]].testament === t).map(cg => `<div class="cat"><h3><i style="background:${cg.color}"></i>${cg.key}</h3><div class="books">${
+        cg.books.map(([n, chs]) => { const b = BOOK[n]; let r = 0; for (let k = 0; k < chs; k++) if (done(b.start + k)) r++;
+          const w = Math.round(r / chs * 100);
+          return `<button type="button" class="progbook ${r === chs ? 'done' : ''}" data-prog="${n}" style="background:linear-gradient(90deg,${cg.color} ${w}%,var(--surface) ${w}%)">${n} <small>${r}/${chs}</small></button>`; }).join('')
+      }</div></div>`).join('')).join('');
+  const el = $('#dBookDetail');
+  if (!progBook) { el.innerHTML = ''; return; }
+  const b = BOOK[progBook];
+  el.innerHTML = `<h3 style="margin-top:14px">${b.name} <span class="hint">이번 회차에 읽은 ${unitOf(b.name)} 표시</span></h3>
+    <div class="chgrid">${Array.from({length:b.chapters}, (_,k) => `<span class="${done(b.start+k)?'on':''}">${k+1}</span>`).join('')}</div>`;
+}
+$('#dDate').addEventListener('change', e => { if (e.target.value) { dSel = e.target.value; calMonth = dSel.slice(0,7); $('#rFromBook').value = ''; renderDaily(); } });
+const shiftDay = n => { const [y,m,d] = dSel.split('-').map(Number); const t = new Date(y, m-1, d+n);
+  dSel = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; calMonth = dSel.slice(0,7); $('#rFromBook').value = ''; renderDaily(); };
+$('#dPrev').onclick = () => shiftDay(-1);
+$('#dNextDay').onclick = () => shiftDay(1);
+$('#dToday').onclick = () => { dSel = today(); calMonth = dSel.slice(0,7); $('#rFromBook').value = ''; renderDaily(); };
+$('#cPrev').onclick = $('#cNext').onclick = e => { const [y,m] = calMonth.split('-').map(Number); const t = new Date(y, m-1 + (e.currentTarget.id === 'cNext' ? 1 : -1), 1);
+  calMonth = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`; renderCal(); };
+$('#dCal').addEventListener('click', e => { const b = e.target.closest('[data-day]'); if (!b) return; dSel = b.dataset.day; $('#rFromBook').value = ''; renderDaily(); window.scrollTo({top:0, behavior:'smooth'}); });
+$('.quick').addEventListener('click', e => { const b = e.target.closest('[data-q]'); if (!b) return;
+  const from = nextStart(dSel); addReading(from, Math.min(from + +b.dataset.q - 1, TOTAL - 1)); });
+$('#rFromBtn').onclick = () => openBookSheet($('#rFromBook'), () => $('#rFromCh').focus({preventScroll:true}));
+$('#rToBtn').onclick = () => openBookSheet($('#rToBook'), () => $('#rToCh').focus({preventScroll:true}));
+$('#rFromBook').addEventListener('change', e => { setRangeBtn('From', e.target.value); setRangeBtn('To', e.target.value); $('#rFromCh').value = ''; $('#rToCh').value = ''; });
+$('#rToBook').addEventListener('change', e => { setRangeBtn('To', e.target.value); $('#rToCh').value = ''; });
+$('#rAdd').onclick = () => {
+  const fb = $('#rFromBook').value, tb = $('#rToBook').value || fb, fc = +$('#rFromCh').value, tc = +$('#rToCh').value || fc;
+  if (!BOOK[fb] || !fc) return toast('시작 성경과 장을 입력해 주세요');
+  if (fc > BOOK[fb].chapters || tc > BOOK[tb].chapters) return toast(`장 번호가 너무 큽니다 (${fb} ${BOOK[fb].chapters}장까지)`);
+  $('#rFromBook').value = ''; addReading(gIdx(fb, fc), gIdx(tb, tc));
+};
+$('#dReadList').addEventListener('click', e => { const b = e.target.closest('[data-rdel]'); if (!b) return;
+  const day = dayOf(dSel), k = +b.dataset.rdel, [gone] = day.readings.splice(k, 1); putDay(dSel, day); $('#rFromBook').value = ''; renderDaily();
+  toast(`${fmtRange(gone)} 체크를 지웠습니다`, () => { const d2 = dayOf(dSel); d2.readings.splice(k, 0, gone); putDay(dSel, d2); $('#rFromBook').value = ''; renderDaily(); }); });
+$('#dPray').addEventListener('click', e => { const b = e.target.closest('[data-pray]'); if (!b) return;
+  const day = dayOf(dSel), k = b.dataset.pray; day.prayers = {...(day.prayers||{})};
+  if (day.prayers[k]) delete day.prayers[k];
+  else { const n = new Date(); day.prayers[k] = dSel === today() ? `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}` : true; }
+  putDay(dSel, day); renderDaily(); });
+let noteTimer;
+$('#dNote').addEventListener('input', e => { clearTimeout(noteTimer); noteTimer = setTimeout(() => { const day = dayOf(dSel); day.note = e.target.value.trim(); putDay(dSel, day); renderCal(); }, 500); });
+$('#dProg').addEventListener('click', e => { const b = e.target.closest('[data-prog]'); if (!b) return; progBook = progBook === b.dataset.prog ? '' : b.dataset.prog; renderProgress(); });
+
 // ───────── 백업 · 내보내기 ─────────
 function download(name, text, type){
   const a = document.createElement('a');
@@ -928,6 +1130,7 @@ function importData(d){
   const merge = (a, b) => { const m = new Map(a.map(x => [x.id, x])); (b||[]).forEach(x => m.set(x.id, x)); return [...m.values()]; };
   db.sermons = merge(db.sermons, d.sermons); db.events = merge(db.events, d.events);
   db.weekNotes = Object.assign({}, db.weekNotes, d.weekNotes);
+  db.daily = Object.assign({}, db.daily, d.daily);
   save(); renderStats(); updateBackupNote(); toast(`불러왔습니다 (설교 ${d.sermons?.length || 0}건)`);
 }
 $('#restoreGo').onclick = () => { try { importData(JSON.parse($('#restoreText').value)); $('#restoreText').value = ''; } catch(e) { toast('내용을 읽을 수 없습니다. 백업 내용 전체를 붙여넣었는지 확인하세요'); } };
@@ -954,10 +1157,16 @@ $('#exportEventCsv').onclick = () => {
   const rows = [...db.events].sort((a,b) => a.date.localeCompare(b.date)).map(e => [e.date, e.name, e.reflection]);
   download(`행사소감_${today()}.csv`, '﻿' + [['날짜','행사명','소감'], ...rows].map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv');
 };
+$('#exportDailyCsv').onclick = () => {
+  const rows = Object.keys(db.daily).sort().map(d => { const day = db.daily[d];
+    return [d, dinfo(d).wdName, (day.readings||[]).map(fmtRange).join(' / '), (day.readings||[]).reduce((a,r) => a + r.to - r.from + 1, 0),
+      PRAY.map(([k]) => day.prayers?.[k] ? (day.prayers[k] === true ? k : `${k}(${String(day.prayers[k]).replace(' 기도','')})`) : '').filter(Boolean).join(', '), day.note]; });
+  download(`매일경건_${today()}.csv`, '\ufeff' + [['날짜','요일','읽은 말씀','장 수','기도','기도 제목·묵상'], ...rows].map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv');
+};
 $('#wipe').onclick = () => {
   if (!confirm('모든 설교·행사 기록을 삭제합니다. 백업은 받아 두셨나요?')) return;
   if (prompt('정말 삭제하려면 "삭제"라고 입력하세요') !== '삭제') return;
-  db = {sermons:[], events:[], weekNotes:{}}; save(); renderStats(); toast('모두 삭제했습니다');
+  db = {sermons:[], events:[], weekNotes:{}, daily:{}}; save(); renderStats(); toast('모두 삭제했습니다');
 };
 $('#loadSample').onclick = () => {
   const d = lastSunday();

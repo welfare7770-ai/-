@@ -1,5 +1,5 @@
 // 오프라인에서도 열리도록 화면 파일을 보관합니다. 설교 기록은 여기에 저장되지 않습니다.
-const CACHE = 'sermon-note-v8';
+const CACHE = 'sermon-note-v9';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
