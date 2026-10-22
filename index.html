@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#14284a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="설교 노트">
+<meta name="apple-mobile-web-app-title" content="신앙증진">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
-<title>설교 노트</title>
+<title>신앙증진 프로젝트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -102,7 +102,19 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .dateline{display:inline-block;margin-top:8px;padding:3px 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font:700 13px var(--gothic);white-space:nowrap}
 .passage{position:relative;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--surface)}
 .passage .top{display:flex;gap:8px;align-items:center}
-.passage .top select{flex:1;min-width:0;font-weight:600}
+.bookbtn{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text);font:600 16px var(--myeongjo);cursor:pointer;text-align:left}
+.bookbtn small{font:500 12px var(--gothic);color:var(--muted);margin-left:6px}
+.bookbtn.empty span{color:var(--ph);font-weight:400}
+.bookbtn i{font-style:normal;color:var(--muted);font-size:12px}
+.sheet{position:fixed;inset:0;z-index:25;background:rgba(10,18,32,.45);display:none;align-items:flex-end;justify-content:center}
+.sheet.on{display:flex}
+.sheet-card{width:100%;max-width:720px;max-height:82vh;overflow-y:auto;background:var(--surface);border-radius:18px 18px 0 0;padding:14px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));box-shadow:0 -8px 30px rgba(0,0,0,.2)}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font:700 16px var(--gothic)}
+.sheet-head .xbtn{width:32px;height:32px;border-radius:50%;border:0;background:var(--surface-2);color:var(--muted);font-size:16px;cursor:pointer}
+#bookFind{margin-bottom:12px;font-size:15px}
+.sheet .tt{font:700 13px var(--gothic);color:var(--muted);margin:6px 0 8px}
+.sheet .cat{margin-bottom:12px}
+.sheet .book{color:var(--text);font-weight:500}
 .passage .x{flex:0 0 auto;width:32px;height:32px;border:0;border-radius:50%;background:var(--surface-2);color:var(--danger);font-size:18px;line-height:1;cursor:pointer}
 .passage .ref{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin-top:10px}
 .passage .grp{display:flex;align-items:center;gap:6px}
@@ -198,7 +210,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>설교 노트</h1>
+      <h1>신앙증진 프로젝트</h1>
     </div>
     <div class="stats" id="stats"></div>
   </header>
@@ -378,6 +390,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
   </section>
 </div>
 
+<div class="sheet" id="bookSheet"><div class="sheet-card" role="dialog" aria-label="성경 선택">
+  <div class="sheet-head"><span>성경 선택</span><button type="button" class="xbtn" data-sheetclose aria-label="닫기">✕</button></div>
+  <input id="bookFind" placeholder="이름으로 찾기 (예: 로마, 시편)" autocomplete="off">
+  <div id="bookSheetList"></div>
+</div></div>
 <div class="modal" id="modal"><div class="card"><div id="modalBody"></div></div></div>
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button type="button" id="toastUndo" hidden>되돌리기</button></div>
 
@@ -466,13 +483,11 @@ function showView(v, fromPop){
 }
 
 // ───────── 설교 입력 폼 ─────────
-const bookOptions = '<option value="">성경 선택</option>' + CATS.map(c =>
-  `<optgroup label="${c.key}">${c.books.map(([n]) => `<option>${n}</option>`).join('')}</optgroup>`).join('');
 function passageRow(p={}){
   const div = document.createElement('div');
   div.className = 'passage';
   div.innerHTML = `
-    <div class="top"><select data-k="book" aria-label="성경">${bookOptions}</select><button type="button" class="x" title="삭제">×</button></div>
+    <div class="top"><input type="hidden" data-k="book"><button type="button" class="bookbtn"><span></span><i>▼</i></button><button type="button" class="x" title="삭제">×</button></div>
     <div class="ref">
       <div class="grp"><b>시작</b>
         <span class="num"><input data-k="ch1" type="number" min="1" inputmode="numeric">장</span>
@@ -483,10 +498,14 @@ function passageRow(p={}){
     </div>
     <div class="pv"></div>`;
   $$('[data-k]', div).forEach(el => el.value = p[el.dataset.k] ?? '');
-  $('[data-k=book]', div).addEventListener('change', e => {
-    const b = BOOK[e.target.value];
+  const showBook = () => {
+    const name = $('[data-k=book]', div).value, b = BOOK[name], btn = $('.bookbtn', div);
+    btn.classList.toggle('empty', !b);
+    $('span', btn).innerHTML = b ? `${esc(name)}<small>${b.cat}</small>` : '성경 선택';
     $$('input[data-k^=ch]', div).forEach(i => i.max = b ? b.chapters : '');
-  });
+  };
+  $('[data-k=book]', div).addEventListener('change', showBook); showBook();
+  $('.bookbtn', div).onclick = () => openBookSheet(div);
   const pv = () => {
     const q = {}; $$('[data-k]', div).forEach(el => { const v = el.value.trim(); if (v) q[el.dataset.k] = el.dataset.k === 'book' ? v : +v; });
     $('.pv', div).textContent = fmtPassage(q);
@@ -495,6 +514,37 @@ function passageRow(p={}){
   $('.x', div).onclick = () => { div.remove(); if (!$$('#passages .passage').length) $('#passages').append(passageRow()); };
   return div;
 }
+let pickRow = null;
+function renderBookSheet(){
+  const q = $('#bookFind').value.trim(), cur = pickRow ? $('[data-k=book]', pickRow).value : '';
+  $('#bookSheetList').innerHTML = ['구약','신약'].map(t => {
+    const cats = CATS.filter(c => BOOK[c.books[0][0]].testament === t).map(c => {
+      const bs = c.books.filter(([n]) => !q || n.includes(q));
+      return bs.length ? `<div class="cat"><h3><i style="background:${c.color}"></i>${c.key}</h3><div class="books">${bs.map(([n]) => `<button type="button" class="book ${n===cur?'sel':''}" data-pick="${n}">${n}</button>`).join('')}</div></div>` : '';
+    }).join('');
+    return cats ? `<div class="tt">${t}</div>${cats}` : '';
+  }).join('') || '<div class="empty">찾는 성경이 없습니다.</div>';
+}
+function openBookSheet(row){
+  pickRow = row; $('#bookFind').value = ''; renderBookSheet();
+  $('#bookSheet').classList.add('on'); $('.sheet-card').scrollTop = 0;
+  history.pushState({sheet:1, view:history.state?.view}, '');
+}
+function closeBookSheet(){
+  if (!$('#bookSheet').classList.contains('on')) return;
+  $('#bookSheet').classList.remove('on');
+  if (history.state?.sheet) { skipPop = true; history.back(); }
+}
+$('#bookFind').addEventListener('input', renderBookSheet);
+$('#bookSheet').addEventListener('click', e => {
+  if (e.target.id === 'bookSheet' || e.target.closest('[data-sheetclose]')) return closeBookSheet();
+  const b = e.target.closest('[data-pick]'); if (!b || !pickRow) return;
+  const inp = $('[data-k=book]', pickRow);
+  inp.value = b.dataset.pick;
+  inp.dispatchEvent(new Event('change', {bubbles:true})); inp.dispatchEvent(new Event('input', {bubbles:true}));
+  closeBookSheet();
+  $('input[data-k=ch1]', pickRow).focus({preventScroll:true});
+});
 function pointsHtml(points=[]){
   $('#points').innerHTML = [0,1,2,3].map(i => `
     <div class="point">
@@ -611,6 +661,7 @@ function closeModal(){
 }
 window.addEventListener('popstate', e => {
   if (skipPop) { skipPop = false; return; }
+  if ($('#bookSheet').classList.contains('on')) { $('#bookSheet').classList.remove('on'); return; }
   if ($('#modal').classList.contains('on')) { $('#modal').classList.remove('on'); return; }
   showView(e.state?.view || 'write', true);
 });
@@ -654,7 +705,7 @@ $('#modal').addEventListener('click', e => {
   const del = e.target.closest('[data-del]');
   if (del) removeSermon(del.dataset.del);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeBookSheet(); closeModal(); } });
 document.addEventListener('click', e => { const it = e.target.closest('[data-open]'); if (it) openDetail(it.dataset.open); });
 function refreshCurrent(){ const v = $('#tabs .on')?.dataset.v; if (v && v !== 'write') showView(v); }
 
@@ -862,7 +913,7 @@ function updateBackupNote(){
 }
 $('#backupNote').addEventListener('click', e => { if (e.target.closest('[data-gobackup]')) showView('backup'); });
 const backupText = () => { db.lastBackup = today(); save(); updateBackupNote(); return JSON.stringify(db, null, 1); };
-$('#exportJson').onclick = () => download(`설교노트_백업_${today()}.json`, backupText(), 'application/json');
+$('#exportJson').onclick = () => download(`신앙증진_백업_${today()}.json`, backupText(), 'application/json');
 $('#copyJson').onclick = async () => {
   const t = backupText();
   try { await navigator.clipboard.writeText(t); toast('복사했습니다 · 메모나 카톡 "나와의 채팅"에 붙여넣어 보관하세요'); }

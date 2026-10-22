@@ -1,6 +1,6 @@
 {
-  "name": "설교 노트",
-  "short_name": "설교 노트",
+  "name": "신앙증진 프로젝트",
+  "short_name": "신앙증진",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
