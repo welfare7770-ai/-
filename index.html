@@ -216,8 +216,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .nextread{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:var(--accent-soft);margin-bottom:12px}
 .nextread b{font:700 17px var(--myeongjo);color:var(--accent)}
 .nextread span{font-size:12.5px;color:var(--muted);display:block}
-.quick{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px;font:600 14px var(--gothic)}
-.quick button{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:999px;padding:7px 14px;font:700 14px var(--gothic);cursor:pointer}
+.quick{margin-bottom:16px;font:600 13px var(--gothic);color:var(--muted)}
+.qbtns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:6px}
+.quick button{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:999px;padding:8px 0;font:700 14px var(--gothic);cursor:pointer}
 .quick button:active{background:var(--fill)}
 .rrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .rrow>b{flex:0 0 40px;text-align:center;font:700 12px var(--gothic);border:1px solid var(--line);border-radius:6px;padding:2px 0}
@@ -351,7 +352,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
     <div class="card">
       <h2>말씀 읽기</h2>
       <div class="nextread"><div><span>이어 읽을 곳</span><b id="dNext"></b></div></div>
-      <div class="quick">이어서 <button type="button" data-q="1">1장</button><button type="button" data-q="2">2장</button><button type="button" data-q="3">3장</button><button type="button" data-q="5">5장</button> 읽음</div>
+      <div class="quick"><span>이어서 읽은 장 수를 누르세요</span><div class="qbtns"><button type="button" data-q="1">1장</button><button type="button" data-q="2">2장</button><button type="button" data-q="3">3장</button><button type="button" data-q="5">5장</button></div></div>
       <h3>읽은 범위 직접 입력</h3>
       <div class="rrow"><b>시작</b><input type="hidden" id="rFromBook"><button type="button" class="bookbtn" id="rFromBtn"><span></span><i>▼</i></button><span class="num"><input id="rFromCh" type="number" min="1" inputmode="numeric">장</span></div>
       <div class="rrow"><b>~ 끝</b><input type="hidden" id="rToBook"><button type="button" class="bookbtn" id="rToBtn"><span></span><i>▼</i></button><span class="num"><input id="rToCh" type="number" min="1" inputmode="numeric">장</span></div>
@@ -1013,9 +1014,14 @@ function nextStart(upto){
   for (let k = days.length - 1; k >= 0; k--) { const rs = db.daily[days[k]].readings || []; if (rs.length) return (rs[rs.length-1].to + 1) % TOTAL; }
   return 0;
 }
+function normRanges(rs){
+  const out = [];
+  [...rs].sort((a,b) => a.from - b.from).forEach(r => { const l = out[out.length-1]; if (l && r.from <= l.to + 1) l.to = Math.max(l.to, r.to); else out.push({from:r.from, to:r.to}); });
+  return out;
+}
 function addReading(from, to){
   if (from > to) return toast('끝이 시작보다 앞에 있습니다. 범위를 확인해 주세요');
-  const day = dayOf(dSel); day.readings = [...(day.readings||[]), {from, to}];
+  const day = dayOf(dSel); day.readings = normRanges([...(day.readings||[]), {from, to}]);
   putDay(dSel, day); renderDaily(); toast(`${fmtRange({from, to})} 읽음으로 체크했습니다`);
 }
 function setRangeBtn(which, book){
@@ -1093,7 +1099,7 @@ $('#rAdd').onclick = () => {
 };
 $('#dReadList').addEventListener('click', e => { const b = e.target.closest('[data-rdel]'); if (!b) return;
   const day = dayOf(dSel), k = +b.dataset.rdel, [gone] = day.readings.splice(k, 1); putDay(dSel, day); $('#rFromBook').value = ''; renderDaily();
-  toast(`${fmtRange(gone)} 체크를 지웠습니다`, () => { const d2 = dayOf(dSel); d2.readings.splice(k, 0, gone); putDay(dSel, d2); $('#rFromBook').value = ''; renderDaily(); }); });
+  toast(`${fmtRange(gone)} 체크를 지웠습니다`, () => { const d2 = dayOf(dSel); d2.readings = normRanges([...d2.readings, gone]); putDay(dSel, d2); $('#rFromBook').value = ''; renderDaily(); }); });
 $('#dPray').addEventListener('click', e => { const b = e.target.closest('[data-pray]'); if (!b) return;
   const day = dayOf(dSel), k = b.dataset.pray; day.prayers = {...(day.prayers||{})};
   if (day.prayers[k]) delete day.prayers[k];
@@ -1200,6 +1206,7 @@ yearOptions($('#fYear')); monthOptions($('#fMonth')); fillBookFilter();
   const real = d && [d.title, d.theme, d.summary, d.application, d.practice, d.memo, ...(d.points||[]).flatMap(p => [p.h, p.body])].some(Boolean);
   if (real) { fillForm(d); toast('작성 중이던 내용을 불러왔습니다'); } else fillForm();
 })();
+Object.values(db.daily || {}).forEach(d => { d.readings = normRanges(d.readings || []); });
 renderStats(); updateBackupNote(); resetEvent();
 if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
