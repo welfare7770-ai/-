@@ -240,7 +240,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .ptrow .ptin{grid-column:1/-1;display:flex;align-items:center;gap:6px}
 .ptrow .ptend{display:flex;align-items:center;gap:6px}
 .ptrow>b{font:700 13.5px var(--gothic)}
-.ptrow input[type=time]{flex:1 1 0;width:0;min-width:0;padding:6px 4px;text-align:center;font:600 15px var(--gothic);letter-spacing:-.02em}
+.tbox{position:relative;flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px 4px;border:1px solid var(--line);border-radius:9px;background:var(--surface);font:700 15px var(--gothic);white-space:nowrap;overflow:hidden;cursor:pointer}
+.tbox.empty span{color:var(--ph);font-weight:500}
+.tbox input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;cursor:pointer}
+.tbox:focus-within{outline:2px solid var(--accent);outline-offset:-1px}
 .ptrow .til{font-weight:700;color:var(--muted)}
 .ptrow .mins{font:700 13px var(--gothic);color:var(--accent);white-space:nowrap}
 .ptrow .now{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font:700 12.5px var(--gothic);color:var(--text);cursor:pointer}
@@ -1018,6 +1021,9 @@ function prayMins(v){
   let m = c*60 + d - (a*60 + b); if (m < 0) m += 1440; return m;
 }
 const fmtMins = m => m >= 60 ? `${Math.floor(m/60)}시간${m % 60 ? ' ' + m % 60 + '분' : ''}` : `${m}분`;
+// 휴대폰 기본 시각 칸은 글자가 크면 분이 잘려서, 시각은 직접 글자로 보여 주고 투명한 입력칸을 위에 겹칩니다.
+const ampm = t => { if (!t) return ''; const [h, m] = t.split(':').map(Number); return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${String(m).padStart(2,'0')}`; };
+const tbox = (k, f, v, ph) => `<label class="tbox ${v ? '' : 'empty'}"><span>${v ? ampm(v) : ph}</span><input type="time" data-ptime="${f}" value="${v}" aria-label="${k} ${ph}"></label>`;
 const fmtPray = v => { const p = prayOf(v); return p.start ? `${p.start}${p.end ? '~' + p.end : ''}` : ''; };
 let dSel = today(), calMonth = today().slice(0,7);
 const dayOf = d => db.daily[d] || {readings:[], prayers:{}, note:''};
@@ -1067,8 +1073,7 @@ function renderDaily(){
   $('#dPrayTimes').innerHTML = checked.map(([k]) => { const p = prayOf(day.prayers[k]), m = prayMins(day.prayers[k]);
     return `<div class="ptrow" data-slot="${k}"><b>${k}</b>
       <span class="ptend">${!p.end && isToday ? `<button type="button" class="now" data-now>지금 마침</button>` : ''}<span class="mins">${m ? fmtMins(m) : ''}</span></span>
-      <div class="ptin"><input type="time" data-ptime="start" value="${p.start}" aria-label="${k} 시작 시각"><span class="til">~</span>
-      <input type="time" data-ptime="end" value="${p.end}" aria-label="${k} 마친 시각"></div></div>`; }).join('')
+      <div class="ptin">${tbox(k, 'start', p.start, '시작 시각')}<span class="til">~</span>${tbox(k, 'end', p.end, '마친 시각')}</div></div>`; }).join('')
     + (total ? `<div class="ptsum">오늘 기도 합계 ${fmtMins(total)}</div>` : '');
   $('#dNote').value = day.note || '';
   renderCal(); renderProgress();
@@ -1137,7 +1142,8 @@ $('#dPray').addEventListener('click', e => { const b = e.target.closest('[data-p
 $('#dPrayTimes').addEventListener('change', e => { const f = e.target.dataset.ptime, row = e.target.closest('[data-slot]'); if (!f || !row) return;
   const day = dayOf(dSel), k = row.dataset.slot; day.prayers = {...(day.prayers||{})};
   day.prayers[k] = {...prayOf(day.prayers[k]), [f]: e.target.value}; putDay(dSel, day); renderDaily(); });
-$('#dPrayTimes').addEventListener('click', e => { if (!e.target.closest('[data-now]')) return; const k = e.target.closest('[data-slot]').dataset.slot;
+$('#dPrayTimes').addEventListener('click', e => { if (e.target.matches('.tbox input')) { try { e.target.showPicker(); } catch(err) {} return; }
+  if (!e.target.closest('[data-now]')) return; const k = e.target.closest('[data-slot]').dataset.slot;
   const day = dayOf(dSel); day.prayers = {...(day.prayers||{})}; day.prayers[k] = {...prayOf(day.prayers[k]), end: hhmm()};
   putDay(dSel, day); renderDaily(); toast(`${k} 기도 ${fmtMins(prayMins(day.prayers[k]))} 기록했습니다`); });
 let noteTimer;
