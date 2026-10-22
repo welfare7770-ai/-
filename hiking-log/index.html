@@ -1,0 +1,358 @@
+<title>산행 현장 기록장</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 한 줄 세로 기록장 — 상단 저장 상태 바, 섹션별 노트 카드, 하단 고정 작업 버튼 */
+:root{
+  --bg:#eef2ec; --paper:#fbfcf9; --ink:#1f2a22; --muted:#5f6d62; --line:#d3ddd1;
+  --pine:#2c5a3f; --pine-ink:#ffffff; --moss:#e3ecdf; --warn:#9a3b22; --ok:#2c6b45;
+  --display:"Gowun Batang","Nanum Myeongjo",serif;
+  --body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141a16; --paper:#1c241f; --ink:#e4ebe3; --muted:#9caea0; --line:#334038;
+  --pine:#7fbf95; --pine-ink:#10251a; --moss:#24322a; --warn:#f0a080; --ok:#8fd3a6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a16; --paper:#1c241f; --ink:#e4ebe3; --muted:#9caea0; --line:#334038;
+  --pine:#7fbf95; --pine-ink:#10251a; --moss:#24322a; --warn:#f0a080; --ok:#8fd3a6; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 120px;display:grid;gap:14px}
+header h1{font-family:var(--display);font-size:1.6rem;margin:0;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
+.state{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.85rem;color:var(--muted)}
+.chip{border:1px solid var(--line);border-radius:999px;padding:2px 10px;background:var(--paper)}
+.chip.ok{color:var(--ok);border-color:currentColor}
+.chip.warn{color:var(--warn);border-color:currentColor}
+section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px;min-width:0}
+h2{font-family:var(--display);font-size:1.15rem;margin:0;color:var(--pine)}
+.hint{margin:0;color:var(--muted);font-size:.88rem}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.field{display:grid;gap:4px;min-width:0}
+.field>span{font-weight:500;font-size:.92rem}
+input,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)}
+textarea{resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--pine);outline-offset:2px}
+.memo{border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:10px}
+.memo:first-of-type{border-top:0;padding-top:0}
+.memo h3{margin:0;font-size:.95rem;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.memo .grid2{grid-template-columns:120px 1fr}
+@media (max-width:420px){.memo .grid2{grid-template-columns:1fr}}
+button{font:inherit;font-weight:700;border-radius:8px;padding:11px 14px;cursor:pointer;border:1px solid var(--pine);background:var(--pine);color:var(--pine-ink)}
+button.ghost{background:transparent;color:var(--pine)}
+button.danger{border-color:var(--warn);color:var(--warn);background:transparent}
+button.small{padding:6px 10px;font-size:.85rem}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));z-index:5}
+.bar .in{max-width:760px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bar .in button{flex:1 1 auto}
+#msg{flex-basis:100%;margin:0;font-size:.85rem;color:var(--muted);min-height:1.3em}
+.list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.list li{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--bg)}
+.list .t{min-width:0;overflow-wrap:anywhere}
+.list .t b{display:block}
+.list .t small{color:var(--muted)}
+.list .acts{display:flex;gap:6px;flex-wrap:wrap}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--moss);border-radius:8px;padding:10px}
+#plain{font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>산행 현장 기록장</h1>
+    <p>입력하는 즉시 이 기기에 자동 보관됩니다. 산행을 마치면 ‘기록 저장’으로 보관함에 넣고, 필요하면 TXT 파일로 내려받으세요.</p>
+    <div class="state" style="margin-top:8px">
+      <span class="chip" id="autoChip">자동 보관 준비 중</span>
+      <span class="chip" id="cloudChip">보관함 연결 확인 중</span>
+    </div>
+  </header>
+
+  <form id="log" autocomplete="off" onsubmit="return false">
+    <div style="display:grid;gap:14px">
+      <section>
+        <h2>1. 산행 기본 정보</h2>
+        <div class="grid2">
+          <label class="field"><span>산행 날짜</span><input type="date" id="date" name="date"></label>
+          <label class="field"><span>산 이름</span><input type="text" id="mountain" name="mountain" placeholder="예: 주왕산"></label>
+        </div>
+        <label class="field"><span>산행 코스</span><input type="text" id="course" name="course" placeholder="예: 대전사–주봉–후리메기"></label>
+        <div class="grid2">
+          <label class="field"><span>날씨·기온</span><input type="text" id="weather" name="weather" placeholder="예: 맑음, 서늘함"></label>
+          <label class="field"><span>총 거리·동행자</span><input type="text" id="distance" name="distance" placeholder="예: 약 9km, 산악회 회원"></label>
+          <label class="field"><span>시작 시각</span><input type="time" id="start" name="start"></label>
+          <label class="field"><span>종료 시각</span><input type="time" id="finish" name="finish"></label>
+        </div>
+        <label class="field"><span>산행 목적·기대</span><textarea id="purpose" name="purpose" rows="3"></textarea></label>
+      </section>
+
+      <section>
+        <h2>2. 시간대별 현장 메모</h2>
+        <p class="hint">출발지, 갈림길, 쉼터, 나무·꽃 발견 지점, 조망처, 정상, 하산 지점 순서로 적어보세요. ‘지금’ 버튼을 누르면 현재 시각이 들어갑니다.</p>
+        <div id="memos" style="display:grid;gap:14px"></div>
+        <div><button type="button" class="ghost small" id="moreMemo">메모 칸 5개 더 쓰기</button></div>
+      </section>
+
+      <section>
+        <h2>3. 자연 관찰·숲 해설</h2>
+        <label class="field"><span>나무 관찰</span><textarea id="trees" name="trees" rows="3" placeholder="잎·껍질·열매·수형, 발견 장소. 이름이 불확실하면 추정이라고 표시"></textarea></label>
+        <label class="field"><span>꽃·풀·열매·버섯</span><textarea id="flowers" name="flowers" rows="3"></textarea></label>
+        <label class="field"><span>숲 해설 소재</span><textarea id="forest" name="forest" rows="3" placeholder="생태 특징, 계절 변화, 숲의 역할, 확인할 지식"></textarea></label>
+        <label class="field"><span>새·곤충·동물·소리</span><textarea id="wildlife" name="wildlife" rows="2"></textarea></label>
+      </section>
+
+      <section>
+        <h2>4. 조망·등산로·안전</h2>
+        <label class="field"><span>조망과 풍경</span><textarea id="view" name="view" rows="3"></textarea></label>
+        <label class="field"><span>등산로·갈림길·시설</span><textarea id="trail" name="trail" rows="3"></textarea></label>
+        <label class="field"><span>주의할 점</span><textarea id="safety" name="safety" rows="3"></textarea></label>
+      </section>
+
+      <section>
+        <h2>5. 사진 기록표</h2>
+        <label class="field"><span>사진 번호와 설명</span><textarea id="photos" name="photos" rows="5" placeholder="사진 01 — 들머리 안내판&#10;사진 02 — 단풍 숲길&#10;사진 03 — 정상 조망"></textarea></label>
+      </section>
+
+      <section>
+        <h2>6. 산행을 마치며</h2>
+        <label class="field"><span>가장 인상 깊었던 순간</span><textarea id="feeling" name="feeling" rows="3"></textarea></label>
+        <label class="field"><span>산에서 얻은 생각·느낀 점</span><textarea id="lesson" name="lesson" rows="3"></textarea></label>
+        <label class="field"><span>다른 등산객에게 전할 정보</span><textarea id="recommend" name="recommend" rows="3"></textarea></label>
+        <label class="field"><span>블로그 핵심 문장</span><textarea id="blog" name="blog" rows="3"></textarea></label>
+      </section>
+    </div>
+  </form>
+
+  <section>
+    <h2>저장한 산행 기록</h2>
+    <p class="hint" id="listHint">‘기록 저장’을 누르면 여기에 쌓입니다. 불러오면 위 칸에 다시 채워집니다.</p>
+    <ul class="list" id="saved"></ul>
+    <div id="confirmBox"></div>
+  </section>
+
+  <section id="plainBox" hidden>
+    <h2>기록 전체 텍스트</h2>
+    <p class="hint">이 화면에서 파일 저장이 막혀 있습니다. 아래 글을 길게 눌러 전체 선택한 뒤 복사해 메모장이나 카카오톡 ‘나와의 채팅’에 붙여 넣으세요.</p>
+    <textarea id="plain" rows="12" readonly></textarea>
+  </section>
+</div>
+
+<div class="bar"><div class="in">
+  <button type="button" id="save">기록 저장</button>
+  <button type="button" class="ghost" id="download">TXT 내려받기</button>
+  <button type="button" class="ghost" id="copy">전체 복사</button>
+  <button type="button" class="danger" id="reset">새 기록</button>
+  <p id="msg" role="status" aria-live="polite"></p>
+</div></div>
+
+<script>
+(function(){
+  const DRAFT_KEY='hikelog.draft.v1', LIST_KEY='hikelog.saved.v1';
+  const form=document.getElementById('log');
+  const memosEl=document.getElementById('memos');
+  const msg=t=>{document.getElementById('msg').textContent=t};
+  const labels={date:'산행 날짜',mountain:'산 이름',course:'산행 코스',weather:'날씨·기온',start:'시작 시각',finish:'종료 시각',distance:'총 거리·동행자',purpose:'산행 목적·기대',
+    trees:'나무 관찰',flowers:'꽃·풀·열매·버섯',forest:'숲 해설 소재',wildlife:'새·곤충·동물·소리',view:'조망과 풍경',trail:'등산로·갈림길·시설',safety:'주의할 점',photos:'사진 번호와 설명',feeling:'가장 인상 깊었던 순간',lesson:'산에서 얻은 생각·느낀 점',recommend:'다른 등산객에게 전할 정보',blog:'블로그 핵심 문장'};
+  const order=['date','mountain','course','weather','start','finish','distance','purpose'];
+  const tail=['trees','flowers','forest','wildlife','view','trail','safety','photos','feeling','lesson','recommend','blog'];
+  let memoCount=0, currentId=null;
+  let db=null, uid=null, downloads=null;
+
+  const pad=n=>String(n).padStart(2,'0');
+  const localDate=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+  const nowTime=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
+
+  function addMemos(n){
+    for(let k=0;k<n;k++){
+      const i=++memoCount, div=document.createElement('div');
+      div.className='memo';
+      div.innerHTML=
+        '<h3>현장 메모 '+pad(i)+'</h3>'+
+        '<div class="grid2">'+
+          '<label class="field"><span>시각</span><span style="display:flex;gap:6px"><input type="time" id="time'+i+'" name="time'+i+'"><button type="button" class="ghost small" data-now="time'+i+'">지금</button></span></label>'+
+          '<label class="field"><span>장소·지점</span><input type="text" id="place'+i+'" name="place'+i+'" placeholder="예: 갈림길, 쉼터, 전망대"></label>'+
+        '</div>'+
+        '<label class="field"><span>관찰·상황</span><textarea id="note'+i+'" name="note'+i+'" rows="3" placeholder="무엇을 보았나요? 길 상태, 나무·꽃, 조망 등"></textarea></label>'+
+        '<label class="field"><span>사진 번호·느낀 점·추가 확인</span><textarea id="photo'+i+'" name="photo'+i+'" rows="2" placeholder="예: 사진 07, 식물 이름은 하산 후 확인"></textarea></label>';
+      memosEl.appendChild(div);
+    }
+  }
+  memosEl.addEventListener('click',e=>{
+    const id=e.target.getAttribute&&e.target.getAttribute('data-now'); if(!id) return;
+    e.preventDefault(); document.getElementById(id).value=nowTime(); onEdit();
+  });
+  document.getElementById('moreMemo').addEventListener('click',()=>{addMemos(5);onEdit()});
+
+  function getData(){
+    const fields={};
+    form.querySelectorAll('input,textarea').forEach(el=>{ if(el.value.trim()) fields[el.name]=el.value });
+    return {fields, memoCount};
+  }
+  function setData(d){
+    form.querySelectorAll('input,textarea').forEach(el=>el.value='');
+    const need=Math.max(10,(d&&d.memoCount)||10);
+    if(need>memoCount) addMemos(need-memoCount);
+    const f=(d&&d.fields)||{};
+    Object.keys(f).forEach(k=>{const el=form.elements[k]; if(el) el.value=f[k]});
+  }
+
+  function collectText(){
+    const f=getData().fields; let out='[산행 현장 기록장]\n\n';
+    const put=(t,v)=>{ if(v&&v.trim()) out+=t+'\n'+v.trim()+'\n\n' };
+    out+='■ 산행 기본 정보\n\n'; order.forEach(k=>put(labels[k],f[k]));
+    let memoOut='';
+    for(let i=1;i<=memoCount;i++){
+      const parts=[['시각',f['time'+i]],['장소',f['place'+i]],['관찰·상황',f['note'+i]],['사진·느낀 점',f['photo'+i]]].filter(p=>p[1]&&p[1].trim());
+      if(!parts.length) continue;
+      memoOut+='- 현장 메모 '+pad(i)+'\n'+parts.map(p=>'  '+p[0]+': '+p[1].trim().replace(/\n/g,'\n    ')).join('\n')+'\n\n';
+    }
+    if(memoOut) out+='■ 시간대별 현장 메모\n\n'+memoOut;
+    out+='■ 관찰·조망·마무리\n\n'; tail.forEach(k=>put(labels[k],f[k]));
+    return out;
+  }
+  const titleOf=f=>((f.date||'날짜 미기재')+' '+(f.mountain||'산 이름 미기재'));
+  const fileName=()=>{const f=getData().fields;return ((f.date?f.date+'_':'')+(f.mountain||'산행')).replace(/[\\/:*?"<>|]/g,'_')+'_산행기록.txt'};
+
+  // --- 자동 보관 (이 기기) ---
+  const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}};
+  const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}};
+  const autoChip=document.getElementById('autoChip');
+  let timer=null;
+  function onEdit(){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{
+      const d=getData(); d.currentId=currentId;
+      const ok=lsSet(DRAFT_KEY,d);
+      autoChip.textContent=ok?'자동 보관됨 '+nowTime():'이 기기 자동 보관 불가';
+      autoChip.className='chip '+(ok?'ok':'warn');
+      if(db&&uid) db.collection('data/users/'+uid).doc('draft').set(d).catch(()=>{});
+    },600);
+  }
+  form.addEventListener('input',onEdit);
+
+  // --- 보관함 ---
+  const listEl=document.getElementById('saved'), confirmBox=document.getElementById('confirmBox');
+  async function loadList(){
+    let items=[];
+    if(db&&uid){
+      try{
+        const snap=await db.collection('data/users/'+uid).get();
+        items=snap.docs.filter(s=>s.id!=='draft'&&s.exists).map(s=>Object.assign({id:s.id},s.data()));
+      }catch(e){ items=lsGet(LIST_KEY)||[] }
+    } else items=lsGet(LIST_KEY)||[];
+    items.sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));
+    renderList(items); return items;
+  }
+  let cache=[];
+  function renderList(items){
+    cache=items; listEl.innerHTML='';
+    document.getElementById('listHint').hidden=items.length>0;
+    items.forEach(it=>{
+      const li=document.createElement('li'), t=document.createElement('div'), b=document.createElement('b'), s=document.createElement('small');
+      t.className='t'; b.textContent=it.title||titleOf((it.fields)||{});
+      const d=new Date(it.savedAt||0); s.textContent='저장 '+d.getFullYear()+'.'+pad(d.getMonth()+1)+'.'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+(it.id===currentId?' · 지금 편집 중':'');
+      t.append(b,s);
+      const acts=document.createElement('div'); acts.className='acts';
+      const lo=document.createElement('button'); lo.type='button'; lo.className='ghost small'; lo.textContent='불러오기';
+      lo.onclick=()=>askConfirm('지금 화면의 내용을 ‘'+b.textContent+'’ 기록으로 바꿉니다. 저장하지 않은 내용은 사라집니다.','불러오기',()=>{setData(it);currentId=it.id;onEdit();renderList(cache);msg('‘'+b.textContent+'’ 기록을 불러왔습니다.');window.scrollTo({top:0})});
+      const de=document.createElement('button'); de.type='button'; de.className='danger small'; de.textContent='삭제';
+      de.onclick=()=>askConfirm('‘'+b.textContent+'’ 기록을 보관함에서 지웁니다. 되돌릴 수 없습니다.','삭제',()=>removeItem(it.id));
+      acts.append(lo,de); li.append(t,acts); listEl.appendChild(li);
+    });
+  }
+  function askConfirm(text,label,fn){
+    confirmBox.innerHTML='';
+    const box=document.createElement('div'); box.className='confirm';
+    const p=document.createElement('span'); p.textContent=text; p.style.flexBasis='100%';
+    const y=document.createElement('button'); y.type='button'; y.textContent=label;
+    const n=document.createElement('button'); n.type='button'; n.className='ghost'; n.textContent='취소';
+    y.onclick=()=>{confirmBox.innerHTML='';fn()}; n.onclick=()=>{confirmBox.innerHTML=''};
+    box.append(p,y,n); confirmBox.appendChild(box); box.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
+  async function removeItem(id){
+    try{
+      if(db&&uid) await db.collection('data/users/'+uid).doc(id).delete();
+      else lsSet(LIST_KEY,(lsGet(LIST_KEY)||[]).filter(x=>x.id!==id));
+      if(currentId===id) currentId=null;
+      await loadList(); msg('삭제했습니다.');
+    }catch(e){ msg('삭제하지 못했습니다. 잠시 후 다시 눌러 주세요.') }
+  }
+
+  document.getElementById('save').addEventListener('click',async()=>{
+    const d=getData();
+    if(!Object.keys(d.fields).some(k=>k!=='date')){ msg('저장할 내용이 없습니다. 산 이름이나 메모를 먼저 적어 주세요.'); return }
+    const id=currentId||('h'+Date.now());
+    const rec={fields:d.fields,memoCount:d.memoCount,title:titleOf(d.fields),savedAt:Date.now()};
+    try{
+      if(db&&uid) await db.collection('data/users/'+uid).doc(id).set(rec);
+      else{
+        const list=(lsGet(LIST_KEY)||[]).filter(x=>x.id!==id); list.push(Object.assign({id},rec));
+        if(!lsSet(LIST_KEY,list)) throw new Error('ls');
+      }
+      currentId=id; onEdit(); await loadList();
+      msg('‘'+rec.title+'’ 기록을 '+(db&&uid?'내 보관함(다른 기기에서도 열림)':'이 기기')+'에 저장했습니다.');
+    }catch(e){
+      msg('저장하지 못했습니다. ‘전체 복사’나 ‘TXT 내려받기’로 따로 보관해 주세요.');
+    }
+  });
+
+  function showPlain(){
+    const box=document.getElementById('plainBox'), ta=document.getElementById('plain');
+    ta.value=collectText(); box.hidden=false; box.scrollIntoView({behavior:'smooth'}); ta.focus(); ta.select();
+  }
+  document.getElementById('download').addEventListener('click',async()=>{
+    if(!downloads){ showPlain(); msg('이 화면에서는 파일 저장이 지원되지 않아 전체 텍스트를 아래에 펼쳤습니다.'); return }
+    try{
+      await downloads.save({filename:fileName(),data:'﻿'+collectText()});
+      msg('TXT 파일을 저장했습니다. 휴대전화는 ‘다운로드’ 폴더나 ‘파일’ 앱에서 확인하세요.');
+    }catch(e){
+      if(e&&e.code==='declined') msg('파일 저장을 취소했습니다.');
+      else if(e&&e.code==='rate_limited') msg('저장 창이 이미 열려 있습니다. 잠시 후 다시 눌러 주세요.');
+      else{ downloads=null; showPlain(); msg('파일 저장이 되지 않아 전체 텍스트를 아래에 펼쳤습니다.') }
+    }
+  });
+  document.getElementById('copy').addEventListener('click',()=>{
+    const txt=collectText();
+    navigator.clipboard.writeText(txt).then(()=>msg('전체 기록을 복사했습니다. 메모장이나 카톡에 붙여 넣으세요.'))
+      .catch(()=>{showPlain();msg('자동 복사가 막혀 있어 전체 텍스트를 아래에 펼쳤습니다. 길게 눌러 복사하세요.')});
+  });
+  document.getElementById('reset').addEventListener('click',()=>{
+    askConfirm('화면을 비우고 새 산행 기록을 시작합니다. 보관함에 저장한 기록은 그대로 남습니다.','새 기록 시작',()=>{
+      setData(null); currentId=null; document.getElementById('date').value=localDate(); onEdit(); renderList(cache); msg('새 기록을 시작했습니다.'); window.scrollTo({top:0});
+    });
+    document.getElementById('confirmBox').scrollIntoView({behavior:'smooth',block:'center'});
+  });
+
+  // --- 시작 ---
+  addMemos(10);
+  const draft=lsGet(DRAFT_KEY);
+  if(draft){ setData(draft); currentId=draft.currentId||null; autoChip.textContent='이전 작성 내용을 이어서 엽니다'; autoChip.className='chip ok' }
+  else autoChip.textContent='입력하면 자동 보관됩니다';
+  const dateEl=document.getElementById('date'); if(!dateEl.value) dateEl.value=localDate();
+  loadList();
+
+  const cloudChip=document.getElementById('cloudChip');
+  (async()=>{
+    const c=window.claude;
+    if(!c||!c.use){ cloudChip.textContent='보관함: 이 기기에만 저장'; return }
+    try{ downloads=await c.use('downloads') }catch(e){ downloads=null }
+    try{
+      const [d,u]=await Promise.all([c.use('db'),c.use('user')]);
+      const id=u?await u.id():null;
+      if(d&&id){
+        db=d; uid=id;
+        cloudChip.textContent='보관함: 내 계정(다른 기기에서도 열림)'; cloudChip.className='chip ok';
+        if(!draft){
+          const s=await db.collection('data/users/'+uid).doc('draft').get().catch(()=>null);
+          if(s&&s.exists){ const dd=s.data(); setData(dd); currentId=dd.currentId||null; autoChip.textContent='다른 기기에서 쓰던 내용을 불러왔습니다'; autoChip.className='chip ok' }
+        }
+        // 이 기기에만 있던 기록을 계정 보관함으로 옮김
+        const local=lsGet(LIST_KEY)||[];
+        for(const it of local){ const {id:lid,...rest}=it; await db.collection('data/users/'+uid).doc(lid).set(rest).catch(()=>{}) }
+        if(local.length) lsSet(LIST_KEY,[]);
+        await loadList();
+      } else cloudChip.textContent='보관함: 이 기기에만 저장';
+    }catch(e){ cloudChip.textContent='보관함: 이 기기에만 저장' }
+  })();
+})();
+</script>
