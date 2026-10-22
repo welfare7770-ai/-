@@ -68,7 +68,7 @@ button.small{padding:6px 10px;font-size:.85rem}
     </div>
   </header>
 
-  <form id="log" autocomplete="off" onsubmit="return false">
+  <form id="log" autocomplete="off">
     <div style="display:grid;gap:14px">
       <section>
         <h2>1. 산행 기본 정보</h2>
@@ -229,6 +229,7 @@ button.small{padding:6px 10px;font-size:.85rem}
     },600);
   }
   form.addEventListener('input',onEdit);
+  form.addEventListener('submit',e=>e.preventDefault());
 
   // --- 보관함 ---
   const listEl=document.getElementById('saved'), confirmBox=document.getElementById('confirmBox');
@@ -303,7 +304,7 @@ button.small{padding:6px 10px;font-size:.85rem}
   document.getElementById('download').addEventListener('click',async()=>{
     if(!downloads){ showPlain(); msg('이 화면에서는 파일 저장이 지원되지 않아 전체 텍스트를 아래에 펼쳤습니다.'); return }
     try{
-      await downloads.save({filename:fileName(),data:'﻿'+collectText()});
+      await downloads.save({filename:fileName(),data:String.fromCharCode(0xFEFF)+collectText()});
       msg('TXT 파일을 저장했습니다. 휴대전화는 ‘다운로드’ 폴더나 ‘파일’ 앱에서 확인하세요.');
     }catch(e){
       if(e&&e.code==='declined') msg('파일 저장을 취소했습니다.');
