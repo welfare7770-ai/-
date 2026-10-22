@@ -208,9 +208,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .editbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 14px;padding:9px 12px;border-radius:10px;background:var(--pm-soft);color:var(--pm);font:700 13.5px var(--gothic)}
 .editbar span{flex:1;min-width:0}
 .editbar[hidden]{display:none}
-.daynav{display:flex;align-items:center;gap:8px;padding:12px 14px}
-.daynav input{flex:1;min-width:0;text-align:center}
-.daynav .btn{padding:8px 12px}
+.daynav{display:flex;align-items:center;gap:6px;padding:10px}
+.daynav input{flex:1;min-width:0;text-align:center;padding:8px 4px;font-family:var(--gothic);font-weight:700}
+.daynav .btn{flex:0 0 38px;height:40px;padding:0;justify-content:center;font-size:18px}
+.todaybtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:2px 10px;margin-left:6px;font:700 12.5px var(--gothic);color:var(--accent);cursor:pointer;vertical-align:2px}
 .daylabel{text-align:center;font:700 16px var(--gothic);margin:-4px 0 12px}
 .daylabel small{display:block;font:500 12.5px var(--gothic);color:var(--muted);margin-top:2px}
 .nextread{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:var(--accent-soft);margin-bottom:12px}
@@ -242,13 +243,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .ptrow .mins{margin-left:auto;font:700 13px var(--gothic);color:var(--accent);white-space:nowrap}
 .ptrow .now{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font:700 12.5px var(--gothic);color:var(--text);cursor:pointer}
 .ptsum{text-align:right;font:700 14px var(--gothic);color:var(--accent)}
-.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
 .cal .wd{font:700 11.5px var(--gothic);color:var(--muted);padding:2px 0}
 .cal .wd:first-child{color:var(--danger)}
-.cal button{border:1px solid transparent;background:var(--surface-2);border-radius:9px;padding:5px 0 4px;min-height:46px;cursor:pointer;color:var(--text);font:600 13px var(--gothic);display:grid;align-content:start;justify-items:center;gap:2px}
+.cal button{border:1px solid transparent;background:var(--surface-2);border-radius:7px;padding:4px 0 3px;min-height:38px;min-width:0;overflow:hidden;cursor:pointer;color:var(--text);font:600 12.5px var(--gothic);display:grid;align-content:start;justify-items:center;gap:2px}
 .cal button.sel{border-color:var(--accent)}
 .cal button.today{background:var(--accent-soft)}
-.cal button i{font-style:normal;font-size:10.5px;line-height:1.2;color:var(--accent)}
+.cal button i{font-style:normal;font-size:9.5px;line-height:1.15;color:var(--accent);white-space:nowrap;letter-spacing:-.03em}
 .cal button i.p{color:var(--pm)}
 .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font:700 15px var(--gothic)}
 .bar{height:12px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin:6px 0 4px}
@@ -353,9 +354,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
       <button type="button" class="btn" id="dPrev" aria-label="전날">‹</button>
       <input type="date" id="dDate" min="2006-01-01">
       <button type="button" class="btn" id="dNextDay" aria-label="다음날">›</button>
-      <button type="button" class="btn" id="dToday">오늘</button>
     </div>
-    <div class="daylabel" id="dLabel"></div>
+    <div class="daylabel"><span id="dLabel"></span><button type="button" class="todaybtn" id="dToday">오늘로</button></div>
 
     <div class="card">
       <h2>말씀 읽기</h2>
@@ -1053,7 +1053,8 @@ function setRangeBtn(which, book){
 function renderDaily(){
   const i = dinfo(dSel), isToday = dSel === today();
   $('#dDate').value = dSel;
-  $('#dLabel').innerHTML = `${i.y}년 ${i.m}월 ${i.d}일 ${i.wdName}요일${isToday ? ' · 오늘' : ''}`;
+  $('#dLabel').textContent = `${i.y}년 ${i.m}월 ${i.d}일 ${i.wdName}요일${isToday ? ' · 오늘' : ''}`;
+  $('#dToday').hidden = isToday;
   const day = dayOf(dSel), nx = gRef(nextStart(dSel));
   $('#dNext').textContent = `${nx.book} ${nx.ch}${unitOf(nx.book)}`;
   if (!$('#rFromBook').value) { setRangeBtn('From', nx.book); $('#rFromCh').value = nx.ch; setRangeBtn('To', nx.book); $('#rToCh').value = ''; }
