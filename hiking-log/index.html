@@ -44,6 +44,14 @@ h2{font-family:var(--display);font-size:1.15rem;margin:0;color:var(--pine)}
 .seg span{display:block;text-align:center;padding:9px 4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-weight:500;font-size:.9rem}
 .seg input:checked+span{background:var(--pine);color:var(--pine-ink);border-color:var(--pine);font-weight:700}
 .seg input:focus-visible+span{outline:2px solid var(--pine);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips label{position:relative;cursor:pointer}
+.chips input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chips span{display:block;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--bg);font-size:.88rem;font-weight:500}
+.chips input:checked+span{background:var(--pine);color:var(--pine-ink);border-color:var(--pine);font-weight:700}
+.chips input:focus-visible+span{outline:2px solid var(--pine);outline-offset:2px}
+.qp{display:flex;flex-wrap:wrap;gap:5px}
+.qp button{padding:3px 9px;font-size:.8rem;font-weight:500;border-radius:999px;background:transparent;color:var(--muted);border-color:var(--line)}
 .total{display:grid;gap:2px;background:var(--moss);border-radius:8px;padding:12px 14px}
 .total .tl{font-size:.85rem;color:var(--muted)}
 .total b{font-family:var(--display);font-size:1.3rem;color:var(--pine);font-variant-numeric:tabular-nums}
@@ -123,7 +131,7 @@ button.small{padding:6px 10px;font-size:.85rem}
                 <label><input type="radio" name="level" value="상"><span>상 · 힘듦</span></label>
               </div>
             </div>
-            <label class="field"><span>주요 특징</span><textarea id="feature" name="feature" rows="2" placeholder="예: 100대 명산, 기암 절벽·폭포, 가을 단풍 명소"></textarea></label>
+            <div class="field"><span>주요 특징</span><div class="chips" role="group"><label><input type="checkbox" id="featureT_0" name="featureT" value="100대 명산"><span>100대 명산</span></label><label><input type="checkbox" id="featureT_1" name="featureT" value="암릉·바위"><span>암릉·바위</span></label><label><input type="checkbox" id="featureT_2" name="featureT" value="계곡·폭포"><span>계곡·폭포</span></label><label><input type="checkbox" id="featureT_3" name="featureT" value="조망 좋음"><span>조망 좋음</span></label><label><input type="checkbox" id="featureT_4" name="featureT" value="단풍"><span>단풍</span></label><label><input type="checkbox" id="featureT_5" name="featureT" value="봄꽃"><span>봄꽃</span></label><label><input type="checkbox" id="featureT_6" name="featureT" value="억새"><span>억새</span></label><label><input type="checkbox" id="featureT_7" name="featureT" value="숲길"><span>숲길</span></label><label><input type="checkbox" id="featureT_8" name="featureT" value="사찰·문화재"><span>사찰·문화재</span></label><label><input type="checkbox" id="featureT_9" name="featureT" value="일출·일몰"><span>일출·일몰</span></label></div><input type="text" id="feature" name="feature" placeholder="그 밖의 특징" aria-label="그 밖의 특징"></div>
 
             <h3 class="sub">코스 · 주차</h3>
             <div class="field">
@@ -139,21 +147,23 @@ button.small{padding:6px 10px;font-size:.85rem}
                 <a class="small" id="kakaoMap" target="_blank" rel="noopener">카카오맵</a>
               </span>
             </div>
-            <label class="field"><span>주차 정보</span><input type="text" id="parking" name="parking" placeholder="예: 상의주차장, 소형 4,000원, 주말 혼잡"></label>
-            <label class="field"><span>들머리 정보</span><input type="text" id="entry" name="entry" placeholder="예: 매표소 지나 대전사 왼쪽 등산로, 화장실 있음"></label>
+            <div class="field"><span>주차 정보</span><div class="chips" role="group"><label><input type="checkbox" id="parkingT_0" name="parkingT" value="무료"><span>무료</span></label><label><input type="checkbox" id="parkingT_1" name="parkingT" value="유료"><span>유료</span></label><label><input type="checkbox" id="parkingT_2" name="parkingT" value="넉넉"><span>넉넉</span></label><label><input type="checkbox" id="parkingT_3" name="parkingT" value="협소"><span>협소</span></label><label><input type="checkbox" id="parkingT_4" name="parkingT" value="주말 혼잡"><span>주말 혼잡</span></label></div><input type="text" id="parking" name="parking" placeholder="주차장 이름·요금 (예: 상의주차장 4,000원)" aria-label="주차장 이름·요금"></div>
+            <div class="field"><span>들머리 시설</span><div class="chips" role="group"><label><input type="checkbox" id="entryT_0" name="entryT" value="화장실"><span>화장실</span></label><label><input type="checkbox" id="entryT_1" name="entryT" value="식수"><span>식수</span></label><label><input type="checkbox" id="entryT_2" name="entryT" value="매점·식당"><span>매점·식당</span></label><label><input type="checkbox" id="entryT_3" name="entryT" value="안내소"><span>안내소</span></label><label><input type="checkbox" id="entryT_4" name="entryT" value="버스정류장"><span>버스정류장</span></label></div><input type="text" id="entry" name="entry" placeholder="입구 찾는 법 (예: 매표소 지나 왼쪽)" aria-label="들머리 찾는 법"></div>
             <label class="field" id="exitBox"><span>날머리·하산 후 교통</span><input type="text" id="exit" name="exit" placeholder="예: 절골 하산 → 택시로 주차장 복귀(약 15분)"></label>
 
             <h3 class="sub">일정 · 준비</h3>
             <label class="field"><span>모임 장소·시각</span><input type="text" id="meet" name="meet" placeholder="예: 안동역 앞 06:30, 산악회 버스"></label>
-            <label class="field"><span>동행</span><input type="text" id="party" name="party" placeholder="예: 산악회 12명, 아내와 둘이"></label>
-            <label class="field"><span>준비 메모</span><textarea id="prep" name="prep" rows="2" placeholder="준비물, 입산 통제·예약 여부, 비상 연락처 등"></textarea></label>
+            <div class="field"><span>동행</span><div class="chips" role="group"><label><input type="checkbox" id="partyT_0" name="partyT" value="혼자"><span>혼자</span></label><label><input type="checkbox" id="partyT_1" name="partyT" value="가족"><span>가족</span></label><label><input type="checkbox" id="partyT_2" name="partyT" value="친구"><span>친구</span></label><label><input type="checkbox" id="partyT_3" name="partyT" value="산악회"><span>산악회</span></label></div><input type="text" id="party" name="party" placeholder="인원 등 (예: 12명)" aria-label="동행 인원"></div>
+            <div class="field"><span>준비물</span><div class="chips" role="group"><label><input type="checkbox" id="gear_0" name="gear" value="물"><span>물</span></label><label><input type="checkbox" id="gear_1" name="gear" value="간식·도시락"><span>간식·도시락</span></label><label><input type="checkbox" id="gear_2" name="gear" value="스틱"><span>스틱</span></label><label><input type="checkbox" id="gear_3" name="gear" value="아이젠"><span>아이젠</span></label><label><input type="checkbox" id="gear_4" name="gear" value="우비·바람막이"><span>우비·바람막이</span></label><label><input type="checkbox" id="gear_5" name="gear" value="여벌옷"><span>여벌옷</span></label><label><input type="checkbox" id="gear_6" name="gear" value="헤드랜턴"><span>헤드랜턴</span></label><label><input type="checkbox" id="gear_7" name="gear" value="보조배터리"><span>보조배터리</span></label><label><input type="checkbox" id="gear_8" name="gear" value="구급약"><span>구급약</span></label><label><input type="checkbox" id="gear_9" name="gear" value="현금"><span>현금</span></label></div></div>
+            <label class="field"><span>준비 메모</span><textarea id="prep" name="prep" rows="2" placeholder="입산 통제·예약 여부, 비상 연락처 등"></textarea></label>
           </div>
         </details>
       </section>
 
       <section>
         <h2>2. 당일 기록</h2>
-        <label class="field"><span>날씨</span><input type="text" id="weather" name="weather" placeholder="예: 맑음, 서늘함"></label>
+        <div class="field"><span>날씨</span><div class="chips" role="group"><label><input type="checkbox" id="weatherT_0" name="weatherT" value="맑음"><span>맑음</span></label><label><input type="checkbox" id="weatherT_1" name="weatherT" value="구름 많음"><span>구름 많음</span></label><label><input type="checkbox" id="weatherT_2" name="weatherT" value="흐림"><span>흐림</span></label><label><input type="checkbox" id="weatherT_3" name="weatherT" value="비"><span>비</span></label><label><input type="checkbox" id="weatherT_4" name="weatherT" value="눈"><span>눈</span></label><label><input type="checkbox" id="weatherT_5" name="weatherT" value="안개"><span>안개</span></label><label><input type="checkbox" id="weatherT_6" name="weatherT" value="바람 강함"><span>바람 강함</span></label><label><input type="checkbox" id="weatherT_7" name="weatherT" value="더움"><span>더움</span></label><label><input type="checkbox" id="weatherT_8" name="weatherT" value="선선"><span>선선</span></label><label><input type="checkbox" id="weatherT_9" name="weatherT" value="쌀쌀"><span>쌀쌀</span></label><label><input type="checkbox" id="weatherT_10" name="weatherT" value="추움"><span>추움</span></label></div><input type="text" id="weather" name="weather" placeholder="기온 등 (예: 12℃)" aria-label="기온 등"></div>
+        <div class="field"><span>등산로 상태</span><div class="chips" role="group"><label><input type="checkbox" id="path_0" name="path" value="잘 정비됨"><span>잘 정비됨</span></label><label><input type="checkbox" id="path_1" name="path" value="완만"><span>완만</span></label><label><input type="checkbox" id="path_2" name="path" value="가파름"><span>가파름</span></label><label><input type="checkbox" id="path_3" name="path" value="바위 구간"><span>바위 구간</span></label><label><input type="checkbox" id="path_4" name="path" value="미끄러움"><span>미끄러움</span></label><label><input type="checkbox" id="path_5" name="path" value="낙엽 많음"><span>낙엽 많음</span></label><label><input type="checkbox" id="path_6" name="path" value="진흙"><span>진흙</span></label><label><input type="checkbox" id="path_7" name="path" value="얼음·눈"><span>얼음·눈</span></label></div></div>
         <div class="grid2 times">
           <div class="field"><label for="start">출발 시각</label><span class="timebox"><input type="time" id="start" name="start"><button type="button" class="ghost small" data-now="start">지금</button></span></div>
           <div class="field"><label for="finish">하산 시각</label><span class="timebox"><input type="time" id="finish" name="finish"><button type="button" class="ghost small" data-now="finish">지금</button></span></div>
@@ -215,12 +225,13 @@ button.small{padding:6px 10px;font-size:.85rem}
 (function(){
   const DRAFT_KEY='hikelog.draft.v1', LIST_KEY='hikelog.saved.v1';
   const MEMOS=15, PER=5;
+  const QUICK=['들머리','갈림길','쉼터','조망처','정상','계곡','날머리'];
   const form=document.getElementById('log');
   const groupsEl=document.getElementById('groups');
   const msg=t=>{document.getElementById('msg').textContent=t};
-  const labels={date:'날짜',region:'지역',mountain:'산 이름',height:'높이',level:'난이도',feature:'주요 특징',course:'코스',addr:'들머리 주소',parking:'주차',entry:'들머리 정보',exit:'날머리·하산 후 교통',meet:'모임 장소·시각',party:'동행',prep:'준비 메모',weather:'날씨',start:'출발 시각',finish:'하산 시각',dist:'총 거리',steps:'걸음 수',
+  const labels={date:'날짜',region:'지역',mountain:'산 이름',height:'높이',level:'난이도',feature:'주요 특징',course:'코스',addr:'들머리 주소',parking:'주차',entry:'들머리',exit:'날머리·하산 후 교통',meet:'모임 장소·시각',party:'동행',prep:'준비 메모',gear:'준비물',path:'등산로 상태',weather:'날씨',start:'출발 시각',finish:'하산 시각',dist:'총 거리',steps:'걸음 수',
     best:'오늘의 한 장면',tip:'다른 등산객에게 한마디',feeling:'한 줄 소감',etc:'기타 메모'};
-  const head=['date','region','mountain','height','level','feature','course','addr','parking','entry','exit','meet','party','prep','weather','start','finish','dist','steps'];
+  const head=['date','region','mountain','height','level','feature','course','addr','parking','entry','exit','meet','party','gear','prep','weather','path','start','finish','dist','steps'];
   const units={dist:' km',steps:'보',height:' m'};
   const tail=['best','tip','feeling','etc'];
   // 이전 버전에서 쓰던 칸: 불러올 때 기타 메모로 옮겨 내용이 사라지지 않게 함
@@ -243,8 +254,9 @@ button.small{padding:6px 10px;font-size:.85rem}
         '<h3>메모 '+pad(i)+'</h3>'+
         '<div class="row">'+
           '<span class="timebox"><input type="time" id="time'+i+'" name="time'+i+'" aria-label="메모 '+i+' 시각"><button type="button" class="ghost small" data-now="time'+i+'">지금</button></span>'+
-          '<input type="text" id="place'+i+'" name="place'+i+'" placeholder="장소·지점 (예: 갈림길, 정상)" aria-label="메모 '+i+' 장소">'+
+          '<input type="text" id="place'+i+'" name="place'+i+'" placeholder="장소·지점 (아래 버튼으로 선택 가능)" aria-label="메모 '+i+' 장소">'+
         '</div>'+
+        '<div class="qp">'+QUICK.map(q=>'<button type="button" data-place="'+q+'" data-i="'+i+'">'+q+'</button>').join('')+'</div>'+
         '<textarea id="note'+i+'" name="note'+i+'" rows="2" placeholder="내용 한두 줄" aria-label="메모 '+i+' 내용"></textarea>'+
         '<label class="pic"><input type="checkbox" id="pic'+i+'" name="pic'+i+'"> 사진 있음</label>';
       body.appendChild(div);
@@ -288,6 +300,13 @@ button.small{padding:6px 10px;font-size:.85rem}
     return ['time','place','note'].some(k=>form.elements[k+i].value.trim())||form.elements['pic'+i].checked;
   }
   form.addEventListener('click',e=>{
+    const q=e.target.getAttribute&&e.target.getAttribute('data-place');
+    if(q){
+      e.preventDefault(); const i=e.target.getAttribute('data-i');
+      form.elements['place'+i].value=q;
+      if(!form.elements['time'+i].value) form.elements['time'+i].value=nowTime();
+      onEdit(); return;
+    }
     const id=e.target.getAttribute&&e.target.getAttribute('data-now'); if(!id) return;
     e.preventDefault(); document.getElementById(id).value=nowTime(); onEdit();
   });
@@ -295,7 +314,8 @@ button.small{padding:6px 10px;font-size:.85rem}
   function getData(){
     const fields={};
     form.querySelectorAll('input,textarea').forEach(el=>{
-      if(el.type==='checkbox'){ if(el.checked) fields[el.name]=true }
+      if(el.type==='checkbox'&&el.value!=='on'){ if(el.checked) (fields[el.name]=fields[el.name]||[]).push(el.value) }
+      else if(el.type==='checkbox'){ if(el.checked) fields[el.name]=true }
       else if(el.type==='radio'){ if(el.checked) fields[el.name]=el.value }
       else if(el.value.trim()) fields[el.name]=el.value;
     });
@@ -318,6 +338,7 @@ button.small{padding:6px 10px;font-size:.85rem}
     Object.keys(oldLabels).forEach(k=>{ if(f[k]&&String(f[k]).trim()) extra.push(oldLabels[k]+': '+String(f[k]).trim()) });
     if(extra.length) f.etc=(f.etc?f.etc+'\n':'')+extra.join('\n');
     Object.keys(f).forEach(k=>{
+      if(Array.isArray(f[k])){ form.querySelectorAll('input[name="'+k+'"]').forEach(c=>{c.checked=f[k].indexOf(c.value)>=0}); return }
       const el=form.elements[k]; if(!el) return;
       if(el.type==='checkbox') el.checked=!!f[k]; else el.value=f[k];
     });
@@ -336,7 +357,8 @@ button.small{padding:6px 10px;font-size:.85rem}
     let pending='■ 산행 전 준비\n';
     head.forEach(k=>{
       if(k==='weather') pending=(out.endsWith('\n\n')?'':'\n')+'■ 당일 기록\n';
-      let v=f[k]&&String(f[k]).trim()?String(f[k]).trim()+(units[k]||''):'';
+      let v=Array.isArray(f[k])?f[k].join(', '):(f[k]&&String(f[k]).trim()?String(f[k]).trim()+(units[k]||''):'');
+      if(Array.isArray(f[k+'T'])&&f[k+'T'].length) v=[f[k+'T'].join(', '),v].filter(Boolean).join(' / ');
       if(k==='course'&&f.loop) v=(v?v+' ':'')+'(원점회귀)';
       if(v){ out+=pending; pending=''; }
       put(labels[k],v);
