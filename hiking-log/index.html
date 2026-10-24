@@ -30,7 +30,11 @@ h2{font-family:var(--display);font-size:1.15rem;margin:0;color:var(--pine)}
 .hint{margin:0;color:var(--muted);font-size:.88rem}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .field{display:grid;gap:4px;min-width:0}
-.field>span{font-weight:500;font-size:.92rem}
+.field>span,.field>label{font-weight:500;font-size:.92rem}
+.total{display:grid;gap:2px;background:var(--moss);border-radius:8px;padding:12px 14px}
+.total .tl{font-size:.85rem;color:var(--muted)}
+.total b{font-family:var(--display);font-size:1.3rem;color:var(--pine);font-variant-numeric:tabular-nums}
+.total small{color:var(--muted);font-size:.85rem}
 input[type=text],input[type=date],input[type=time],textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)}
 textarea{resize:vertical}
 input:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--pine);outline-offset:2px}
@@ -48,10 +52,13 @@ details.group>summary .cnt{font-weight:500;font-size:.85rem;color:var(--muted);m
 .memo h3{margin:0;font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.04em}
 .row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center}
 .timebox{display:flex;gap:6px;align-items:center}
-.timebox input{width:7.2em}
+.timebox input{flex:1;min-width:0}
+@media (max-width:480px){.grid2.times{grid-template-columns:1fr}}
 .pic{display:inline-flex;gap:8px;align-items:center;font-size:.95rem;cursor:pointer;user-select:none}
 .pic input{width:22px;height:22px;accent-color:var(--pine);margin:0}
-@media (max-width:420px){.row{grid-template-columns:1fr}.timebox input{flex:1}}
+@media (max-width:420px){.row{grid-template-columns:1fr}}
+.row .timebox input{width:7.2em;flex:none}
+@media (max-width:420px){.row .timebox input{flex:1}}
 
 button{font:inherit;font-weight:700;border-radius:8px;padding:11px 14px;cursor:pointer;border:1px solid var(--pine);background:var(--pine);color:var(--pine-ink)}
 button.ghost{background:transparent;color:var(--pine)}
@@ -86,19 +93,25 @@ button.small{padding:6px 10px;font-size:.85rem}
     <div style="display:grid;gap:14px">
       <section>
         <h2>1. 기본 정보</h2>
-        <div class="grid2">
-          <label class="field"><span>날짜</span><input type="date" id="date" name="date"></label>
-          <label class="field"><span>산 이름</span><input type="text" id="mountain" name="mountain" placeholder="예: 주왕산"></label>
+        <label class="field"><span>날짜</span><input type="date" id="date" name="date"></label>
+        <label class="field"><span>산 이름</span><input type="text" id="mountain" name="mountain" placeholder="예: 주왕산"></label>
+        <div class="field">
+          <span style="display:flex;justify-content:space-between;align-items:center;gap:8px"><label for="course">코스</label><label class="pic"><input type="checkbox" id="loop" name="loop"> 원점회귀</label></span>
+          <input type="text" id="course" name="course" placeholder="예: 대전사–주봉–후리메기">
         </div>
-        <label class="field"><span>코스</span><input type="text" id="course" name="course" placeholder="예: 대전사–주봉–후리메기"></label>
         <label class="field"><span>날씨</span><input type="text" id="weather" name="weather" placeholder="예: 맑음, 서늘함"></label>
-        <div class="grid2">
-          <label class="field"><span>출발 시각</span><input type="time" id="start" name="start"></label>
-          <label class="field"><span>하산 시각</span><input type="time" id="finish" name="finish"></label>
+        <div class="grid2 times">
+          <div class="field"><label for="start">출발 시각</label><span class="timebox"><input type="time" id="start" name="start"><button type="button" class="ghost small" data-now="start">지금</button></span></div>
+          <div class="field"><label for="finish">하산 시각</label><span class="timebox"><input type="time" id="finish" name="finish"><button type="button" class="ghost small" data-now="finish">지금</button></span></div>
         </div>
         <div class="grid2">
           <label class="field"><span>총 거리 (km)</span><input type="text" inputmode="decimal" id="dist" name="dist" placeholder="예: 9.2"></label>
           <label class="field"><span>걸음 수 (보)</span><input type="text" inputmode="numeric" id="steps" name="steps" placeholder="예: 18500"></label>
+        </div>
+        <div class="total" id="total" aria-live="polite">
+          <span class="tl">총 산행시간</span>
+          <b id="totalTime">출발·하산 시각을 넣으면 계산됩니다</b>
+          <small id="totalSub"></small>
         </div>
       </section>
 
@@ -184,7 +197,24 @@ button.small{padding:6px 10px;font-size:.85rem}
     }
     det.append(sum,body); groupsEl.appendChild(det);
   }
+  // 총 산행시간: 하산이 출발보다 이르면 자정을 넘긴 것으로 봄
+  function calcTotal(){
+    const a=form.elements.start.value, b=form.elements.finish.value;
+    if(!a||!b) return null;
+    const m=t=>{const [h,mi]=t.split(':').map(Number);return h*60+mi};
+    let d=m(b)-m(a); if(d<0) d+=1440;
+    return d;
+  }
+  const fmtDur=d=>(Math.floor(d/60)?Math.floor(d/60)+'시간 ':'')+(d%60)+'분';
+  function updateTotal(){
+    const d=calcTotal(), km=parseFloat(String(form.elements.dist.value).replace(',','.'));
+    const tt=document.getElementById('totalTime'), sub=document.getElementById('totalSub');
+    if(d===null){ tt.textContent='출발·하산 시각을 넣으면 계산됩니다'; sub.textContent=''; return }
+    tt.textContent=fmtDur(d);
+    sub.textContent=(km>0&&d>0)?'평균 '+(km/(d/60)).toFixed(1)+' km/h (휴식 포함)':'';
+  }
   function updateCounts(){
+    updateTotal();
     for(let g=0;g<MEMOS/PER;g++){
       let n=0;
       for(let i=g*PER+1;i<=g*PER+PER;i++) if(memoFilled(i)) n++;
@@ -194,7 +224,7 @@ button.small{padding:6px 10px;font-size:.85rem}
   function memoFilled(i){
     return ['time','place','note'].some(k=>form.elements[k+i].value.trim())||form.elements['pic'+i].checked;
   }
-  groupsEl.addEventListener('click',e=>{
+  form.addEventListener('click',e=>{
     const id=e.target.getAttribute&&e.target.getAttribute('data-now'); if(!id) return;
     e.preventDefault(); document.getElementById(id).value=nowTime(); onEdit();
   });
@@ -238,7 +268,16 @@ button.small{padding:6px 10px;font-size:.85rem}
   function collectText(){
     const f=getData().fields; let out='[산행 현장 기록장]\n\n';
     const put=(t,v)=>{ if(v&&String(v).trim()) out+=t+': '+String(v).trim()+'\n' };
-    head.forEach(k=>put(labels[k],f[k]&&String(f[k]).trim()?String(f[k]).trim()+(units[k]||''):''));
+    head.forEach(k=>{
+      let v=f[k]&&String(f[k]).trim()?String(f[k]).trim()+(units[k]||''):'';
+      if(k==='course'&&f.loop) v=(v?v+' ':'')+'(원점회귀)';
+      put(labels[k],v);
+    });
+    const dur=calcTotal();
+    if(dur!==null){
+      const km=parseFloat(String(f.dist||'').replace(',','.'));
+      put('총 산행시간',fmtDur(dur)+(km>0&&dur>0?' (평균 '+(km/(dur/60)).toFixed(1)+' km/h)':''));
+    }
     let memoOut='';
     for(let i=1;i<=MEMOS;i++){
       if(!memoFilled(i)) continue;
