@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
-/* Layout: 한 줄 세로 기록장 — 상단 저장 상태 바, 섹션별 노트 카드, 하단 고정 작업 버튼 */
+/* Layout: 한 줄 세로 기록장 — 기본 정보, 접히는 현장 메모 3묶음, 하산 후 정리(선택), 하단 고정 버튼 */
 :root{
   --bg:#eef2ec; --paper:#fbfcf9; --ink:#1f2a22; --muted:#5f6d62; --line:#d3ddd1;
   --pine:#2c5a3f; --pine-ink:#ffffff; --moss:#e3ecdf; --warn:#9a3b22; --ok:#2c6b45;
@@ -18,27 +18,41 @@
   --pine:#7fbf95; --pine-ink:#10251a; --moss:#24322a; --warn:#f0a080; --ok:#8fd3a6; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
-.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 120px;display:grid;gap:14px}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 140px;display:grid;gap:14px}
 header h1{font-family:var(--display);font-size:1.6rem;margin:0;text-wrap:balance}
 header p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
-.state{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.85rem;color:var(--muted)}
+.state{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.85rem;color:var(--muted);margin-top:8px}
 .chip{border:1px solid var(--line);border-radius:999px;padding:2px 10px;background:var(--paper)}
 .chip.ok{color:var(--ok);border-color:currentColor}
 .chip.warn{color:var(--warn);border-color:currentColor}
 section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px;min-width:0}
 h2{font-family:var(--display);font-size:1.15rem;margin:0;color:var(--pine)}
 .hint{margin:0;color:var(--muted);font-size:.88rem}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .field{display:grid;gap:4px;min-width:0}
 .field>span{font-weight:500;font-size:.92rem}
-input,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)}
+input[type=text],input[type=date],input[type=time],textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)}
 textarea{resize:vertical}
-input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--pine);outline-offset:2px}
-.memo{border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:10px}
-.memo:first-of-type{border-top:0;padding-top:0}
-.memo h3{margin:0;font-size:.95rem;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.04em}
-.memo .grid2{grid-template-columns:120px 1fr}
-@media (max-width:420px){.memo .grid2{grid-template-columns:1fr}}
+input:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--pine);outline-offset:2px}
+
+details.group{border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+details.group>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;font-weight:700;color:var(--pine)}
+details.group>summary::-webkit-details-marker{display:none}
+details.group>summary::after{content:"펼치기 ▾";font-size:.85rem;font-weight:500;color:var(--muted);white-space:nowrap}
+details.group[open]>summary::after{content:"접기 ▴"}
+details.group>summary .cnt{font-weight:500;font-size:.85rem;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+.gbody{display:grid;gap:14px;padding:0 14px 14px}
+
+.memo{border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:8px}
+.memo:first-child{border-top:0;padding-top:0}
+.memo h3{margin:0;font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center}
+.timebox{display:flex;gap:6px;align-items:center}
+.timebox input{width:7.2em}
+.pic{display:inline-flex;gap:8px;align-items:center;font-size:.95rem;cursor:pointer;user-select:none}
+.pic input{width:22px;height:22px;accent-color:var(--pine);margin:0}
+@media (max-width:420px){.row{grid-template-columns:1fr}.timebox input{flex:1}}
+
 button{font:inherit;font-weight:700;border-radius:8px;padding:11px 14px;cursor:pointer;border:1px solid var(--pine);background:var(--pine);color:var(--pine-ink)}
 button.ghost{background:transparent;color:var(--pine)}
 button.danger{border-color:var(--warn);color:var(--warn);background:transparent}
@@ -55,14 +69,13 @@ button.small{padding:6px 10px;font-size:.85rem}
 .list .acts{display:flex;gap:6px;flex-wrap:wrap}
 .confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--moss);border-radius:8px;padding:10px}
 #plain{font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <div class="wrap">
   <header>
     <h1>산행 현장 기록장</h1>
-    <p>입력하는 즉시 이 기기에 자동 보관됩니다. 산행을 마치면 ‘기록 저장’으로 보관함에 넣고, 필요하면 TXT 파일로 내려받으세요.</p>
-    <div class="state" style="margin-top:8px">
+    <p>걸으면서는 시각·장소·한 줄만 적으세요. 나머지는 하산 후에 채워도 됩니다.</p>
+    <div class="state">
       <span class="chip" id="autoChip">자동 보관 준비 중</span>
       <span class="chip" id="cloudChip">보관함 연결 확인 중</span>
     </div>
@@ -71,54 +84,35 @@ button.small{padding:6px 10px;font-size:.85rem}
   <form id="log" autocomplete="off">
     <div style="display:grid;gap:14px">
       <section>
-        <h2>1. 산행 기본 정보</h2>
+        <h2>1. 기본 정보</h2>
         <div class="grid2">
-          <label class="field"><span>산행 날짜</span><input type="date" id="date" name="date"></label>
+          <label class="field"><span>날짜</span><input type="date" id="date" name="date"></label>
           <label class="field"><span>산 이름</span><input type="text" id="mountain" name="mountain" placeholder="예: 주왕산"></label>
         </div>
-        <label class="field"><span>산행 코스</span><input type="text" id="course" name="course" placeholder="예: 대전사–주봉–후리메기"></label>
+        <label class="field"><span>코스</span><input type="text" id="course" name="course" placeholder="예: 대전사–주봉–후리메기"></label>
+        <label class="field"><span>날씨</span><input type="text" id="weather" name="weather" placeholder="예: 맑음, 서늘함"></label>
         <div class="grid2">
-          <label class="field"><span>날씨·기온</span><input type="text" id="weather" name="weather" placeholder="예: 맑음, 서늘함"></label>
-          <label class="field"><span>총 거리·동행자</span><input type="text" id="distance" name="distance" placeholder="예: 약 9km, 산악회 회원"></label>
-          <label class="field"><span>시작 시각</span><input type="time" id="start" name="start"></label>
-          <label class="field"><span>종료 시각</span><input type="time" id="finish" name="finish"></label>
+          <label class="field"><span>출발 시각</span><input type="time" id="start" name="start"></label>
+          <label class="field"><span>하산 시각</span><input type="time" id="finish" name="finish"></label>
         </div>
-        <label class="field"><span>산행 목적·기대</span><textarea id="purpose" name="purpose" rows="3"></textarea></label>
       </section>
 
       <section>
-        <h2>2. 시간대별 현장 메모</h2>
-        <p class="hint">출발지, 갈림길, 쉼터, 나무·꽃 발견 지점, 조망처, 정상, 하산 지점 순서로 적어보세요. ‘지금’ 버튼을 누르면 현재 시각이 들어갑니다.</p>
-        <div id="memos" style="display:grid;gap:14px"></div>
-        <div><button type="button" class="ghost small" id="moreMemo">메모 칸 5개 더 쓰기</button></div>
+        <h2>2. 현장 메모</h2>
+        <p class="hint">‘지금’을 누르면 현재 시각이 들어갑니다. 사진을 찍었으면 ‘사진 있음’만 체크하세요.</p>
+        <div id="groups" style="display:grid;gap:10px"></div>
       </section>
 
       <section>
-        <h2>3. 자연 관찰·숲 해설</h2>
-        <label class="field"><span>나무 관찰</span><textarea id="trees" name="trees" rows="3" placeholder="잎·껍질·열매·수형, 발견 장소. 이름이 불확실하면 추정이라고 표시"></textarea></label>
-        <label class="field"><span>꽃·풀·열매·버섯</span><textarea id="flowers" name="flowers" rows="3"></textarea></label>
-        <label class="field"><span>숲 해설 소재</span><textarea id="forest" name="forest" rows="3" placeholder="생태 특징, 계절 변화, 숲의 역할, 확인할 지식"></textarea></label>
-        <label class="field"><span>새·곤충·동물·소리</span><textarea id="wildlife" name="wildlife" rows="2"></textarea></label>
-      </section>
-
-      <section>
-        <h2>4. 조망·등산로·안전</h2>
-        <label class="field"><span>조망과 풍경</span><textarea id="view" name="view" rows="3"></textarea></label>
-        <label class="field"><span>등산로·갈림길·시설</span><textarea id="trail" name="trail" rows="3"></textarea></label>
-        <label class="field"><span>주의할 점</span><textarea id="safety" name="safety" rows="3"></textarea></label>
-      </section>
-
-      <section>
-        <h2>5. 사진 기록표</h2>
-        <label class="field"><span>사진 번호와 설명</span><textarea id="photos" name="photos" rows="5" placeholder="사진 01 — 들머리 안내판&#10;사진 02 — 단풍 숲길&#10;사진 03 — 정상 조망"></textarea></label>
-      </section>
-
-      <section>
-        <h2>6. 산행을 마치며</h2>
-        <label class="field"><span>가장 인상 깊었던 순간</span><textarea id="feeling" name="feeling" rows="3"></textarea></label>
-        <label class="field"><span>산에서 얻은 생각·느낀 점</span><textarea id="lesson" name="lesson" rows="3"></textarea></label>
-        <label class="field"><span>다른 등산객에게 전할 정보</span><textarea id="recommend" name="recommend" rows="3"></textarea></label>
-        <label class="field"><span>블로그 핵심 문장</span><textarea id="blog" name="blog" rows="3"></textarea></label>
+        <details class="group" id="afterBox" style="border:0">
+          <summary style="padding:0">3. 하산 후 정리 <span class="cnt">선택 · 나중에 써도 됩니다</span></summary>
+          <div class="gbody" style="padding:12px 0 0">
+            <label class="field"><span>오늘의 한 장면</span><textarea id="best" name="best" rows="2" placeholder="가장 기억에 남는 풍경·나무·꽃 한 가지"></textarea></label>
+            <label class="field"><span>다른 등산객에게 한마디</span><textarea id="tip" name="tip" rows="2" placeholder="길 상태, 주의할 곳, 주차·화장실 등"></textarea></label>
+            <label class="field"><span>한 줄 소감</span><textarea id="feeling" name="feeling" rows="2" placeholder="블로그 첫 문장으로 쓸 만한 한 줄"></textarea></label>
+            <label class="field"><span>기타 메모</span><textarea id="etc" name="etc" rows="2"></textarea></label>
+          </div>
+        </details>
       </section>
     </div>
   </form>
@@ -148,66 +142,107 @@ button.small{padding:6px 10px;font-size:.85rem}
 <script>
 (function(){
   const DRAFT_KEY='hikelog.draft.v1', LIST_KEY='hikelog.saved.v1';
+  const MEMOS=15, PER=5;
   const form=document.getElementById('log');
-  const memosEl=document.getElementById('memos');
+  const groupsEl=document.getElementById('groups');
   const msg=t=>{document.getElementById('msg').textContent=t};
-  const labels={date:'산행 날짜',mountain:'산 이름',course:'산행 코스',weather:'날씨·기온',start:'시작 시각',finish:'종료 시각',distance:'총 거리·동행자',purpose:'산행 목적·기대',
-    trees:'나무 관찰',flowers:'꽃·풀·열매·버섯',forest:'숲 해설 소재',wildlife:'새·곤충·동물·소리',view:'조망과 풍경',trail:'등산로·갈림길·시설',safety:'주의할 점',photos:'사진 번호와 설명',feeling:'가장 인상 깊었던 순간',lesson:'산에서 얻은 생각·느낀 점',recommend:'다른 등산객에게 전할 정보',blog:'블로그 핵심 문장'};
-  const order=['date','mountain','course','weather','start','finish','distance','purpose'];
-  const tail=['trees','flowers','forest','wildlife','view','trail','safety','photos','feeling','lesson','recommend','blog'];
-  let memoCount=0, currentId=null;
-  let db=null, uid=null, downloads=null;
+  const labels={date:'날짜',mountain:'산 이름',course:'코스',weather:'날씨',start:'출발 시각',finish:'하산 시각',
+    best:'오늘의 한 장면',tip:'다른 등산객에게 한마디',feeling:'한 줄 소감',etc:'기타 메모'};
+  const head=['date','mountain','course','weather','start','finish'];
+  const tail=['best','tip','feeling','etc'];
+  // 이전 버전에서 쓰던 칸: 불러올 때 기타 메모로 옮겨 내용이 사라지지 않게 함
+  const oldLabels={distance:'총 거리·동행자',purpose:'산행 목적·기대',trees:'나무 관찰',flowers:'꽃·풀·열매·버섯',forest:'숲 해설 소재',wildlife:'새·곤충·동물·소리',view:'조망과 풍경',trail:'등산로·갈림길·시설',safety:'주의할 점',photos:'사진 기록표',lesson:'느낀 점',recommend:'다른 등산객에게 전할 정보',blog:'블로그 핵심 문장'};
+  let currentId=null, db=null, uid=null, downloads=null;
 
   const pad=n=>String(n).padStart(2,'0');
   const localDate=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
   const nowTime=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
 
-  function addMemos(n){
-    for(let k=0;k<n;k++){
-      const i=++memoCount, div=document.createElement('div');
-      div.className='memo';
+  // 현장 메모 15칸을 5칸씩 3묶음으로
+  for(let g=0;g<MEMOS/PER;g++){
+    const det=document.createElement('details'); det.className='group'; det.id='grp'+g; if(g===0) det.open=true;
+    const sum=document.createElement('summary');
+    sum.innerHTML='메모 '+pad(g*PER+1)+'–'+pad(g*PER+PER)+' <span class="cnt" id="cnt'+g+'"></span>';
+    const body=document.createElement('div'); body.className='gbody';
+    for(let i=g*PER+1;i<=g*PER+PER;i++){
+      const div=document.createElement('div'); div.className='memo';
       div.innerHTML=
-        '<h3>현장 메모 '+pad(i)+'</h3>'+
-        '<div class="grid2">'+
-          '<label class="field"><span>시각</span><span style="display:flex;gap:6px"><input type="time" id="time'+i+'" name="time'+i+'"><button type="button" class="ghost small" data-now="time'+i+'">지금</button></span></label>'+
-          '<label class="field"><span>장소·지점</span><input type="text" id="place'+i+'" name="place'+i+'" placeholder="예: 갈림길, 쉼터, 전망대"></label>'+
+        '<h3>메모 '+pad(i)+'</h3>'+
+        '<div class="row">'+
+          '<span class="timebox"><input type="time" id="time'+i+'" name="time'+i+'" aria-label="메모 '+i+' 시각"><button type="button" class="ghost small" data-now="time'+i+'">지금</button></span>'+
+          '<input type="text" id="place'+i+'" name="place'+i+'" placeholder="장소·지점 (예: 갈림길, 정상)" aria-label="메모 '+i+' 장소">'+
         '</div>'+
-        '<label class="field"><span>관찰·상황</span><textarea id="note'+i+'" name="note'+i+'" rows="3" placeholder="무엇을 보았나요? 길 상태, 나무·꽃, 조망 등"></textarea></label>'+
-        '<label class="field"><span>사진 번호·느낀 점·추가 확인</span><textarea id="photo'+i+'" name="photo'+i+'" rows="2" placeholder="예: 사진 07, 식물 이름은 하산 후 확인"></textarea></label>';
-      memosEl.appendChild(div);
+        '<textarea id="note'+i+'" name="note'+i+'" rows="2" placeholder="내용 한두 줄" aria-label="메모 '+i+' 내용"></textarea>'+
+        '<label class="pic"><input type="checkbox" id="pic'+i+'" name="pic'+i+'"> 사진 있음</label>';
+      body.appendChild(div);
+    }
+    det.append(sum,body); groupsEl.appendChild(det);
+  }
+  function updateCounts(){
+    for(let g=0;g<MEMOS/PER;g++){
+      let n=0;
+      for(let i=g*PER+1;i<=g*PER+PER;i++) if(memoFilled(i)) n++;
+      document.getElementById('cnt'+g).textContent=n?n+'칸 작성':'';
     }
   }
-  memosEl.addEventListener('click',e=>{
+  function memoFilled(i){
+    return ['time','place','note'].some(k=>form.elements[k+i].value.trim())||form.elements['pic'+i].checked;
+  }
+  groupsEl.addEventListener('click',e=>{
     const id=e.target.getAttribute&&e.target.getAttribute('data-now'); if(!id) return;
     e.preventDefault(); document.getElementById(id).value=nowTime(); onEdit();
   });
-  document.getElementById('moreMemo').addEventListener('click',()=>{addMemos(5);onEdit()});
 
   function getData(){
     const fields={};
-    form.querySelectorAll('input,textarea').forEach(el=>{ if(el.value.trim()) fields[el.name]=el.value });
-    return {fields, memoCount};
+    form.querySelectorAll('input,textarea').forEach(el=>{
+      if(el.type==='checkbox'){ if(el.checked) fields[el.name]=true }
+      else if(el.value.trim()) fields[el.name]=el.value;
+    });
+    return {fields};
   }
   function setData(d){
-    form.querySelectorAll('input,textarea').forEach(el=>el.value='');
-    const need=Math.max(10,(d&&d.memoCount)||10);
-    if(need>memoCount) addMemos(need-memoCount);
-    const f=(d&&d.fields)||{};
-    Object.keys(f).forEach(k=>{const el=form.elements[k]; if(el) el.value=f[k]});
+    form.querySelectorAll('input,textarea').forEach(el=>{ if(el.type==='checkbox') el.checked=false; else el.value='' });
+    const f=Object.assign({},(d&&d.fields)||{});
+    // 이전 버전 기록 옮기기
+    const extra=[];
+    for(let i=1;i<=MEMOS;i++){
+      const old=f['photo'+i];
+      if(typeof old==='string'&&old.trim()){ f['note'+i]=(f['note'+i]?f['note'+i]+'\n':'')+old.trim(); f['pic'+i]=true }
+      delete f['photo'+i];
+    }
+    for(let i=MEMOS+1;i<=40;i++){
+      const parts=[f['time'+i],f['place'+i],f['note'+i],f['photo'+i]].filter(v=>v&&String(v).trim());
+      if(parts.length) extra.push('메모 '+pad(i)+': '+parts.join(' / '));
+    }
+    Object.keys(oldLabels).forEach(k=>{ if(f[k]&&String(f[k]).trim()) extra.push(oldLabels[k]+': '+String(f[k]).trim()) });
+    if(extra.length) f.etc=(f.etc?f.etc+'\n':'')+extra.join('\n');
+    Object.keys(f).forEach(k=>{
+      const el=form.elements[k]; if(!el) return;
+      if(el.type==='checkbox') el.checked=!!f[k]; else el.value=f[k];
+    });
+    for(let g=0;g<MEMOS/PER;g++){
+      let any=false; for(let i=g*PER+1;i<=g*PER+PER;i++) if(memoFilled(i)) any=true;
+      if(any) document.getElementById('grp'+g).open=true;
+    }
+    if(tail.some(k=>f[k])) document.getElementById('afterBox').open=true;
+    updateCounts();
   }
 
   function collectText(){
     const f=getData().fields; let out='[산행 현장 기록장]\n\n';
-    const put=(t,v)=>{ if(v&&v.trim()) out+=t+'\n'+v.trim()+'\n\n' };
-    out+='■ 산행 기본 정보\n\n'; order.forEach(k=>put(labels[k],f[k]));
+    const put=(t,v)=>{ if(v&&String(v).trim()) out+=t+': '+String(v).trim()+'\n' };
+    head.forEach(k=>put(labels[k],f[k]));
     let memoOut='';
-    for(let i=1;i<=memoCount;i++){
-      const parts=[['시각',f['time'+i]],['장소',f['place'+i]],['관찰·상황',f['note'+i]],['사진·느낀 점',f['photo'+i]]].filter(p=>p[1]&&p[1].trim());
-      if(!parts.length) continue;
-      memoOut+='- 현장 메모 '+pad(i)+'\n'+parts.map(p=>'  '+p[0]+': '+p[1].trim().replace(/\n/g,'\n    ')).join('\n')+'\n\n';
+    for(let i=1;i<=MEMOS;i++){
+      if(!memoFilled(i)) continue;
+      const top=[f['time'+i],f['place'+i]].filter(Boolean).join(' · ');
+      memoOut+='- '+pad(i)+(top?' '+top:'')+(f['pic'+i]?' [사진]':'')+'\n';
+      if(f['note'+i]) memoOut+='  '+f['note'+i].trim().replace(/\n/g,'\n  ')+'\n';
     }
-    if(memoOut) out+='■ 시간대별 현장 메모\n\n'+memoOut;
-    out+='■ 관찰·조망·마무리\n\n'; tail.forEach(k=>put(labels[k],f[k]));
+    if(memoOut) out+='\n■ 현장 메모\n'+memoOut;
+    let after=''; tail.forEach(k=>{ if(f[k]) after+=labels[k]+'\n'+f[k].trim()+'\n\n' });
+    if(after) out+='\n■ 하산 후 정리\n'+after;
     return out;
   }
   const titleOf=f=>((f.date||'날짜 미기재')+' '+(f.mountain||'산 이름 미기재'));
@@ -219,20 +254,28 @@ button.small{padding:6px 10px;font-size:.85rem}
   const autoChip=document.getElementById('autoChip');
   let timer=null;
   function onEdit(){
+    updateCounts();
     clearTimeout(timer);
-    timer=setTimeout(()=>{
-      const d=getData(); d.currentId=currentId;
-      const ok=lsSet(DRAFT_KEY,d);
-      autoChip.textContent=ok?'자동 보관됨 '+nowTime():'이 기기 자동 보관 불가';
-      autoChip.className='chip '+(ok?'ok':'warn');
-      if(db&&uid) db.collection('data/users/'+uid).doc('draft').set(d).catch(()=>{});
-    },600);
+    timer=setTimeout(flush,600);
   }
+  function flush(){
+    clearTimeout(timer); timer=null;
+    const d=getData(); d.currentId=currentId;
+    const ok=lsSet(DRAFT_KEY,d);
+    autoChip.textContent=ok?'자동 보관됨 '+nowTime():'이 기기 자동 보관 불가';
+    autoChip.className='chip '+(ok?'ok':'warn');
+    if(db&&uid) db.collection('data/users/'+uid).doc('draft').set(d).catch(()=>{});
+  }
+  // 앱을 내리거나 화면을 끌 때 바로 보관
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&timer) flush() });
+  window.addEventListener('pagehide',()=>{ if(timer) flush() });
   form.addEventListener('input',onEdit);
+  form.addEventListener('change',onEdit);
   form.addEventListener('submit',e=>e.preventDefault());
 
   // --- 보관함 ---
   const listEl=document.getElementById('saved'), confirmBox=document.getElementById('confirmBox');
+  let cache=[];
   async function loadList(){
     let items=[];
     if(db&&uid){
@@ -244,7 +287,6 @@ button.small{padding:6px 10px;font-size:.85rem}
     items.sort((a,b)=>(b.savedAt||0)-(a.savedAt||0));
     renderList(items); return items;
   }
-  let cache=[];
   function renderList(items){
     cache=items; listEl.innerHTML='';
     document.getElementById('listHint').hidden=items.length>0;
@@ -268,7 +310,7 @@ button.small{padding:6px 10px;font-size:.85rem}
     const y=document.createElement('button'); y.type='button'; y.textContent=label;
     const n=document.createElement('button'); n.type='button'; n.className='ghost'; n.textContent='취소';
     y.onclick=()=>{confirmBox.innerHTML='';fn()}; n.onclick=()=>{confirmBox.innerHTML=''};
-    box.append(p,y,n); confirmBox.appendChild(box); box.scrollIntoView({block:'nearest',behavior:'smooth'});
+    box.append(p,y,n); confirmBox.appendChild(box); box.scrollIntoView({block:'center',behavior:'smooth'});
   }
   async function removeItem(id){
     try{
@@ -283,14 +325,14 @@ button.small{padding:6px 10px;font-size:.85rem}
     const d=getData();
     if(!Object.keys(d.fields).some(k=>k!=='date')){ msg('저장할 내용이 없습니다. 산 이름이나 메모를 먼저 적어 주세요.'); return }
     const id=currentId||('h'+Date.now());
-    const rec={fields:d.fields,memoCount:d.memoCount,title:titleOf(d.fields),savedAt:Date.now()};
+    const rec={fields:d.fields,title:titleOf(d.fields),savedAt:Date.now()};
     try{
       if(db&&uid) await db.collection('data/users/'+uid).doc(id).set(rec);
       else{
         const list=(lsGet(LIST_KEY)||[]).filter(x=>x.id!==id); list.push(Object.assign({id},rec));
         if(!lsSet(LIST_KEY,list)) throw new Error('ls');
       }
-      currentId=id; onEdit(); await loadList();
+      currentId=id; flush(); await loadList();
       msg('‘'+rec.title+'’ 기록을 '+(db&&uid?'내 보관함(다른 기기에서도 열림)':'이 기기')+'에 저장했습니다.');
     }catch(e){
       msg('저장하지 못했습니다. ‘전체 복사’나 ‘TXT 내려받기’로 따로 보관해 주세요.');
@@ -319,17 +361,19 @@ button.small{padding:6px 10px;font-size:.85rem}
   });
   document.getElementById('reset').addEventListener('click',()=>{
     askConfirm('화면을 비우고 새 산행 기록을 시작합니다. 보관함에 저장한 기록은 그대로 남습니다.','새 기록 시작',()=>{
-      setData(null); currentId=null; document.getElementById('date').value=localDate(); onEdit(); renderList(cache); msg('새 기록을 시작했습니다.'); window.scrollTo({top:0});
+      setData(null); currentId=null; document.getElementById('date').value=localDate();
+      for(let g=1;g<MEMOS/PER;g++) document.getElementById('grp'+g).open=false;
+      document.getElementById('afterBox').open=false;
+      onEdit(); renderList(cache); msg('새 기록을 시작했습니다.'); window.scrollTo({top:0});
     });
-    document.getElementById('confirmBox').scrollIntoView({behavior:'smooth',block:'center'});
   });
 
   // --- 시작 ---
-  addMemos(10);
   const draft=lsGet(DRAFT_KEY);
   if(draft){ setData(draft); currentId=draft.currentId||null; autoChip.textContent='이전 작성 내용을 이어서 엽니다'; autoChip.className='chip ok' }
   else autoChip.textContent='입력하면 자동 보관됩니다';
   const dateEl=document.getElementById('date'); if(!dateEl.value) dateEl.value=localDate();
+  updateCounts();
   loadList();
 
   const cloudChip=document.getElementById('cloudChip');
@@ -347,9 +391,8 @@ button.small{padding:6px 10px;font-size:.85rem}
           const s=await db.collection('data/users/'+uid).doc('draft').get().catch(()=>null);
           if(s&&s.exists){ const dd=s.data(); setData(dd); currentId=dd.currentId||null; autoChip.textContent='다른 기기에서 쓰던 내용을 불러왔습니다'; autoChip.className='chip ok' }
         }
-        // 이 기기에만 있던 기록을 계정 보관함으로 옮김
         const local=lsGet(LIST_KEY)||[];
-        for(const it of local){ const {id:lid,...rest}=it; await db.collection('data/users/'+uid).doc(lid).set(rest).catch(()=>{}) }
+        for(const it of local){ const rest=Object.assign({},it); const lid=rest.id; delete rest.id; await db.collection('data/users/'+uid).doc(lid).set(rest).catch(()=>{}) }
         if(local.length) lsSet(LIST_KEY,[]);
         await loadList();
       } else cloudChip.textContent='보관함: 이 기기에만 저장';
