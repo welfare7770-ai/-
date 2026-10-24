@@ -31,8 +31,8 @@ body{background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMac
 header.top{background:var(--brand);color:#fff;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top))}
 :root[data-theme="dark"] header.top{color:#0f1a16}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) header.top{color:#0f1a16}}
-header.top h1{margin:0;font-size:18px}
-nav#tabs{position:sticky;top:0;z-index:5;display:flex;gap:4px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--line);padding:6px 8px;scrollbar-width:none}
+header.top{display:flex;align-items:center;gap:8px}header.top h1{margin:0;font-size:18px;flex:1}#sync{font-size:12px;opacity:.85}
+nav#tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:4px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--line);padding:6px 8px;scrollbar-width:none}
 nav#tabs::-webkit-scrollbar{display:none}
 nav#tabs button{flex:0 0 auto;border:0;background:none;color:var(--muted);padding:8px 12px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer}
 nav#tabs button.on{background:var(--brand-weak);color:var(--brand)}
@@ -110,10 +110,11 @@ svg.spark{width:100%;height:60px;display:block}
 </style>
 </head>
 <body>
-<header class="top"><h1>생활기록장</h1></header>
+<header class="top"><h1>생활기록장</h1><span id="sync"></span></header>
 <nav id="tabs"></nav>
 <main id="view"></main>
 <dialog id="dlg"><form id="dlgForm" novalidate></form></dialog>
+<dialog id="cfm"><form id="cfmForm" style="padding:16px"><p id="cfmMsg" style="white-space:pre-line;margin:0 0 4px"></p><div class="actions"><span class="sp"></span><button type="button" id="cfmNo">취소</button><button type="submit" class="primary" id="cfmYes">확인</button></div></form></dialog>
 <div id="toast"></div>
 <script>
 'use strict';
@@ -142,7 +143,64 @@ const GIFT_REL=['가족·친척','친구','직장','이웃·지인','모임·동
 function blank(){return {tx:[],budget:0,car:{name:'',plate:'',odo:0,fuelType:'휘발유',year:''},rules:DEFAULT_RULES.map(r=>({...r})),maint:[],fuel:[],recur:[],sched:[],gift:[],health:[]};}
 let S;
 try{S=Object.assign(blank(),JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){S=blank();}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('저장 실패: 브라우저 저장공간을 확인하세요');}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}cloud.push();}
+/* ---------- 클라우드 동기화 (claude.ai 아티팩트로 열었을 때) ----------
+   본인 전용 경로 data/users/<id>/ 에 저장 → 같은 계정이면 휴대폰·PC 어디서나 같은 기록,
+   다른 사람은 볼 수 없음. 가계부는 연도별 문서로 나눠 문서 크기 제한을 피함. */
+const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
+  docs(){
+    const out={meta:{budget:S.budget,car:S.car,rules:S.rules}};
+    for(const k of ['maint','fuel','recur','sched','gift','health'])out[k]={items:S[k]};
+    const years={};S.tx.forEach(t=>{(years[t.date.slice(0,4)]||=[]).push(t);});
+    for(const y in years)out['tx-'+y]={items:years[y]};
+    for(const id in this.sent)if(id.startsWith('tx-')&&!out[id])out[id]=null; // 비워진 연도는 삭제
+    return out;
+  },
+  push(){if(!this.db)return;this.pending=true;clearTimeout(this.timer);this.timer=setTimeout(()=>this.flush(),400);},
+  async flush(){
+    if(this.busy){this.again=true;return;}
+    this.busy=true;setSync('저장 중…');
+    try{
+      const docs=this.docs();
+      for(const id in docs){
+        const body=docs[id],js=body?JSON.stringify(body):null;
+        if(this.sent[id]===js)continue;
+        const ref=this.db.collection(this.base).doc(id);
+        if(body)await ref.set(body);else await ref.delete();
+        if(js)this.sent[id]=js;else delete this.sent[id];
+      }
+      setSync('☁ 동기화됨');
+    }catch(e){setSync('⚠ 저장 실패');toast(e&&e.code==='quota_exceeded'?'저장공간이 가득 찼습니다. 오래된 기록을 정리하세요':'서버 저장에 실패했습니다. 잠시 후 다시 시도됩니다');setTimeout(()=>this.push(),5000);}
+    this.busy=false;if(this.again){this.again=false;this.flush();}else this.pending=false;
+  },
+  apply(snap){
+    if(snap.metadata.hasPendingWrites||this.busy||this.pending)return;
+    const got={};snap.docs.forEach(d=>{got[d.id]=d.data();});
+    const n=blank();
+    if(got.meta){n.budget=got.meta.budget||0;n.car={...n.car,...got.meta.car};if(Array.isArray(got.meta.rules))n.rules=got.meta.rules;}
+    for(const k of ['maint','fuel','recur','sched','gift','health'])if(got[k])n[k]=JSON.parse(JSON.stringify(got[k].items||[]));
+    for(const id in got)if(id.startsWith('tx-'))n.tx.push(...JSON.parse(JSON.stringify(got[id].items||[])));
+    this.sent={};for(const id in got)this.sent[id]=JSON.stringify(got[id]);
+    S=n;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+    if(!dlg.open)render();
+  },
+  async start(){
+    if(!window.claude?.use)return setSync('이 기기에만 저장');
+    const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);
+    const id=user?await user.id():null;
+    if(!db||!id)return setSync('이 기기에만 저장');
+    this.base='data/users/'+id;
+    let first;
+    try{first=await db.collection(this.base).get();}catch(e){return setSync('이 기기에만 저장');}
+    this.db=db;
+    if(first.empty){ // 처음: 이 기기에 있던 기록을 올림
+      if(S.tx.length||S.maint.length||S.fuel.length||S.recur.length||S.sched.length||S.gift.length||S.health.length||S.car.name)await this.flush();
+      else setSync('☁ 동기화됨');
+    }else{this.apply(first);setSync('☁ 동기화됨');}
+    db.collection(this.base).onSnapshot(s=>this.apply(s),()=>setSync('⚠ 연결 끊김'));
+  }
+};
+function setSync(t){const el=document.getElementById('sync');if(el)el.textContent=t;}
 
 /* ---------- 유틸 ---------- */
 const $=s=>document.querySelector(s);
@@ -161,6 +219,10 @@ function shiftYM(ym,n){return addMonths(ym+'-01',n).slice(0,7);}
 const WD=['일','월','화','수','목','금','토'];
 const dLabel=s=>{const d=parseD(s);return `${d.getMonth()+1}월 ${d.getDate()}일 (${WD[d.getDay()]})`;};
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2200);}
+function askConfirm(msg,yes){
+  return new Promise(res=>{const d=$('#cfm');$('#cfmMsg').textContent=msg;$('#cfmYes').textContent=yes||'확인';
+    $('#cfmNo').onclick=()=>{d.close();res(false);};$('#cfmForm').onsubmit=e=>{e.preventDefault();d.close();res(true);};d.oncancel=()=>res(false);d.showModal();});
+}
 function addTx(o){S.tx.push({id:uid(),pay:'',memo:'',...o});}
 
 /* ---------- 공용 입력 폼 ---------- */
@@ -191,7 +253,7 @@ function openForm(title,fields,rec,onSave,onDelete){
   });
   dlgForm.querySelector('[data-x=cancel]').onclick=()=>dlg.close();
   const del=dlgForm.querySelector('[data-x=del]');
-  if(del)del.onclick=()=>{if(confirm('삭제할까요?')){onDelete();save();dlg.close();render();toast('삭제했습니다');}};
+  if(del)del.onclick=async()=>{if(await askConfirm('이 기록을 삭제할까요?','삭제')){onDelete();save();dlg.close();render();toast('삭제했습니다');}};
   dlgForm.onsubmit=e=>{
     e.preventDefault();
     if(!dlgForm.checkValidity()){dlgForm.reportValidity();return;}
@@ -475,7 +537,7 @@ function view_settings(){
   const cnt=`가계부 ${S.tx.length} · 정비 ${S.maint.length} · 주유 ${S.fuel.length} · 고정지출 ${S.recur.length} · 기한 ${S.sched.length} · 경조사 ${S.gift.length} · 건강 ${S.health.length}`;
   let lastBk='';try{lastBk=localStorage.getItem(KEY+'.lastBackup')||'';}catch(e){}
   return `
-  <section class="card"><h2>백업 · 복원</h2><p class="hint">모든 기록은 이 기기의 이 브라우저에만 저장됩니다. 브라우저 데이터 삭제·기기 변경 시 사라지므로 백업 파일을 보관하세요.<br>현재: ${cnt}<br>마지막 백업: ${lastBk||'없음'}</p>
+  <section class="card"><h2>백업 · 복원</h2><p class="hint">${cloud.db?'claude.ai 계정에 저장되어 휴대폰·PC 어디서 열어도 같은 기록이 보입니다. 다른 사람은 이 기록을 볼 수 없습니다. 만일을 위해 가끔 백업 파일도 받아 두세요.':'지금은 이 기기의 이 브라우저에만 저장됩니다. 브라우저 데이터 삭제·기기 변경 시 사라지므로 백업 파일을 보관하세요.'}<br>현재: ${cnt}<br>마지막 백업: ${lastBk||'없음'}</p>
    <div class="toolbar"><button class="btn primary" data-act="backup">백업 파일 저장(JSON)</button><button class="btn" data-act="restore">백업 불러오기</button><button class="btn" data-act="csv">가계부 엑셀(CSV) 내보내기</button></div>
    <input type="file" id="restoreFile" accept=".json,application/json" hidden></section>
   <section class="card"><h2>화면</h2><div class="toolbar" style="margin:0"><button class="btn" data-act="theme" data-v="">시스템 설정</button><button class="btn" data-act="theme" data-v="light">밝게</button><button class="btn" data-act="theme" data-v="dark">어둡게</button></div></section>
@@ -493,7 +555,10 @@ function render(){
 function go(t){tab=t;try{localStorage.setItem(KEY+'.tab',t);}catch(e){}render();window.scrollTo(0,0);}
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(b){go(b.dataset.tab);b.scrollIntoView({inline:'center',block:'nearest'});}});
 
-function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
+async function download(name,text,type){
+  const dl=window.claude?.use?await window.claude.use('downloads').catch(()=>null):null;
+  if(dl){try{await dl.save({filename:name,data:new Blob([text],{type})});toast('파일을 저장했습니다');}catch(e){if(e&&e.code!=='declined')toast('파일 저장에 실패했습니다');}return;}
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 const ACT={
   go:d=>go(d.tab),
   ym:d=>{ledgerYM=shiftYM(ledgerYM,+d.n);render();},
@@ -506,7 +571,7 @@ const ACT={
     {k:'year',label:'연식',type:'text',ph:'예: 2021년식'},{k:'fuelType',label:'연료',type:'select',options:['휘발유','경유','LPG','하이브리드','전기']},
     {k:'odo',label:'현재 주행거리(km)',type:'number'}],{...S.car,odo:currentOdo()||''},v=>{Object.assign(S.car,v);}),
   setOdo:()=>openForm('현재 주행거리',[{k:'odo',label:'계기판 누적 주행거리(km)',type:'number',req:1}],{odo:currentOdo()||''},v=>{
-    if(v.odo<currentOdo()&&!confirm('기존 기록보다 작은 값입니다. 그래도 저장할까요? (기존 주유·정비 기록의 최댓값이 우선 적용됩니다)'))return false;S.car.odo=v.odo;}),
+    if(v.odo<currentOdo()){toast('기존 주유·정비 기록('+num(currentOdo())+'km)보다 작은 값은 입력할 수 없습니다');return false;}S.car.odo=v.odo;}),
   addMaint:d=>{
     const f=[...maintFields(),ledgerChk];
     openForm('정비기록 추가',f,{item:d.item||''},v=>{
@@ -537,10 +602,10 @@ const ACT={
   },
   addRecur:()=>crud('recur','고정지출',recurFields,null),
   editRecur:d=>crud('recur','고정지출',recurFields,find('recur',d.id)),
-  postRecur:()=>{
+  postRecur:async()=>{
     const ym=today().slice(0,7),list=S.recur.filter(r=>r.active&&!posted(r,ym));
     if(!list.length)return;
-    if(!confirm(`${ymLabel(ym)} 고정지출 ${list.length}건(${won(list.reduce((s,r)=>s+(+r.amount||0),0))})을 가계부에 기록할까요?\n실제 금액이 다르면 가계부에서 수정하세요.`))return;
+    if(!await askConfirm(`${ymLabel(ym)} 고정지출 ${list.length}건(${won(list.reduce((s,r)=>s+(+r.amount||0),0))})을 가계부에 기록할까요?\n실제 금액이 다르면 가계부에서 수정하세요.`,'기록'))return;
     list.forEach(r=>{const last=new Date(+ym.slice(0,4),+ym.slice(5),0).getDate();
       addTx({type:'out',date:`${ym}-${String(Math.min(r.day||1,last)).padStart(2,'0')}`,amount:r.amount,cat:r.cat,pay:r.pay,memo:`[고정] ${r.name}`});
       r.posted=[...(r.posted||[]),ym].slice(-24);});
@@ -563,7 +628,7 @@ const ACT={
     download(`가계부_${today()}.csv`,'﻿'+rows.map(r=>r.map(q).join(',')).join('\r\n'),'text/csv');
   },
   theme:d=>{if(d.v)document.documentElement.dataset.theme=d.v;else delete document.documentElement.dataset.theme;try{localStorage.setItem(KEY+'.theme',d.v);}catch(e){}},
-  reset:()=>{if(confirm('모든 기록을 삭제합니다. 백업하셨나요?')&&confirm('정말 삭제할까요? 되돌릴 수 없습니다.')){S=blank();save();render();toast('초기화했습니다');}}
+  reset:async()=>{if(await askConfirm('모든 기록을 삭제합니다. 백업하셨나요?','다음')&&await askConfirm('정말 삭제할까요? 되돌릴 수 없습니다.','모두 삭제')){S=blank();save();render();toast('초기화했습니다');}}
 };
 $('#view').addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const f=ACT[el.dataset.act];if(f)f(el.dataset);});
 $('#view').addEventListener('input',e=>{
@@ -577,16 +642,18 @@ $('#view').addEventListener('change',e=>{
   if(e.target.id==='schedCat'){schedCat=e.target.value;render();}
   if(e.target.id==='restoreFile'){
     const file=e.target.files[0];if(!file)return;
-    file.text().then(txt=>{
+    e.target.value='';
+    file.text().then(async txt=>{
       const o=JSON.parse(txt),d=o&&o.app==='lifebook'?o.data:o;
       if(!d||typeof d!=='object'||!Array.isArray(d.tx))throw new Error('형식 오류');
-      if(!confirm('현재 데이터를 백업 파일 내용으로 바꿉니다. 계속할까요?'))return;
+      if(!await askConfirm('현재 데이터를 백업 파일 내용으로 바꿉니다. 계속할까요?','복원'))return;
       S=Object.assign(blank(),d);save();render();toast('복원했습니다');
     }).catch(()=>toast('올바른 백업 파일이 아닙니다'));
   }
 });
 try{const th=localStorage.getItem(KEY+'.theme');if(th)document.documentElement.dataset.theme=th;}catch(e){}
 render();
+cloud.start();
 </script>
 </body>
 </html>
