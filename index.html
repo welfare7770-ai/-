@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2f6f5e">
+<title>생활기록장</title>
+<style>
+:root{
+  --bg:#f4f5f2;--card:#fff;--text:#1d2420;--muted:#66706a;--line:#e1e4df;
+  --brand:#2f6f5e;--brand-weak:#e3efe9;
+  --pos:#1f6fb2;--neg:#c2410c;
+  --over:#b91c1c;--over-bg:#fde8e8;--soon:#a16207;--soon-bg:#fdf3d7;
+  --ok:#15803d;--ok-bg:#e3f4e8;--info:#1d4ed8;--info-bg:#e4ebfd;--none:#6b7280;--none-bg:#eceef0;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141816;--card:#1e2421;--text:#e7ebe8;--muted:#9aa49e;--line:#2f3833;
+  --brand:#6fc3a6;--brand-weak:#22352e;--pos:#7ab8f0;--neg:#f59e6b;
+  --over:#fca5a5;--over-bg:#3b1d1d;--soon:#fcd34d;--soon-bg:#3a2f12;
+  --ok:#86efac;--ok-bg:#16301f;--info:#a5b4fc;--info-bg:#1f2547;--none:#b0b6bd;--none-bg:#2a2f33;
+}}
+:root[data-theme="dark"]{
+  --bg:#141816;--card:#1e2421;--text:#e7ebe8;--muted:#9aa49e;--line:#2f3833;
+  --brand:#6fc3a6;--brand-weak:#22352e;--pos:#7ab8f0;--neg:#f59e6b;
+  --over:#fca5a5;--over-bg:#3b1d1d;--soon:#fcd34d;--soon-bg:#3a2f12;
+  --ok:#86efac;--ok-bg:#16301f;--info:#a5b4fc;--info-bg:#1f2547;--none:#b0b6bd;--none-bg:#2a2f33;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;-webkit-text-size-adjust:100%}
+header.top{background:var(--brand);color:#fff;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top))}
+:root[data-theme="dark"] header.top{color:#0f1a16}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) header.top{color:#0f1a16}}
+header.top h1{margin:0;font-size:18px}
+nav#tabs{position:sticky;top:0;z-index:5;display:flex;gap:4px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--line);padding:6px 8px;scrollbar-width:none}
+nav#tabs::-webkit-scrollbar{display:none}
+nav#tabs button{flex:0 0 auto;border:0;background:none;color:var(--muted);padding:8px 12px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer}
+nav#tabs button.on{background:var(--brand-weak);color:var(--brand)}
+main{max-width:760px;margin:0 auto;padding:12px 16px 80px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h2{font-size:16px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.card h2 .sp{flex:1}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--bg);border-radius:10px;padding:8px 10px;min-width:0}
+.stat small{display:block;color:var(--muted);font-size:12px}
+.stat b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pos{color:var(--pos)}.neg{color:var(--neg)}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+button{font:inherit;cursor:pointer}
+.btn,.quick button,.toolbar button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:8px 10px;font-weight:600}
+.quick button{padding:10px 4px;font-size:13px}
+.btn.primary,button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+:root[data-theme="dark"] button.primary,:root[data-theme="dark"] .btn.primary{color:#0f1a16}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.primary,:root:not([data-theme="light"]) .btn.primary{color:#0f1a16}}
+.btn.sm{padding:4px 10px;font-size:13px}
+.danger{color:var(--over)!important}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar .grow{flex:1}
+.monthnav{display:flex;align-items:center;gap:6px;font-weight:700;font-size:16px}
+.list{list-style:none;margin:0;padding:0}
+.row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-top:1px solid var(--line);cursor:pointer}
+.list .row:first-child{border-top:0}
+.grow{flex:1;min-width:0}
+.row b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row small{display:block;color:var(--muted);font-size:12.5px}
+.amt{font-weight:700;white-space:nowrap;text-align:right}
+.daygrp{font-size:12.5px;color:var(--muted);margin:12px 2px 2px;display:flex;justify-content:space-between}
+.pill{flex:0 0 auto;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pill.over{color:var(--over);background:var(--over-bg)}.pill.soon{color:var(--soon);background:var(--soon-bg)}
+.pill.ok{color:var(--ok);background:var(--ok-bg)}.pill.info{color:var(--info);background:var(--info-bg)}
+.pill.none{color:var(--none);background:var(--none-bg)}
+.bar{height:8px;background:var(--bg);border-radius:99px;overflow:hidden;margin-top:4px}
+.bar span{display:block;height:100%;background:var(--brand);border-radius:99px}
+.bar.warn span{background:var(--soon)}.bar.over span{background:var(--over)}
+.catrow{display:grid;grid-template-columns:92px 1fr auto;gap:8px;align-items:center;font-size:13.5px;margin:6px 0}
+.catrow .bar{margin:0}
+.empty{color:var(--muted);text-align:center;padding:14px 0;margin:0}
+.hint{color:var(--muted);font-size:13px;margin:4px 0 10px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font-weight:600}
+input,select,textarea{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+textarea{min-height:64px;resize:vertical}
+input[type=checkbox]{width:auto}
+dialog{border:0;border-radius:16px;padding:0;width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 32px);background:var(--card);color:var(--text)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+#dlgForm{padding:16px;overflow:auto}
+#dlgForm h2{margin:0 0 12px;font-size:17px}
+.fld{margin-bottom:10px}
+.fld>label{display:block;font-size:13px;color:var(--muted);margin-bottom:3px}
+.fld.chk label{display:flex;gap:8px;align-items:center;color:var(--text);font-size:14px}
+.fld2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.actions{display:flex;gap:8px;margin-top:14px;position:sticky;bottom:-16px;background:var(--card);padding:10px 0}
+.actions .sp{flex:1}
+.actions button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:9px 16px;font-weight:600}
+.rule{display:grid;grid-template-columns:1fr 78px 20px 60px 26px 30px;gap:4px;align-items:center;margin-bottom:6px;font-size:12.5px;color:var(--muted)}
+.rule input{padding:6px}
+.rule button{border:0;background:none;color:var(--over);font-size:16px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100vw - 32px)}
+#toast.show{opacity:1}
+svg.spark{width:100%;height:60px;display:block}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th,.tbl td{text-align:left;padding:7px 4px;border-top:1px solid var(--line);vertical-align:top}
+.tbl th{color:var(--muted);font-weight:600;border-top:0;font-size:12.5px}
+.tbl tr[data-act]{cursor:pointer}
+.tbl td.r,.tbl th.r{text-align:right}
+@media (max-width:420px){
+  .stat b{font-size:13.5px}
+  .tbl .hide-sm{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top"><h1>생활기록장</h1></header>
+<nav id="tabs"></nav>
+<main id="view"></main>
+<dialog id="dlg"><form id="dlgForm" novalidate></form></dialog>
+<div id="toast"></div>
+<script>
+'use strict';
+/* ---------- 기본 데이터 ---------- */
+const KEY='lifebook.v1';
+const CAT_OUT=['식비','외식·카페','생활용품','주거·관리비','공과금','통신','교통·차량','의료·건강','보험','경조사','교육','문화·여가','의류·미용','용돈','저축·투자','세금','기타'];
+const CAT_IN=['급여','연금','사업소득','이자·배당','용돈','환급','경조금','기타'];
+const PAY=['카드','현금','계좌이체','간편결제','자동이체'];
+// 일반적 권장 주기(차량·운행조건마다 다름 → 취급설명서 기준으로 수정)
+const DEFAULT_RULES=[
+  {item:'엔진오일',km:7000,months:6},{item:'오일필터',km:7000,months:6},
+  {item:'에어컨필터',km:10000,months:6},{item:'에어클리너',km:15000,months:12},
+  {item:'타이어 위치교환',km:10000,months:12},{item:'브레이크패드',km:30000,months:24},
+  {item:'와이퍼',km:0,months:12},{item:'냉각수',km:40000,months:24},
+  {item:'브레이크오일',km:40000,months:24},{item:'배터리',km:0,months:36},
+  {item:'미션오일',km:60000,months:48},{item:'점화플러그',km:60000,months:48},
+  {item:'타이어 교체',km:50000,months:48}
+];
+const SCHED_CAT=['자동차','보험','건강','신분·면허','자격·교육','세금·공과','가족·기념일','기타'];
+const SCHED_TITLES=['자동차보험 만기','자동차 정기검사','자동차세 연납','운전면허 적성검사·갱신','국가건강검진','암검진','여권 만료','실손보험 갱신','재산세 납부(7월)','재산세 납부(9월)','종합소득세 신고(5월)','자격증 보수교육','부모님 생신','결혼기념일','제사'];
+const REPEAT=[['none','반복 없음'],['1m','매월'],['6m','6개월마다'],['1y','매년'],['2y','2년마다'],['5y','5년마다'],['10y','10년마다']];
+const REPEAT_M={none:0,'1m':1,'6m':6,'1y':12,'2y':24,'5y':60,'10y':120};
+const GIFT_KIND=['결혼','부고(조의)','돌·생일','회갑·칠순','개업·이전','병문안','출산','기타'];
+const GIFT_REL=['가족·친척','친구','직장','이웃·지인','모임·동호회','기타'];
+
+function blank(){return {tx:[],budget:0,car:{name:'',plate:'',odo:0,fuelType:'휘발유',year:''},rules:DEFAULT_RULES.map(r=>({...r})),maint:[],fuel:[],recur:[],sched:[],gift:[],health:[]};}
+let S;
+try{S=Object.assign(blank(),JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){S=blank();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('저장 실패: 브라우저 저장공간을 확인하세요');}}
+
+/* ---------- 유틸 ---------- */
+const $=s=>document.querySelector(s);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=n=>(Number(n)||0).toLocaleString('ko-KR');
+const won=n=>num(n)+'원';
+function fmtD(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+const today=()=>fmtD(new Date());
+function parseD(s){const [y,m,d]=String(s).split('-').map(Number);return new Date(y,(m||1)-1,d||1);}
+function addMonths(s,m){const d=parseD(s),day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+m);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return fmtD(d);}
+const dday=s=>Math.round((parseD(s)-parseD(today()))/864e5);
+const ddayLabel=n=>n===0?'D-Day':n>0?'D-'+n:'D+'+(-n);
+const ymLabel=ym=>{const [y,m]=ym.split('-');return `${y}년 ${Number(m)}월`;};
+function shiftYM(ym,n){return addMonths(ym+'-01',n).slice(0,7);}
+const WD=['일','월','화','수','목','금','토'];
+const dLabel=s=>{const d=parseD(s);return `${d.getMonth()+1}월 ${d.getDate()}일 (${WD[d.getDay()]})`;};
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2200);}
+function addTx(o){S.tx.push({id:uid(),pay:'',memo:'',...o});}
+
+/* ---------- 공용 입력 폼 ---------- */
+const dlg=$('#dlg'),dlgForm=$('#dlgForm');
+function optHTML(opts,val){return opts.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<option value="${esc(v)}"${String(v)===String(val)?' selected':''}>${esc(l)}</option>`;}).join('');}
+function fieldHTML(fd,val){
+  if(val===undefined||val===null)val=typeof fd.def==='function'?fd.def():(fd.def??'');
+  const id='f_'+fd.k,req=fd.req?' required':'';
+  if(fd.type==='checkbox')return `<div class="fld chk"><label><input type="checkbox" name="${fd.k}"${val?' checked':''}> ${esc(fd.label)}</label></div>`;
+  let input;
+  if(fd.type==='select')input=`<select id="${id}" name="${fd.k}"${req}>${fd.dep?'':optHTML(fd.options,val)}</select>`;
+  else if(fd.type==='textarea')input=`<textarea id="${id}" name="${fd.k}">${esc(val)}</textarea>`;
+  else{
+    const extra=fd.type==='number'?` inputmode="${fd.dec?'decimal':'numeric'}" step="${fd.dec?'any':'1'}" min="0"`:'';
+    const list=fd.list?` list="${id}_l"`:'';
+    input=`<input id="${id}" name="${fd.k}" type="${fd.type||'text'}" value="${esc(val)}"${extra}${list}${req} placeholder="${esc(fd.ph||'')}" autocomplete="off">`+
+      (fd.list?`<datalist id="${id}_l">${(typeof fd.list==='function'?fd.list():fd.list).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`:'');
+  }
+  return `<div class="fld"><label for="${id}">${esc(fd.label)}${fd.req?' *':''}</label>${input}</div>`;
+}
+function openForm(title,fields,rec,onSave,onDelete){
+  dlgForm.innerHTML=`<h2>${esc(title)}</h2>`+fields.map(fd=>fieldHTML(fd,rec?rec[fd.k]:undefined)).join('')+
+    `<div class="actions">${onDelete?'<button type="button" class="danger" data-x="del">삭제</button>':''}<span class="sp"></span><button type="button" data-x="cancel">취소</button><button type="submit" class="primary">저장</button></div>`;
+  fields.filter(fd=>fd.dep).forEach(fd=>{
+    const el=dlgForm.elements.namedItem(fd.k),dep=dlgForm.elements.namedItem(fd.dep);
+    const fill=keep=>{const cur=keep??el.value;el.innerHTML=optHTML(fd.map[dep.value]||[],cur);};
+    dep.addEventListener('change',()=>fill());fill(rec?rec[fd.k]:undefined);
+  });
+  dlgForm.querySelector('[data-x=cancel]').onclick=()=>dlg.close();
+  const del=dlgForm.querySelector('[data-x=del]');
+  if(del)del.onclick=()=>{if(confirm('삭제할까요?')){onDelete();save();dlg.close();render();toast('삭제했습니다');}};
+  dlgForm.onsubmit=e=>{
+    e.preventDefault();
+    if(!dlgForm.checkValidity()){dlgForm.reportValidity();return;}
+    const v={};
+    for(const fd of fields){
+      const el=dlgForm.elements.namedItem(fd.k);
+      if(fd.type==='checkbox')v[fd.k]=el.checked;
+      else if(fd.type==='number')v[fd.k]=el.value===''?null:Number(el.value);
+      else v[fd.k]=el.value.trim();
+    }
+    if(onSave(v)===false)return;
+    save();dlg.close();render();toast('저장했습니다');
+  };
+  dlg.showModal();
+  const first=dlgForm.querySelector('input:not([type=checkbox]),select,textarea');
+  if(first&&matchMedia('(pointer:fine)').matches)first.focus();
+}
+// 컬렉션 하나에 대한 추가/수정 폼
+function crud(coll,title,fields,rec,preset,after){
+  openForm(rec?title+' 수정':title+' 추가',fields,rec||preset,v=>{
+    if(rec){Object.assign(rec,v);}else{const r={id:uid(),...v};S[coll].push(r);after&&after(r);}
+  },rec?()=>{S[coll]=S[coll].filter(x=>x.id!==rec.id);}:null);
+}
+const find=(coll,id)=>S[coll].find(x=>x.id===id);
+
+/* ---------- 가계부 ---------- */
+const txFields=[
+  {k:'type',label:'구분',type:'select',options:[['out','지출'],['in','수입']],def:'out'},
+  {k:'date',label:'날짜',type:'date',def:today,req:1},
+  {k:'amount',label:'금액(원)',type:'number',req:1},
+  {k:'cat',label:'분류',type:'select',dep:'type',map:{out:CAT_OUT,in:CAT_IN}},
+  {k:'pay',label:'결제수단',type:'select',options:['',...PAY]},
+  {k:'memo',label:'내용',type:'text',ph:'예: 마트 장보기'}
+];
+function monthSum(ym){let inc=0,out=0;for(const t of S.tx)if(t.date.startsWith(ym)){if(t.type==='in')inc+=+t.amount||0;else out+=+t.amount||0;}return {inc,out};}
+function budgetBar(out){
+  if(!(S.budget>0))return '';
+  const p=out/S.budget*100,cls=p>=100?'over':p>=80?'warn':'';
+  return `<div style="margin-top:10px;font-size:13px"><div style="display:flex;justify-content:space-between"><span>월 예산 ${won(S.budget)}</span><span>${Math.round(p)}% · 남은 ${won(S.budget-out)}</span></div><div class="bar ${cls}"><span style="width:${Math.min(p,100)}%"></span></div></div>`;
+}
+let ledgerYM=today().slice(0,7),ledgerQ='';
+function txRow(t){
+  const sign=t.type==='in'?'+':'-';
+  return `<li class="row" data-act="editTx" data-id="${t.id}"><div class="grow"><b>${esc(t.memo||t.cat)}</b><small>${esc(t.cat)}${t.pay?' · '+esc(t.pay):''}</small></div><span class="amt ${t.type==='in'?'pos':'neg'}">${sign}${num(t.amount)}</span></li>`;
+}
+function view_ledger(){
+  const {inc,out}=monthSum(ledgerYM);
+  const q=ledgerQ.toLowerCase();
+  const rows=S.tx.filter(t=>t.date.startsWith(ledgerYM)&&(!q||(t.memo+' '+t.cat+' '+t.pay).toLowerCase().includes(q))).sort((a,b)=>b.date.localeCompare(a.date));
+  const cats={};S.tx.forEach(t=>{if(t.type==='out'&&t.date.startsWith(ledgerYM))cats[t.cat]=(cats[t.cat]||0)+(+t.amount||0);});
+  const catArr=Object.entries(cats).sort((a,b)=>b[1]-a[1]),max=catArr[0]?.[1]||1;
+  let html='',cur='';
+  for(const t of rows){
+    if(t.date!==cur){
+      if(cur)html+='</ul>';cur=t.date;
+      const dayOut=rows.filter(x=>x.date===cur&&x.type==='out').reduce((s,x)=>s+(+x.amount||0),0);
+      html+=`<div class="daygrp"><span>${dLabel(cur)}</span><span>${dayOut?'지출 '+num(dayOut):''}</span></div><ul class="list">`;
+    }
+    html+=txRow(t);
+  }
+  if(cur)html+='</ul>';
+  return `
+  <div class="toolbar"><div class="monthnav"><button class="btn sm" data-act="ym" data-n="-1" aria-label="이전 달">◀</button>${ymLabel(ledgerYM)}<button class="btn sm" data-act="ym" data-n="1" aria-label="다음 달">▶</button></div><span class="grow"></span><button class="btn primary" data-act="addTx">＋ 기록</button></div>
+  <section class="card"><div class="stats"><div class="stat"><small>수입</small><b class="pos">${won(inc)}</b></div><div class="stat"><small>지출</small><b class="neg">${won(out)}</b></div><div class="stat"><small>잔액</small><b>${won(inc-out)}</b></div></div>${budgetBar(out)}
+  <div style="margin-top:8px"><button class="btn sm" data-act="setBudget">월 예산 설정</button></div></section>
+  ${catArr.length?`<section class="card"><h2>분류별 지출</h2>${catArr.map(([c,v])=>`<div class="catrow"><span>${esc(c)}</span><div class="bar"><span style="width:${v/max*100}%"></span></div><span class="amt">${num(v)}<small style="color:var(--muted);font-weight:400"> ${out?Math.round(v/out*100):0}%</small></span></div>`).join('')}</section>`:''}
+  <section class="card"><h2>내역<span class="sp"></span></h2><input type="search" id="ledgerQ" placeholder="내용·분류 검색" value="${esc(ledgerQ)}">${html||'<p class="empty">이 달의 기록이 없습니다.</p>'}</section>
+  ${yearCard()}`;
+}
+function yearCard(){
+  const y=ledgerYM.slice(0,4);let rows='',ti=0,to=0;
+  for(let m=1;m<=12;m++){const ym=`${y}-${String(m).padStart(2,'0')}`;const {inc,out}=monthSum(ym);if(!inc&&!out)continue;ti+=inc;to+=out;
+    rows+=`<tr data-act="goYM" data-ym="${ym}"><td>${m}월</td><td class="r pos">${num(inc)}</td><td class="r neg">${num(out)}</td><td class="r">${num(inc-out)}</td></tr>`;}
+  if(!rows)return '';
+  return `<section class="card"><h2>${y}년 월별 합계</h2><table class="tbl"><tr><th>월</th><th class="r">수입</th><th class="r">지출</th><th class="r">잔액</th></tr>${rows}<tr><th>합계</th><th class="r pos">${num(ti)}</th><th class="r neg">${num(to)}</th><th class="r">${num(ti-to)}</th></tr></table></section>`;
+}
+
+/* ---------- 자동차 ---------- */
+function currentOdo(){return Math.max(+S.car.odo||0,...S.fuel.map(f=>+f.odo||0),...S.maint.map(m=>+m.km||0));}
+function maintStatus(rule){
+  const recs=S.maint.filter(m=>m.item===rule.item).sort((a,b)=>b.date.localeCompare(a.date)||(b.km||0)-(a.km||0));
+  const last=recs[0];
+  if(!last)return {rule,level:'none',label:'기록없음'};
+  const odo=currentOdo();
+  const nextKm=rule.km>0&&last.km!=null?last.km+rule.km:null;
+  const nextDate=rule.months>0?addMonths(last.date,rule.months):null;
+  const remKm=nextKm!=null?nextKm-odo:null,days=nextDate?dday(nextDate):null;
+  let level='ok';
+  if((remKm!=null&&remKm<=0)||(days!=null&&days<0))level='over';
+  else if((remKm!=null&&remKm<=1000)||(days!=null&&days<=30))level='soon';
+  return {rule,last,nextKm,nextDate,remKm,days,level,label:{over:'교체필요',soon:'임박',ok:'양호'}[level]};
+}
+function fuelStats(){
+  const arr=[...S.fuel].sort((a,b)=>(a.odo||0)-(b.odo||0));
+  let lastFull=null,acc=0;const eff={};
+  for(const f of arr){
+    acc+=+f.liters||0;
+    if(f.full){if(lastFull!=null&&f.odo>lastFull&&acc>0)eff[f.id]=(f.odo-lastFull)/acc;lastFull=f.odo;acc=0;}
+  }
+  const vals=Object.values(eff);
+  return {eff,avg:vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null};
+}
+const maintFields=()=>[
+  {k:'item',label:'정비 항목',type:'text',req:1,list:()=>S.rules.map(r=>r.item),ph:'예: 엔진오일'},
+  {k:'date',label:'정비일',type:'date',def:today,req:1},
+  {k:'km',label:'정비 시 주행거리(km)',type:'number',def:()=>currentOdo()||''},
+  {k:'cost',label:'비용(원)',type:'number'},
+  {k:'shop',label:'정비소',type:'text'},
+  {k:'memo',label:'메모',type:'text',ph:'예: 합성유 5W-30, 4L'}
+];
+const fuelFields=[
+  {k:'date',label:'주유일',type:'date',def:today,req:1},
+  {k:'odo',label:'주유 시 누적 주행거리(km)',type:'number',req:1},
+  {k:'amount',label:'주유 금액(원)',type:'number',req:1},
+  {k:'liters',label:'주유량(L)',type:'number',dec:1,req:1},
+  {k:'full',label:'가득 주유 (연비 계산에 사용)',type:'checkbox',def:true},
+  {k:'station',label:'주유소',type:'text'}
+];
+const ledgerChk={k:'_ledger',label:'가계부에도 지출로 기록',type:'checkbox',def:true};
+function view_car(){
+  const c=S.car,odo=currentOdo();
+  const st=S.rules.map(maintStatus).sort((a,b)=>({over:0,soon:1,ok:2,none:3}[a.level]-{over:0,soon:1,ok:2,none:3}[b.level]));
+  const {eff,avg}=fuelStats();
+  const ym=today().slice(0,7);
+  const fuelMonth=S.fuel.filter(f=>f.date.startsWith(ym)).reduce((s,f)=>s+(+f.amount||0),0);
+  const y=today().slice(0,4);
+  const carYear=S.fuel.filter(f=>f.date.startsWith(y)).reduce((s,f)=>s+(+f.amount||0),0)+S.maint.filter(m=>m.date.startsWith(y)).reduce((s,m)=>s+(+m.cost||0),0);
+  const carSched=S.sched.filter(s=>s.cat==='자동차').map(s=>({...s,next:schedNext(s)})).sort((a,b)=>a.next.localeCompare(b.next));
+  return `
+  <section class="card"><h2>🚗 ${esc(c.name||'내 차량')}<span class="sp"></span><button class="btn sm" data-act="editCar">차량정보</button></h2>
+   <dl class="kv"><dt>차량번호</dt><dd>${esc(c.plate||'-')}</dd><dt>연식·연료</dt><dd>${esc([c.year,c.fuelType].filter(Boolean).join(' · ')||'-')}</dd><dt>현재 주행거리</dt><dd>${num(odo)} km <button class="btn sm" data-act="setOdo">갱신</button></dd><dt>평균 연비</dt><dd>${avg?avg.toFixed(1)+' km/L':'가득 주유 2회 이상 기록 시 계산'}</dd><dt>이번 달 주유비</dt><dd>${won(fuelMonth)}</dd><dt>${y}년 차량유지비</dt><dd>${won(carYear)} <small style="color:var(--muted);font-weight:400">(주유+정비)</small></dd></dl></section>
+  <div class="toolbar"><button class="btn primary" data-act="addMaint">＋ 정비기록</button><button class="btn primary" data-act="addFuel">＋ 주유기록</button><span class="grow"></span><button class="btn" data-act="editRules">정비주기 설정</button></div>
+  <section class="card"><h2>소모품 교체 현황</h2><p class="hint">항목을 누르면 해당 항목으로 정비기록을 추가합니다. 주기는 일반 권장값이니 차량 취급설명서에 맞게 수정하세요.</p>
+   <ul class="list">${st.map(s=>`<li class="row" data-act="addMaint" data-item="${esc(s.rule.item)}"><span class="pill ${s.level}">${s.label}</span><div class="grow"><b>${esc(s.rule.item)}</b><small>${s.last?`최근 ${s.last.date}${s.last.km!=null?' · '+num(s.last.km)+'km':''}`:'최근 교체 기록을 입력하세요'}</small>${s.last?`<small>다음 ${[s.nextKm!=null?num(s.nextKm)+'km':'',s.nextDate||''].filter(Boolean).join(' 또는 ')}</small>`:''}</div><div class="amt" style="font-size:13px">${s.remKm!=null?(s.remKm>0?num(s.remKm)+'km 남음':num(-s.remKm)+'km 초과'):''}${s.days!=null?'<br><small>'+ddayLabel(s.days)+'</small>':''}</div></li>`).join('')}</ul></section>
+  <section class="card"><h2>자동차 관련 기한<span class="sp"></span><button class="btn sm" data-act="addSched" data-cat="자동차">＋ 추가</button></h2>
+   ${carSched.length?`<ul class="list">${carSched.map(schedRow).join('')}</ul>`:'<p class="empty">보험 만기, 정기검사, 자동차세 연납 등을 등록하세요.</p>'}</section>
+  <section class="card"><h2>정비 이력</h2>${S.maint.length?`<table class="tbl"><tr><th>날짜</th><th>항목</th><th class="r">km</th><th class="r">비용</th><th class="hide-sm">정비소</th></tr>${[...S.maint].sort((a,b)=>b.date.localeCompare(a.date)).map(m=>`<tr data-act="editMaint" data-id="${m.id}"><td>${m.date.slice(2)}</td><td>${esc(m.item)}${m.memo?`<br><small style="color:var(--muted)">${esc(m.memo)}</small>`:''}</td><td class="r">${m.km!=null?num(m.km):'-'}</td><td class="r">${m.cost?num(m.cost):'-'}</td><td class="hide-sm">${esc(m.shop||'')}</td></tr>`).join('')}</table>`:'<p class="empty">정비 기록이 없습니다.</p>'}</section>
+  <section class="card"><h2>주유 기록</h2>${S.fuel.length?`<table class="tbl"><tr><th>날짜</th><th class="r">km</th><th class="r">금액</th><th class="r">L</th><th class="r hide-sm">원/L</th><th class="r">연비</th></tr>${[...S.fuel].sort((a,b)=>b.date.localeCompare(a.date)||(b.odo-a.odo)).map(f=>`<tr data-act="editFuel" data-id="${f.id}"><td>${f.date.slice(2)}</td><td class="r">${num(f.odo)}</td><td class="r">${num(f.amount)}</td><td class="r">${(+f.liters||0).toFixed(1)}${f.full?'':'<small>*</small>'}</td><td class="r hide-sm">${f.liters?num(Math.round(f.amount/f.liters)):'-'}</td><td class="r">${eff[f.id]?eff[f.id].toFixed(1):'-'}</td></tr>`).join('')}</table><p class="hint">* 부분 주유 · 연비는 가득 주유 사이 구간으로 계산(km/L)</p>`:'<p class="empty">주유 기록이 없습니다.</p>'}</section>`;
+}
+
+/* ---------- 고정지출 ---------- */
+const recurFields=[
+  {k:'name',label:'항목명',type:'text',req:1,list:['관리비','전기요금','도시가스','수도요금','휴대폰','인터넷·TV','실손보험','자동차보험(월납)','종신·연금보험','넷플릭스','유튜브 프리미엄','적금','후원금'],ph:'예: 휴대폰 요금'},
+  {k:'amount',label:'금액(원, 대략)',type:'number',req:1},
+  {k:'day',label:'매월 납부일(1~31)',type:'number',req:1,def:25},
+  {k:'cat',label:'가계부 분류',type:'select',options:CAT_OUT,def:'공과금'},
+  {k:'pay',label:'결제수단',type:'select',options:PAY,def:'자동이체'},
+  {k:'active',label:'사용 중',type:'checkbox',def:true},
+  {k:'memo',label:'메모',type:'text',ph:'예: ○○카드 자동이체'}
+];
+function recurDue(r){
+  const t=today(),d=parseD(t);
+  const make=(y,m)=>{const last=new Date(y,m+1,0).getDate();return fmtD(new Date(y,m,Math.min(Math.max(1,r.day||1),last)));};
+  let due=make(d.getFullYear(),d.getMonth());
+  if(due<t){const n=new Date(d.getFullYear(),d.getMonth()+1,1);due=make(n.getFullYear(),n.getMonth());}
+  return due;
+}
+const posted=(r,ym)=>(r.posted||[]).includes(ym);
+function view_recur(){
+  const ym=today().slice(0,7);
+  const act=S.recur.filter(r=>r.active),total=act.reduce((s,r)=>s+(+r.amount||0),0);
+  const pending=act.filter(r=>!posted(r,ym));
+  const rows=[...S.recur].sort((a,b)=>(b.active-a.active)||(a.day-b.day));
+  return `
+  <section class="card"><div class="stats"><div class="stat"><small>월 고정지출</small><b class="neg">${won(total)}</b></div><div class="stat"><small>연 환산</small><b>${won(total*12)}</b></div><div class="stat"><small>이번 달 미기록</small><b>${pending.length}건</b></div></div>
+  <div class="toolbar" style="margin:10px 0 0"><button class="btn primary" data-act="addRecur">＋ 고정지출</button><button class="btn" data-act="postRecur"${pending.length?'':' disabled'}>이번 달분 가계부에 일괄 기록</button></div></section>
+  <section class="card"><h2>목록</h2>${rows.length?`<ul class="list">${rows.map(r=>{const due=recurDue(r),n=dday(due);return `<li class="row" data-act="editRecur" data-id="${r.id}"><span class="pill ${!r.active?'none':posted(r,ym)?'ok':n<=3?'soon':'info'}">${!r.active?'중지':posted(r,ym)?'기록됨':'매월 '+r.day+'일'}</span><div class="grow"><b>${esc(r.name)}</b><small>${esc(r.cat)} · ${esc(r.pay||'')}${r.memo?' · '+esc(r.memo):''}</small>${r.active?`<small>다음 납부 ${due} (${ddayLabel(n)})</small>`:''}</div><span class="amt">${num(r.amount)}</span></li>`;}).join('')}</ul>`:'<p class="empty">관리비·통신비·보험료·구독료 등 매월 나가는 돈을 등록하세요.</p>'}</section>`;
+}
+
+/* ---------- 기한관리 ---------- */
+const schedFields=()=>[
+  {k:'title',label:'항목',type:'text',req:1,list:SCHED_TITLES,ph:'예: 자동차보험 만기'},
+  {k:'date',label:'날짜(기한)',type:'date',req:1,def:today},
+  {k:'cat',label:'분류',type:'select',options:SCHED_CAT,def:'기타'},
+  {k:'repeat',label:'반복',type:'select',options:REPEAT,def:'none'},
+  {k:'alert',label:'며칠 전부터 알림',type:'number',def:30},
+  {k:'memo',label:'메모',type:'textarea',ph:'예: ○○손해보험, 증권번호, 담당자 연락처'}
+];
+function schedNext(s){
+  const m=REPEAT_M[s.repeat]||0;let d=s.date;
+  if(m){let guard=0;while(dday(d)<0&&guard++<600)d=addMonths(s.date,m*guard);}
+  return d;
+}
+function schedRow(s){
+  const next=s.next||schedNext(s),n=dday(next),alert=s.alert??30;
+  const lvl=n<0?'over':n<=7?'soon':n<=alert?'info':'none';
+  const rep=REPEAT.find(r=>r[0]===s.repeat);
+  return `<li class="row" data-act="editSched" data-id="${s.id}"><span class="pill ${lvl}">${ddayLabel(n)}</span><div class="grow"><b>${esc(s.title)}</b><small>${next} · ${esc(s.cat)}${s.repeat&&s.repeat!=='none'?' · '+rep[1]:''}</small>${s.memo?`<small>${esc(s.memo)}</small>`:''}</div></li>`;
+}
+let schedCat='전체';
+function view_sched(){
+  const list=S.sched.filter(s=>schedCat==='전체'||s.cat===schedCat).map(s=>({...s,next:schedNext(s)})).sort((a,b)=>a.next.localeCompare(b.next));
+  return `
+  <div class="toolbar"><select id="schedCat" style="width:auto">${optHTML(['전체',...SCHED_CAT],schedCat)}</select><span class="grow"></span><button class="btn primary" data-act="addSched">＋ 기한 추가</button></div>
+  <section class="card"><h2>놓치면 안 되는 날짜</h2><p class="hint">보험 만기, 정기검사, 면허 갱신, 건강검진, 세금 납부, 가족 기념일 등. 반복 항목은 지난 후 다음 날짜로 자동 넘어갑니다.</p>
+  ${list.length?`<ul class="list">${list.map(schedRow).join('')}</ul>`:'<p class="empty">등록된 기한이 없습니다.</p>'}</section>`;
+}
+
+/* ---------- 경조사 ---------- */
+const giftFields=[
+  {k:'dir',label:'구분',type:'select',options:[['give','보냄(내가 낸 돈)'],['recv','받음(내가 받은 돈)']],def:'give'},
+  {k:'date',label:'날짜',type:'date',def:today,req:1},
+  {k:'person',label:'이름',type:'text',req:1,list:()=>[...new Set(S.gift.map(g=>g.person))]},
+  {k:'relation',label:'관계',type:'select',options:GIFT_REL,def:'이웃·지인'},
+  {k:'kind',label:'경조 종류',type:'select',options:GIFT_KIND,def:'결혼'},
+  {k:'amount',label:'금액(원)',type:'number',req:1},
+  {k:'memo',label:'메모',type:'text',ph:'예: 자녀 결혼, 화환 별도'}
+];
+let giftQ='';
+function view_gift(){
+  const q=giftQ.trim();
+  const list=S.gift.filter(g=>!q||(g.person+' '+g.memo+' '+g.relation).includes(q)).sort((a,b)=>b.date.localeCompare(a.date));
+  const sum=d=>list.filter(g=>g.dir===d).reduce((s,g)=>s+(+g.amount||0),0);
+  return `
+  <div class="toolbar"><input type="search" id="giftQ" class="grow" placeholder="이름 검색 (주고받은 내역 확인)" value="${esc(q)}" style="flex:1"><button class="btn primary" data-act="addGift">＋ 기록</button></div>
+  <section class="card"><div class="stats"><div class="stat"><small>${q?esc(q)+'님께 ':''}보냄</small><b class="neg">${won(sum('give'))}</b></div><div class="stat"><small>${q?esc(q)+'님께 ':''}받음</small><b class="pos">${won(sum('recv'))}</b></div><div class="stat"><small>건수</small><b>${list.length}건</b></div></div></section>
+  <section class="card"><h2>경조사 장부</h2>${list.length?`<ul class="list">${list.map(g=>`<li class="row" data-act="editGift" data-id="${g.id}"><span class="pill ${g.dir==='give'?'soon':'info'}">${g.dir==='give'?'보냄':'받음'}</span><div class="grow"><b>${esc(g.person)} <small style="display:inline">${esc(g.relation)}</small></b><small>${g.date} · ${esc(g.kind)}${g.memo?' · '+esc(g.memo):''}</small></div><span class="amt">${num(g.amount)}</span></li>`).join('')}</ul>`:'<p class="empty">축의금·조의금 주고받은 내역을 기록해 두면 답례할 때 유용합니다.</p>'}</section>`;
+}
+
+/* ---------- 건강 ---------- */
+const healthFields=[
+  {k:'date',label:'측정일',type:'date',def:today,req:1},
+  {k:'time',label:'시간',type:'time',def:()=>new Date().toTimeString().slice(0,5)},
+  {k:'sys',label:'수축기 혈압(mmHg)',type:'number'},
+  {k:'dia',label:'이완기 혈압(mmHg)',type:'number'},
+  {k:'pulse',label:'맥박(회/분)',type:'number'},
+  {k:'sugar',label:'혈당(mg/dL)',type:'number'},
+  {k:'sugarWhen',label:'혈당 측정 시점',type:'select',options:['공복','식후 2시간','기타'],def:'공복'},
+  {k:'weight',label:'체중(kg)',type:'number',dec:1},
+  {k:'memo',label:'메모',type:'text',ph:'예: 약 복용 후, 운동 후'}
+];
+// 참고용 분류(대한고혈압학회 2022 진료지침 / 공복혈당 기준) — 진단 아님
+function bpClass(s,d){if(!s||!d)return null;if(s>=140||d>=90)return ['고혈압 범위','over'];if(s>=130||d>=80)return ['고혈압 전단계','soon'];if(s>=120)return ['주의혈압','info'];return ['정상','ok'];}
+function sugarClass(v,when){if(!v||when!=='공복')return null;if(v>=126)return ['당뇨 의심 범위','over'];if(v>=100)return ['공복혈당장애 범위','soon'];return ['정상','ok'];}
+function spark(vals,color){
+  if(vals.length<2)return '';
+  const mn=Math.min(...vals),mx=Math.max(...vals),rg=mx-mn||1,w=300,h=56;
+  const pts=vals.map((v,i)=>`${(i/(vals.length-1)*w).toFixed(1)},${(h-4-(v-mn)/rg*(h-8)).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function view_health(){
+  const list=[...S.health].sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
+  const lastBp=list.find(h=>h.sys&&h.dia),lastSg=list.find(h=>h.sugar),lastW=list.find(h=>h.weight);
+  const chron=[...list].reverse();
+  const sysV=chron.filter(h=>h.sys).slice(-30).map(h=>h.sys),wV=chron.filter(h=>h.weight).slice(-30).map(h=>h.weight);
+  const bc=lastBp&&bpClass(lastBp.sys,lastBp.dia),sc=lastSg&&sugarClass(lastSg.sugar,lastSg.sugarWhen);
+  return `
+  <div class="toolbar"><span class="grow"></span><button class="btn primary" data-act="addHealth">＋ 측정 기록</button></div>
+  <section class="card"><div class="stats">
+   <div class="stat"><small>최근 혈압</small><b>${lastBp?lastBp.sys+'/'+lastBp.dia:'-'}</b>${bc?`<span class="pill ${bc[1]}">${bc[0]}</span>`:''}</div>
+   <div class="stat"><small>최근 혈당</small><b>${lastSg?lastSg.sugar:'-'}</b>${sc?`<span class="pill ${sc[1]}">${sc[0]}</span>`:lastSg?`<small>${esc(lastSg.sugarWhen)}</small>`:''}</div>
+   <div class="stat"><small>최근 체중</small><b>${lastW?lastW.weight+'kg':'-'}</b></div></div>
+   ${sysV.length>1?`<p class="hint" style="margin-top:10px">수축기 혈압 추이 (최근 ${sysV.length}회)</p>${spark(sysV,'var(--neg)')}`:''}
+   ${wV.length>1?`<p class="hint">체중 추이 (최근 ${wV.length}회)</p>${spark(wV,'var(--pos)')}`:''}
+   <p class="hint">분류는 참고용(가정혈압·자가측정 기준 아님)이며 진단이 아닙니다. 진료 시 이 기록을 보여드리세요.</p></section>
+  <section class="card"><h2>측정 기록</h2>${list.length?`<table class="tbl"><tr><th>날짜</th><th class="r">혈압</th><th class="r">맥박</th><th class="r">혈당</th><th class="r">체중</th></tr>${list.map(h=>`<tr data-act="editHealth" data-id="${h.id}"><td>${h.date.slice(2)}<br><small style="color:var(--muted)">${esc(h.time||'')}</small></td><td class="r">${h.sys&&h.dia?h.sys+'/'+h.dia:'-'}</td><td class="r">${h.pulse||'-'}</td><td class="r">${h.sugar?h.sugar+`<br><small style="color:var(--muted)">${esc(h.sugarWhen||'')}</small>`:'-'}</td><td class="r">${h.weight||'-'}</td></tr>`).join('')}</table>`:'<p class="empty">혈압·혈당·체중을 기록하세요.</p>'}</section>`;
+}
+
+/* ---------- 홈 ---------- */
+function collectAlerts(){
+  const a=[];
+  S.rules.map(maintStatus).filter(s=>s.level==='over'||s.level==='soon').forEach(s=>a.push({tab:'car',level:s.level,badge:s.label,title:`${s.rule.item} 교체`,sub:[s.remKm!=null?(s.remKm>0?num(s.remKm)+'km 남음':num(-s.remKm)+'km 초과'):'',s.nextDate?s.nextDate+' ('+ddayLabel(s.days)+')':''].filter(Boolean).join(' · '),k:s.level==='over'?-9999:(s.days??30)}));
+  S.sched.forEach(s=>{const nx=schedNext(s),n=dday(nx);if(n<=(s.alert??30))a.push({tab:'sched',level:n<0?'over':n<=7?'soon':'info',badge:ddayLabel(n),title:s.title,sub:nx+' · '+s.cat,k:n});});
+  const ym=today().slice(0,7);
+  S.recur.filter(r=>r.active).forEach(r=>{const due=recurDue(r),n=dday(due);if(n<=5&&!posted(r,due.slice(0,7)))a.push({tab:'recur',level:'info',badge:ddayLabel(n),title:`${r.name} 납부`,sub:`${won(r.amount)} · ${r.pay||''}`,k:n});});
+  return a.sort((x,y)=>x.k-y.k);
+}
+function view_home(){
+  const ym=today().slice(0,7),{inc,out}=monthSum(ym),al=collectAlerts();
+  const recent=[...S.tx].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  return `
+  <section class="card"><h2>${ymLabel(ym)} 가계</h2><div class="stats"><div class="stat"><small>수입</small><b class="pos">${won(inc)}</b></div><div class="stat"><small>지출</small><b class="neg">${won(out)}</b></div><div class="stat"><small>잔액</small><b>${won(inc-out)}</b></div></div>${budgetBar(out)}</section>
+  <div class="quick"><button data-act="addTx">＋ 가계부</button><button data-act="addFuel">⛽ 주유</button><button data-act="addMaint">🔧 정비</button><button data-act="addHealth">❤️ 혈압</button></div>
+  <section class="card"><h2>알림 · 다가오는 일</h2>${al.length?`<ul class="list">${al.map(x=>`<li class="row" data-act="go" data-tab="${x.tab}"><span class="pill ${x.level}">${esc(x.badge)}</span><div class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)}</small></div></li>`).join('')}</ul>`:'<p class="empty">임박한 일이 없습니다.</p>'}</section>
+  <section class="card"><h2>최근 가계부<span class="sp"></span><button class="btn sm" data-act="go" data-tab="ledger">전체</button></h2>${recent.length?`<ul class="list">${recent.map(txRow).join('')}</ul>`:'<p class="empty">아직 기록이 없습니다.</p>'}</section>
+  ${!S.tx.length&&!S.maint.length?`<section class="card"><h2>처음 사용하시나요?</h2><p class="hint" style="margin:0">① 설정 없이 바로 가계부를 쓸 수 있습니다.<br>② 자동차 탭 → 차량정보·현재 주행거리 입력 → 소모품별 최근 교체일을 한 번씩 입력하면 다음 교체 시기를 자동 계산합니다.<br>③ 데이터는 이 기기 브라우저에만 저장됩니다. 설정 탭에서 주기적으로 백업하세요.</p></section>`:''}`;
+}
+
+/* ---------- 설정 ---------- */
+function view_settings(){
+  const cnt=`가계부 ${S.tx.length} · 정비 ${S.maint.length} · 주유 ${S.fuel.length} · 고정지출 ${S.recur.length} · 기한 ${S.sched.length} · 경조사 ${S.gift.length} · 건강 ${S.health.length}`;
+  let lastBk='';try{lastBk=localStorage.getItem(KEY+'.lastBackup')||'';}catch(e){}
+  return `
+  <section class="card"><h2>백업 · 복원</h2><p class="hint">모든 기록은 이 기기의 이 브라우저에만 저장됩니다. 브라우저 데이터 삭제·기기 변경 시 사라지므로 백업 파일을 보관하세요.<br>현재: ${cnt}<br>마지막 백업: ${lastBk||'없음'}</p>
+   <div class="toolbar"><button class="btn primary" data-act="backup">백업 파일 저장(JSON)</button><button class="btn" data-act="restore">백업 불러오기</button><button class="btn" data-act="csv">가계부 엑셀(CSV) 내보내기</button></div>
+   <input type="file" id="restoreFile" accept=".json,application/json" hidden></section>
+  <section class="card"><h2>화면</h2><div class="toolbar" style="margin:0"><button class="btn" data-act="theme" data-v="">시스템 설정</button><button class="btn" data-act="theme" data-v="light">밝게</button><button class="btn" data-act="theme" data-v="dark">어둡게</button></div></section>
+  <section class="card"><h2>휴대폰에서 앱처럼 쓰기</h2><p class="hint" style="margin:0">브라우저 메뉴의 <b>홈 화면에 추가</b>를 누르면 아이콘으로 바로 열 수 있습니다. 인터넷 없이도 동작합니다.</p></section>
+  <section class="card"><h2>초기화</h2><button class="btn danger" data-act="reset">모든 데이터 삭제</button></section>`;
+}
+
+/* ---------- 렌더 & 동작 ---------- */
+const TABS=[['home','홈'],['ledger','가계부'],['car','자동차'],['recur','고정지출'],['sched','기한관리'],['gift','경조사'],['health','건강'],['settings','설정']];
+let tab='home';try{tab=localStorage.getItem(KEY+'.tab')||'home';}catch(e){}
+function render(){
+  $('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${l}</button>`).join('');
+  $('#view').innerHTML=(window['view_'+tab]||view_home)();
+}
+function go(t){tab=t;try{localStorage.setItem(KEY+'.tab',t);}catch(e){}render();window.scrollTo(0,0);}
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(b){go(b.dataset.tab);b.scrollIntoView({inline:'center',block:'nearest'});}});
+
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
+const ACT={
+  go:d=>go(d.tab),
+  ym:d=>{ledgerYM=shiftYM(ledgerYM,+d.n);render();},
+  goYM:d=>{ledgerYM=d.ym;render();window.scrollTo(0,0);},
+  addTx:()=>crud('tx','가계부',txFields,null),
+  editTx:d=>crud('tx','가계부',txFields,find('tx',d.id)),
+  setBudget:()=>openForm('월 예산 설정',[{k:'budget',label:'한 달 지출 예산(원, 0이면 사용 안 함)',type:'number'}],{budget:S.budget||''},v=>{S.budget=v.budget||0;}),
+  editCar:()=>openForm('차량 정보',[
+    {k:'name',label:'차종',type:'text',ph:'예: 쏘렌토'},{k:'plate',label:'차량번호',type:'text',ph:'예: 12가 3456'},
+    {k:'year',label:'연식',type:'text',ph:'예: 2021년식'},{k:'fuelType',label:'연료',type:'select',options:['휘발유','경유','LPG','하이브리드','전기']},
+    {k:'odo',label:'현재 주행거리(km)',type:'number'}],{...S.car,odo:currentOdo()||''},v=>{Object.assign(S.car,v);}),
+  setOdo:()=>openForm('현재 주행거리',[{k:'odo',label:'계기판 누적 주행거리(km)',type:'number',req:1}],{odo:currentOdo()||''},v=>{
+    if(v.odo<currentOdo()&&!confirm('기존 기록보다 작은 값입니다. 그래도 저장할까요? (기존 주유·정비 기록의 최댓값이 우선 적용됩니다)'))return false;S.car.odo=v.odo;}),
+  addMaint:d=>{
+    const f=[...maintFields(),ledgerChk];
+    openForm('정비기록 추가',f,{item:d.item||''},v=>{
+      const {_ledger,...r}=v;S.maint.push({id:uid(),...r});
+      if(_ledger&&r.cost>0)addTx({type:'out',date:r.date,amount:r.cost,cat:'교통·차량',memo:`[정비] ${r.item}${r.shop?' - '+r.shop:''}`});
+    });
+  },
+  editMaint:d=>crud('maint','정비기록',maintFields(),find('maint',d.id)),
+  addFuel:()=>openForm('주유기록 추가',[...fuelFields,ledgerChk],null,v=>{
+    const {_ledger,...r}=v;S.fuel.push({id:uid(),...r});
+    if(_ledger&&r.amount>0)addTx({type:'out',date:r.date,amount:r.amount,cat:'교통·차량',memo:`[주유] ${r.station||''} ${r.liters?r.liters+'L':''}`.trim()});
+  }),
+  editFuel:d=>crud('fuel','주유기록',fuelFields,find('fuel',d.id)),
+  editRules:()=>{
+    const row=r=>`<div class="rule"><input class="ri" value="${esc(r.item)}" placeholder="항목" aria-label="항목"><input class="rk" type="number" inputmode="numeric" min="0" value="${r.km||0}" aria-label="km 주기"><span>km</span><input class="rm" type="number" inputmode="numeric" min="0" value="${r.months||0}" aria-label="개월 주기"><span>개월</span><button type="button" class="x" aria-label="삭제">✕</button></div>`;
+    dlgForm.innerHTML=`<h2>정비 주기 설정</h2><p class="hint">일반적 권장 주기입니다. 운행 환경(단거리·가혹조건)과 차량 취급설명서에 맞게 수정하세요. 0은 해당 기준 미사용. 먼저 도래하는 기준으로 알림합니다.</p><div id="rules">${S.rules.map(row).join('')}</div>
+    <div class="toolbar"><button type="button" class="btn sm" id="addRule">＋ 항목 추가</button><button type="button" class="btn sm" id="defRule">기본값 복원</button></div>
+    <div class="actions"><span class="sp"></span><button type="button" data-x="cancel">취소</button><button type="submit" class="primary">저장</button></div>`;
+    const box=dlgForm.querySelector('#rules');
+    box.onclick=e=>{if(e.target.closest('.x'))e.target.closest('.rule').remove();};
+    dlgForm.querySelector('#addRule').onclick=()=>box.insertAdjacentHTML('beforeend',row({item:'',km:0,months:0}));
+    dlgForm.querySelector('#defRule').onclick=()=>{box.innerHTML=DEFAULT_RULES.map(row).join('');};
+    dlgForm.querySelector('[data-x=cancel]').onclick=()=>dlg.close();
+    dlgForm.onsubmit=e=>{e.preventDefault();
+      S.rules=[...box.querySelectorAll('.rule')].map(r=>({item:r.querySelector('.ri').value.trim(),km:+r.querySelector('.rk').value||0,months:+r.querySelector('.rm').value||0})).filter(r=>r.item);
+      save();dlg.close();render();toast('저장했습니다');};
+    dlg.showModal();
+  },
+  addRecur:()=>crud('recur','고정지출',recurFields,null),
+  editRecur:d=>crud('recur','고정지출',recurFields,find('recur',d.id)),
+  postRecur:()=>{
+    const ym=today().slice(0,7),list=S.recur.filter(r=>r.active&&!posted(r,ym));
+    if(!list.length)return;
+    if(!confirm(`${ymLabel(ym)} 고정지출 ${list.length}건(${won(list.reduce((s,r)=>s+(+r.amount||0),0))})을 가계부에 기록할까요?\n실제 금액이 다르면 가계부에서 수정하세요.`))return;
+    list.forEach(r=>{const last=new Date(+ym.slice(0,4),+ym.slice(5),0).getDate();
+      addTx({type:'out',date:`${ym}-${String(Math.min(r.day||1,last)).padStart(2,'0')}`,amount:r.amount,cat:r.cat,pay:r.pay,memo:`[고정] ${r.name}`});
+      r.posted=[...(r.posted||[]),ym].slice(-24);});
+    save();render();toast(`${list.length}건 기록했습니다`);
+  },
+  addSched:d=>crud('sched','기한',schedFields(),null,d.cat?{cat:d.cat}:null),
+  editSched:d=>crud('sched','기한',schedFields(),find('sched',d.id)),
+  addGift:()=>openForm('경조사 기록 추가',[...giftFields,{k:'_ledger',label:'가계부에도 기록 (보냄=지출, 받음=수입)',type:'checkbox',def:true}],giftQ?{person:giftQ.trim()}:null,v=>{
+    const {_ledger,...r}=v;S.gift.push({id:uid(),...r});
+    if(_ledger&&r.amount>0)addTx(r.dir==='give'?{type:'out',date:r.date,amount:r.amount,cat:'경조사',memo:`[${r.kind}] ${r.person}`}:{type:'in',date:r.date,amount:r.amount,cat:'경조금',memo:`[${r.kind}] ${r.person}`});
+  }),
+  editGift:d=>crud('gift','경조사 기록',giftFields,find('gift',d.id)),
+  addHealth:()=>crud('health','측정 기록',healthFields,null),
+  editHealth:d=>crud('health','측정 기록',healthFields,find('health',d.id)),
+  backup:()=>{const t=today();download(`생활기록장_백업_${t}.json`,JSON.stringify({app:'lifebook',version:1,exported:new Date().toISOString(),data:S},null,1),'application/json');try{localStorage.setItem(KEY+'.lastBackup',t);}catch(e){}setTimeout(render,300);},
+  restore:()=>$('#restoreFile').click(),
+  csv:()=>{
+    const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+    const rows=[['날짜','구분','분류','금액','결제수단','내용'],...[...S.tx].sort((a,b)=>a.date.localeCompare(b.date)).map(t=>[t.date,t.type==='in'?'수입':'지출',t.cat,t.amount,t.pay,t.memo])];
+    download(`가계부_${today()}.csv`,'﻿'+rows.map(r=>r.map(q).join(',')).join('\r\n'),'text/csv');
+  },
+  theme:d=>{if(d.v)document.documentElement.dataset.theme=d.v;else delete document.documentElement.dataset.theme;try{localStorage.setItem(KEY+'.theme',d.v);}catch(e){}},
+  reset:()=>{if(confirm('모든 기록을 삭제합니다. 백업하셨나요?')&&confirm('정말 삭제할까요? 되돌릴 수 없습니다.')){S=blank();save();render();toast('초기화했습니다');}}
+};
+$('#view').addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const f=ACT[el.dataset.act];if(f)f(el.dataset);});
+$('#view').addEventListener('input',e=>{
+  const id=e.target.id;
+  if(id==='ledgerQ'||id==='giftQ'){
+    if(id==='ledgerQ')ledgerQ=e.target.value;else giftQ=e.target.value;
+    const pos=e.target.selectionStart;render();const el=$('#'+id);el.focus();try{el.setSelectionRange(pos,pos);}catch(_){}
+  }
+});
+$('#view').addEventListener('change',e=>{
+  if(e.target.id==='schedCat'){schedCat=e.target.value;render();}
+  if(e.target.id==='restoreFile'){
+    const file=e.target.files[0];if(!file)return;
+    file.text().then(txt=>{
+      const o=JSON.parse(txt),d=o&&o.app==='lifebook'?o.data:o;
+      if(!d||typeof d!=='object'||!Array.isArray(d.tx))throw new Error('형식 오류');
+      if(!confirm('현재 데이터를 백업 파일 내용으로 바꿉니다. 계속할까요?'))return;
+      S=Object.assign(blank(),d);save();render();toast('복원했습니다');
+    }).catch(()=>toast('올바른 백업 파일이 아닙니다'));
+  }
+});
+try{const th=localStorage.getItem(KEY+'.theme');if(th)document.documentElement.dataset.theme=th;}catch(e){}
+render();
+</script>
+</body>
+</html>
