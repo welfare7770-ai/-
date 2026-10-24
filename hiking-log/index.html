@@ -96,6 +96,10 @@ button.small{padding:6px 10px;font-size:.85rem}
           <label class="field"><span>출발 시각</span><input type="time" id="start" name="start"></label>
           <label class="field"><span>하산 시각</span><input type="time" id="finish" name="finish"></label>
         </div>
+        <div class="grid2">
+          <label class="field"><span>총 거리 (km)</span><input type="text" inputmode="decimal" id="dist" name="dist" placeholder="예: 9.2"></label>
+          <label class="field"><span>걸음 수 (보)</span><input type="text" inputmode="numeric" id="steps" name="steps" placeholder="예: 18500"></label>
+        </div>
       </section>
 
       <section>
@@ -147,9 +151,10 @@ button.small{padding:6px 10px;font-size:.85rem}
   const form=document.getElementById('log');
   const groupsEl=document.getElementById('groups');
   const msg=t=>{document.getElementById('msg').textContent=t};
-  const labels={date:'날짜',mountain:'산 이름',course:'코스',weather:'날씨',start:'출발 시각',finish:'하산 시각',
+  const labels={date:'날짜',mountain:'산 이름',course:'코스',weather:'날씨',start:'출발 시각',finish:'하산 시각',dist:'총 거리',steps:'걸음 수',
     best:'오늘의 한 장면',tip:'다른 등산객에게 한마디',feeling:'한 줄 소감',etc:'기타 메모'};
-  const head=['date','mountain','course','weather','start','finish'];
+  const head=['date','mountain','course','weather','start','finish','dist','steps'];
+  const units={dist:' km',steps:'보'};
   const tail=['best','tip','feeling','etc'];
   // 이전 버전에서 쓰던 칸: 불러올 때 기타 메모로 옮겨 내용이 사라지지 않게 함
   const oldLabels={distance:'총 거리·동행자',purpose:'산행 목적·기대',trees:'나무 관찰',flowers:'꽃·풀·열매·버섯',forest:'숲 해설 소재',wildlife:'새·곤충·동물·소리',view:'조망과 풍경',trail:'등산로·갈림길·시설',safety:'주의할 점',photos:'사진 기록표',lesson:'느낀 점',recommend:'다른 등산객에게 전할 정보',blog:'블로그 핵심 문장'};
@@ -233,7 +238,7 @@ button.small{padding:6px 10px;font-size:.85rem}
   function collectText(){
     const f=getData().fields; let out='[산행 현장 기록장]\n\n';
     const put=(t,v)=>{ if(v&&String(v).trim()) out+=t+': '+String(v).trim()+'\n' };
-    head.forEach(k=>put(labels[k],f[k]));
+    head.forEach(k=>put(labels[k],f[k]&&String(f[k]).trim()?String(f[k]).trim()+(units[k]||''):''));
     let memoOut='';
     for(let i=1;i<=MEMOS;i++){
       if(!memoFilled(i)) continue;
