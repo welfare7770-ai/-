@@ -107,7 +107,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .passage .top{display:flex;gap:8px;align-items:center}
 .bookbtn{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font:600 15px var(--myeongjo);cursor:pointer;text-align:left}
 .bookbtn small{font:500 11.5px var(--gothic);color:var(--muted);margin-left:6px}
-.bookbtn.empty span{color:var(--ph);font-weight:400}
+.bookbtn.unset span{color:var(--ph);font-weight:400}
 .bookbtn i{font-style:normal;color:var(--muted);font-size:10px}
 .sheet{position:fixed;inset:0;z-index:25;background:rgba(10,18,32,.45);display:none;align-items:flex-end;justify-content:center}
 .sheet.on{display:flex}
@@ -262,6 +262,39 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .progbook{border:1px solid var(--line);border-radius:8px;padding:4px 9px;font:500 13px var(--gothic);cursor:pointer;color:var(--text)}
 .progbook.done{font-weight:700}
 .progbook.done::after{content:" ✓";color:var(--ok)}
+.tgh{font:700 14px var(--gothic);margin:16px 0 8px}
+.tgh small{font-weight:500;color:var(--muted);margin-left:4px}
+.btgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.bt{position:relative;overflow:hidden;height:40px;border:1px solid var(--line);border-radius:9px;background:var(--surface);font:700 13px var(--gothic);color:var(--text);cursor:pointer;padding:0;letter-spacing:-.03em}
+.bt.done{background:var(--fill);border-color:var(--fill);color:var(--on-fill)}
+.bt.done::after{content:"✓";position:absolute;top:0;right:4px;font-size:10px}
+.bt i{position:absolute;left:0;bottom:0;height:4px;background:var(--gold)}
+.bt.sel{outline:2px solid var(--accent);outline-offset:1px}
+.bdhead{display:flex;align-items:center;gap:8px;margin:18px 0 4px;padding-top:14px;border-top:1px dashed var(--line)}
+.bdhead b{font:700 16px var(--gothic)}
+.bdhead span{flex:1;min-width:0}
+.bdhead button{width:30px;height:30px;border-radius:50%;border:0;background:var(--surface-2);color:var(--muted);cursor:pointer}
+.chcircles{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:9px 7px;margin:10px 0 6px}
+.cc{position:relative;aspect-ratio:1;border-radius:50%;border:1px solid var(--line);background:var(--surface);font:600 13px var(--gothic);color:var(--text);cursor:pointer;padding:0}
+.cc.on{background:var(--fill);border-color:var(--fill);color:var(--on-fill);font-weight:700}
+.cc i{position:absolute;right:-4px;bottom:-4px;min-width:17px;height:17px;padding:0 3px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font:700 10px/15px var(--gothic);font-style:normal;color:var(--muted)}
+.cc.on i{color:var(--accent)}
+.stars{display:flex;gap:2px}
+.stars button{border:0;background:transparent;font-size:24px;line-height:1;color:var(--line);cursor:pointer;padding:4px 2px}
+.stars button.on{color:var(--gold)}
+.bookcard .meta{font:500 13px var(--gothic);color:var(--muted)}
+.bookcard .quote{margin:8px 0 0;padding:6px 12px;border-left:3px solid var(--gold);font-family:var(--myeongjo);color:var(--muted)}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font:700 11.5px var(--gothic);background:var(--surface-2);color:var(--muted)}
+.badge.wait{background:var(--pm-soft);color:var(--pm)}
+.badge.ok{background:var(--am-soft);color:var(--am)}
+.stfield{margin-top:10px}
+.strow{display:flex;align-items:center;gap:8px}
+.strow .num{display:flex;align-items:center;gap:4px;font:700 14px var(--gothic)}
+.strow .num input{width:52px;text-align:center;padding:5px 2px;font-weight:700;border-radius:7px}
+.stfilter{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 10px}
+.stfilter .seg{flex:0 0 auto}
+.stfilter input{flex:1 1 160px}
+a.btn{text-decoration:none}
 </style>
 </head>
 <body>
@@ -279,7 +312,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
     <button data-v="weekly">주별 말씀요약</button>
     <button data-v="search">검색·목록</button>
     <button data-v="bible">성경 66권 색인</button>
+    <button data-v="study">말씀 해석</button>
     <button data-v="events">행사 소감</button>
+    <button data-v="books">책 소감</button>
     <button data-v="backup">백업·내보내기</button>
   </nav>
 
@@ -452,6 +487,67 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
     <div class="list" id="eventList"></div>
   </section>
 
+  <!-- 말씀 해석 -->
+  <section class="view" id="v-study">
+    <form class="card" id="studyForm" autocomplete="off">
+      <h2 id="stFormTitle">말씀 해석 노트</h2>
+      <input type="hidden" id="stId">
+      <div class="seg sm" style="max-width:300px">
+        <label><input type="radio" name="stKind" value="note" checked><span>해석 기록</span></label>
+        <label><input type="radio" name="stKind" value="question"><span>질문 (답 기다림)</span></label>
+      </div>
+      <div class="stfield"><label>성경 구절</label>
+        <div class="strow"><input type="hidden" id="stBook"><button type="button" class="bookbtn" id="stBookBtn"><span></span><i>▼</i></button>
+          <span class="num"><input id="stCh" type="number" min="1" inputmode="numeric" aria-label="장">장</span>
+          <span class="num"><input id="stV" type="number" min="1" inputmode="numeric" aria-label="절">절</span></div></div>
+      <div class="stfield"><label for="stTerm">궁금한 단어 또는 문장</label><input id="stTerm" placeholder="예: 임마누엘 / 고난받는 종은 누구를 말하나요?"></div>
+      <div class="stfield"><label for="stMeaning">뜻 · 해석 (또는 받은 답변)</label><textarea id="stMeaning" rows="4" placeholder="찾아본 뜻, 설교에서 들은 해석, 목사님 답변"></textarea></div>
+      <div class="stfield"><label for="stSource">출처</label><input id="stSource" placeholder="예: 주석, 설교, 강현복 목사님 답변"></div>
+      <div class="row" style="margin-top:12px">
+        <a class="btn sm" id="stSearch" target="_blank" rel="noopener" href="#">인터넷에서 뜻 찾아보기 ↗</a>
+        <button type="button" class="btn sm" id="stAsk">목사님께 보낼 질문 복사</button>
+      </div>
+      <div class="row end" style="margin-top:10px">
+        <button type="button" class="btn ghost" id="stReset">새로 쓰기</button>
+        <button class="btn primary" id="stSave">저장</button>
+      </div>
+    </form>
+    <div class="stfilter">
+      <div class="seg sm"><label><input type="radio" name="stShow" value="" checked><span>전체</span></label><label><input type="radio" name="stShow" value="wait"><span>답 기다림</span></label></div>
+      <input id="stQ" placeholder="단어·구절로 찾기">
+    </div>
+    <div class="list" id="studyList"></div>
+  </section>
+
+  <!-- 책 소감 -->
+  <section class="view" id="v-books">
+    <div class="card">
+      <div class="calhead"><button type="button" class="btn ghost sm" id="bkPrev">‹</button><span id="bkCalTitle"></span><button type="button" class="btn ghost sm" id="bkNext">›</button></div>
+      <div class="cal" id="bkCal"></div>
+      <p class="hint" style="margin:8px 0 0">📚 표시는 그날 기록한 책입니다. 날짜를 누르면 그날 기록만 보이고, 새로 쓸 날짜도 그날로 맞춰집니다.</p>
+    </div>
+    <form class="card" id="bookForm" autocomplete="off">
+      <h2 id="bkFormTitle">책 소감 기록</h2>
+      <input type="hidden" id="bkId">
+      <div class="grid g2">
+        <div><label for="bkDate">읽은 날짜</label><input type="date" id="bkDate" min="2006-01-01" required></div>
+        <div><label>별점</label><div class="stars" id="bkStars" data-v="0"><button type="button" data-star="1" aria-label="별 1개">★</button><button type="button" data-star="2" aria-label="별 2개">★</button><button type="button" data-star="3" aria-label="별 3개">★</button><button type="button" data-star="4" aria-label="별 4개">★</button><button type="button" data-star="5" aria-label="별 5개">★</button></div></div>
+      </div>
+      <div class="grid g2" style="margin-top:10px">
+        <div><label for="bkName">책 제목</label><input id="bkName" required placeholder="예: 순전한 기독교"></div>
+        <div><label for="bkAuthor">지은이</label><input id="bkAuthor" placeholder="예: C. S. 루이스"></div>
+      </div>
+      <div style="margin-top:10px"><label for="bkQuote">마음에 남은 문장</label><textarea id="bkQuote" rows="2" placeholder="밑줄 긋고 싶었던 한 문장"></textarea></div>
+      <div style="margin-top:10px"><label for="bkText">소감</label><textarea id="bkText" rows="4" placeholder="느낀 점, 삶에 적용할 점"></textarea></div>
+      <div class="row end" style="margin-top:10px">
+        <button type="button" class="btn ghost" id="bkReset">새로 쓰기</button>
+        <button class="btn primary" id="bkSave">저장</button>
+      </div>
+    </form>
+    <div class="row" style="justify-content:space-between;margin:4px 2px 8px"><b id="bkListTitle"></b><button type="button" class="btn ghost sm" id="bkShowAll" hidden>전체 보기</button></div>
+    <div class="list" id="bookList"></div>
+  </section>
+
   <!-- 백업 -->
   <section class="view" id="v-backup">
     <div class="notice">
@@ -518,7 +614,7 @@ CATS.forEach(c => c.books.forEach(([name, chapters]) => {
 
 // ───────── 저장소 ─────────
 const KEY = 'sermon-notes-v1';
-let db = {sermons:[], events:[], weekNotes:{}, daily:{}};
+let db = {sermons:[], events:[], weekNotes:{}, daily:{}, books:[], studies:[]};
 function load(){ try { const s = localStorage.getItem(KEY); if (s) db = Object.assign(db, JSON.parse(s)); } catch(e) {} }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify(db)); } catch(e) { toast('저장 실패: 백업 파일로 내려받아 두세요'); } }
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -581,6 +677,8 @@ function showView(v, fromPop){
   if (v === 'bible') renderBible();
   if (v === 'events') renderEvents();
   if (v === 'daily') renderDaily();
+  if (v === 'books') renderBooks();
+  if (v === 'study') renderStudy();
   window.scrollTo({top:0});
 }
 
@@ -602,7 +700,7 @@ function passageRow(p={}){
   $$('[data-k]', div).forEach(el => el.value = p[el.dataset.k] ?? '');
   const showBook = () => {
     const name = $('[data-k=book]', div).value, b = BOOK[name], btn = $('.bookbtn', div);
-    btn.classList.toggle('empty', !b);
+    btn.classList.toggle('unset', !b);
     $('span', btn).innerHTML = b ? `${esc(name)}<small>${b.cat}</small>` : '성경 선택';
     $$('input[data-k^=ch]', div).forEach(i => i.max = b ? b.chapters : '');
   };
@@ -1054,7 +1152,7 @@ function addReading(from, to){
 function setRangeBtn(which, book){
   const inp = $(`#r${which}Book`), btn = $(`#r${which}Btn`), b = BOOK[book];
   inp.value = book || '';
-  btn.classList.toggle('empty', !b);
+  btn.classList.toggle('unset', !b);
   $('span', btn).innerHTML = b ? `${esc(book)}<small>${b.cat}</small>` : '성경 선택';
   $(`#r${which}Ch`).max = b ? b.chapters : '';
 }
@@ -1091,24 +1189,25 @@ function renderCal(){
   $('#dCal').innerHTML = h;
 }
 let progBook = '';
+const ABBR = '창 출 레 민 신 수 삿 룻 삼상 삼하 왕상 왕하 대상 대하 스 느 에 욥 시 잠 전 아 사 렘 애 겔 단 호 욜 암 옵 욘 미 나 합 습 학 슥 말 마 막 눅 요 행 롬 고전 고후 갈 엡 빌 골 살전 살후 딤전 딤후 딛 몬 히 약 벧전 벧후 요일 요이 요삼 유 계'.split(' ');
 function renderProgress(){
   const c = readCounts(); let cycle = c.reduce((a,v) => Math.min(a,v), 65535);
   const done = i => c[i] > cycle, total = c.reduce((a,v,i) => a + (done(i) ? 1 : 0), 0);
   const pct = (total / TOTAL * 100).toFixed(1);
+  const readIn = b => { let r = 0; for (let k = 0; k < b.chapters; k++) if (done(b.start + k)) r++; return r; };
   $('#dProg').innerHTML = `<div class="row" style="justify-content:space-between"><b>${cycle + 1}독째 진행 중</b><span class="hint">${total.toLocaleString()} / ${TOTAL.toLocaleString()}장 · ${pct}%</span></div>
     <div class="bar"><i style="width:${pct}%"></i></div>
     ${cycle ? `<p class="hint" style="margin:0 0 8px">지금까지 성경 전체를 ${cycle}번 읽으셨습니다.</p>` : ''}` +
-    ['구약','신약'].map(t => `<div class="tt" style="font:700 13px var(--gothic);color:var(--muted);margin:12px 0 6px">${t}</div>` +
-      CATS.filter(cg => BOOK[cg.books[0][0]].testament === t).map(cg => `<div class="cat"><h3><i style="background:${cg.color}"></i>${cg.key}</h3><div class="books">${
-        cg.books.map(([n, chs]) => { const b = BOOK[n]; let r = 0; for (let k = 0; k < chs; k++) if (done(b.start + k)) r++;
-          const w = Math.round(r / chs * 100);
-          return `<button type="button" class="progbook ${r === chs ? 'done' : ''}" data-prog="${n}" style="background:linear-gradient(90deg,${cg.color} ${w}%,var(--surface) ${w}%)">${n} <small>${r}/${chs}</small></button>`; }).join('')
-      }</div></div>`).join('')).join('');
+    ['구약','신약'].map(t => { const bs = BOOKS.filter(b => b.testament === t), dn = bs.filter(b => readIn(b) === b.chapters).length;
+      return `<div class="tgh">${t}<small>${dn} / ${bs.length}권</small></div><div class="btgrid">${bs.map(b => { const r = readIn(b), st = r === b.chapters ? 'done' : '';
+        return `<button type="button" class="bt ${st} ${progBook === b.name ? 'sel' : ''}" data-prog="${b.name}" aria-label="${b.name} ${r}/${b.chapters}">${ABBR[b.order]}${r && !st ? `<i style="width:${Math.round(r / b.chapters * 100)}%"></i>` : ''}</button>`; }).join('')}</div>`; }).join('');
   const el = $('#dBookDetail');
-  if (!progBook) { el.innerHTML = ''; return; }
-  const b = BOOK[progBook];
-  el.innerHTML = `<h3 style="margin-top:14px">${b.name} <span class="hint">이번 회차에 읽은 ${unitOf(b.name)} 표시</span></h3>
-    <div class="chgrid">${Array.from({length:b.chapters}, (_,k) => `<span class="${done(b.start+k)?'on':''}">${k+1}</span>`).join('')}</div>`;
+  if (!progBook) { el.innerHTML = '<p class="hint" style="margin:12px 0 0">권을 누르면 장마다 몇 번 읽었는지 볼 수 있습니다.</p>'; return; }
+  const b = BOOK[progBook], r = readIn(b), u = unitOf(b.name), di = dinfo(dSel);
+  el.innerHTML = `<div class="bdhead"><b>${b.name}</b><span class="hint">${b.cat} · 이번 회차 ${r}/${b.chapters}${u}</span><button type="button" data-progclose aria-label="닫기">✕</button></div>
+    <div class="chcircles">${Array.from({length:b.chapters}, (_,k) => { const n = c[b.start + k];
+      return `<button type="button" class="cc ${done(b.start + k) ? 'on' : ''}" data-ch="${b.start + k}" aria-label="${k + 1}${u} ${n}회">${k + 1}${n ? `<i>${n}</i>` : ''}</button>`; }).join('')}</div>
+    <p class="hint" style="margin:6px 0 0">작은 숫자는 지금까지 읽은 횟수입니다. 장 번호를 누르면 ${di.m}월 ${di.d}일에 읽은 것으로 체크됩니다.</p>`;
 }
 $('#dDate').addEventListener('change', e => { if (e.target.value) { dSel = e.target.value; calMonth = dSel.slice(0,7); $('#rFromBook').value = ''; renderDaily(); } });
 const shiftDay = n => { const [y,m,d] = dSel.split('-').map(Number); const t = new Date(y, m-1, d+n);
@@ -1148,7 +1247,140 @@ $('#dPrayTimes').addEventListener('click', e => { if (e.target.matches('.tbox in
   putDay(dSel, day); renderDaily(); toast(`${k} 기도 ${fmtMins(prayMins(day.prayers[k]))} 기록했습니다`); });
 let noteTimer;
 $('#dNote').addEventListener('input', e => { clearTimeout(noteTimer); noteTimer = setTimeout(() => { const day = dayOf(dSel); day.note = e.target.value.trim(); putDay(dSel, day); renderCal(); }, 500); });
-$('#dProg').addEventListener('click', e => { const b = e.target.closest('[data-prog]'); if (!b) return; progBook = progBook === b.dataset.prog ? '' : b.dataset.prog; renderProgress(); });
+$('#dProg').addEventListener('click', e => { const b = e.target.closest('[data-prog]'); if (!b) return; progBook = progBook === b.dataset.prog ? '' : b.dataset.prog; renderProgress();
+  if (progBook) $('#dBookDetail').scrollIntoView({behavior:'smooth', block:'nearest'}); });
+$('#dBookDetail').addEventListener('click', e => {
+  if (e.target.closest('[data-progclose]')) { progBook = ''; return renderProgress(); }
+  const c = e.target.closest('[data-ch]'); if (!c) return; const g = +c.dataset.ch;
+  $('#rFromBook').value = ''; addReading(g, g);
+});
+
+// ───────── 공통: 한 달 달력 ─────────
+function monthCal(ym, sel, mark){
+  const [y, m] = ym.split('-').map(Number);
+  const first = new Date(y, m-1, 1).getDay(), last = new Date(y, m, 0).getDate(), td = today();
+  let h = WD.map(w => `<div class="wd">${w}</div>`).join('') + '<div></div>'.repeat(first);
+  for (let d = 1; d <= last; d++) { const key = `${ym}-${String(d).padStart(2,'0')}`;
+    h += `<button type="button" data-day="${key}" class="${key===sel?'sel':''} ${key===td?'today':''}">${d}${mark(key)}</button>`; }
+  return h;
+}
+const shiftMonth = (ym, n) => { const [y,m] = ym.split('-').map(Number); const t = new Date(y, m-1+n, 1); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`; };
+
+// ───────── 책 소감 ─────────
+let bkMonth = today().slice(0,7), bkFilter = '';
+const starStr = n => n ? '★'.repeat(n) + '☆'.repeat(5 - n) : '';
+function setStars(n){ $('#bkStars').dataset.v = n; $$('#bkStars button').forEach(b => b.classList.toggle('on', +b.dataset.star <= n)); }
+function resetBook(b){
+  $('#bkId').value = b?.id || ''; $('#bkDate').value = b?.date || bkFilter || today();
+  $('#bkName').value = b?.name || ''; $('#bkAuthor').value = b?.author || ''; $('#bkQuote').value = b?.quote || ''; $('#bkText').value = b?.text || '';
+  setStars(b?.rating || 0);
+  $('#bkFormTitle').textContent = b?.id ? '책 소감 수정' : '책 소감 기록';
+  $('#bkSave').textContent = b?.id ? '수정 완료' : '저장';
+  $('#bkReset').textContent = b?.id ? '수정 취소' : '새로 쓰기';
+}
+function renderBooks(){
+  const [y, m] = bkMonth.split('-').map(Number);
+  $('#bkCalTitle').textContent = `${y}년 ${m}월 독서 달력`;
+  const per = {}; db.books.forEach(b => per[b.date] = (per[b.date] || 0) + 1);
+  $('#bkCal').innerHTML = monthCal(bkMonth, bkFilter, k => per[k] ? `<i>📚${per[k] > 1 ? per[k] : ''}</i>` : '');
+  const list = db.books.filter(b => !bkFilter || b.date === bkFilter).sort((a,b) => b.date.localeCompare(a.date));
+  $('#bkListTitle').textContent = bkFilter ? `${bkFilter.replace(/-/g,'.')} 기록 ${list.length}권` : `읽은 책 ${db.books.length}권`;
+  $('#bkShowAll').hidden = !bkFilter;
+  $('#bookList').innerHTML = list.length ? list.map(b => `<div class="card bookcard" style="margin:0">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div style="min-width:0;flex:1"><div class="t" style="font:700 16px var(--myeongjo)">${esc(b.name)}</div>
+          <div class="meta">${b.date.replace(/-/g,'.')}${b.author ? ' · ' + esc(b.author) : ''} <span style="color:var(--gold)">${starStr(b.rating)}</span></div></div>
+        <div><button type="button" class="btn ghost sm" data-bkedit="${b.id}">수정</button><button type="button" class="btn ghost sm danger" data-bkdel="${b.id}">삭제</button></div>
+      </div>
+      ${b.quote ? `<div class="quote pre">${esc(b.quote)}</div>` : ''}
+      ${b.text ? `<div class="pre" style="margin-top:8px">${esc(b.text)}</div>` : ''}
+    </div>`).join('') : `<div class="empty">${bkFilter ? '이 날짜에 기록한 책이 없습니다.' : '아직 기록한 책이 없습니다. 위에서 첫 책을 기록해 보세요.'}</div>`;
+}
+$('#bkStars').addEventListener('click', e => { const b = e.target.closest('[data-star]'); if (!b) return; const n = +b.dataset.star; setStars(+$('#bkStars').dataset.v === n ? 0 : n); });
+$('#bkPrev').onclick = () => { bkMonth = shiftMonth(bkMonth, -1); renderBooks(); };
+$('#bkNext').onclick = () => { bkMonth = shiftMonth(bkMonth, 1); renderBooks(); };
+$('#bkCal').addEventListener('click', e => { const d = e.target.closest('[data-day]'); if (!d) return;
+  bkFilter = bkFilter === d.dataset.day ? '' : d.dataset.day;
+  if (!$('#bkId').value) $('#bkDate').value = bkFilter || today();
+  renderBooks(); });
+$('#bkShowAll').onclick = () => { bkFilter = ''; renderBooks(); };
+$('#bkReset').onclick = () => resetBook();
+$('#bookForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const b = {id: $('#bkId').value || uid(), date: $('#bkDate').value, name: $('#bkName').value.trim(), author: $('#bkAuthor').value.trim(),
+    rating: +$('#bkStars').dataset.v, quote: $('#bkQuote').value.trim(), text: $('#bkText').value.trim()};
+  const i = db.books.findIndex(x => x.id === b.id);
+  if (i >= 0) db.books[i] = b; else db.books.push(b);
+  save(); bkMonth = b.date.slice(0,7); resetBook(); renderBooks(); toast(i >= 0 ? '수정했습니다' : '저장했습니다');
+});
+$('#bookList').addEventListener('click', e => {
+  const ed = e.target.closest('[data-bkedit]'), del = e.target.closest('[data-bkdel]');
+  if (ed) { resetBook(db.books.find(x => x.id === ed.dataset.bkedit)); $('#bookForm').scrollIntoView({behavior:'smooth'}); }
+  if (del) { const i = db.books.findIndex(x => x.id === del.dataset.bkdel); if (i < 0) return;
+    const [gone] = db.books.splice(i, 1); save(); if ($('#bkId').value === gone.id) resetBook(); renderBooks();
+    toast(`「${gone.name}」 소감을 삭제했습니다`, () => { db.books.splice(i, 0, gone); save(); renderBooks(); toast('되돌렸습니다'); }); }
+});
+
+// ───────── 말씀 해석 ─────────
+const stRef = x => x.book ? `${x.book}${x.ch ? ' ' + x.ch + (x.v ? ':' + x.v : unitOf(x.book)) : ''}` : '';
+function stBookLabel(){ const n = $('#stBook').value, b = BOOK[n], btn = $('#stBookBtn');
+  btn.classList.toggle('unset', !b); $('span', btn).innerHTML = b ? `${esc(n)}<small>${b.cat}</small>` : '성경 선택'; $('#stCh').max = b ? b.chapters : ''; }
+function stCurrent(){ return {book: $('#stBook').value, ch: +$('#stCh').value || '', v: +$('#stV').value || '', term: $('#stTerm').value.trim()}; }
+function stLinks(){
+  const x = stCurrent(), ref = stRef(x);
+  $('#stSearch').href = 'https://www.google.com/search?q=' + encodeURIComponent(['성경', ref, x.term, '뜻 해석'].filter(Boolean).join(' '));
+}
+function resetStudy(x){
+  $('#stId').value = x?.id || ''; $('#stBook').value = x?.book || ''; $('#stCh').value = x?.ch || ''; $('#stV').value = x?.v || '';
+  $('#stTerm').value = x?.term || ''; $('#stMeaning').value = x?.meaning || ''; $('#stSource').value = x?.source || '';
+  $$('[name=stKind]').forEach(r => r.checked = r.value === (x?.kind || 'note'));
+  stBookLabel(); stLinks();
+  $('#stFormTitle').textContent = x?.id ? '말씀 해석 수정' : '말씀 해석 노트';
+  $('#stSave').textContent = x?.id ? '수정 완료' : '저장';
+  $('#stReset').textContent = x?.id ? '수정 취소' : '새로 쓰기';
+}
+function renderStudy(){
+  const show = $('[name=stShow]:checked').value, q = $('#stQ').value.trim();
+  const list = db.studies.filter(x => (!show || (x.kind === 'question' && !x.meaning)) && (!q || [stRef(x), x.term, x.meaning, x.source].join(' ').includes(q)))
+    .sort((a,b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+  $('#studyList').innerHTML = list.length ? list.map(x => { const badge = x.kind === 'question' ? (x.meaning ? '<span class="badge ok">답변 받음</span>' : '<span class="badge wait">답 기다림</span>') : '<span class="badge">해석</span>';
+    return `<div class="item" data-stedit="${x.id}">
+      <div class="row" style="justify-content:space-between">${badge}<button type="button" class="btn ghost sm danger" data-stdel="${x.id}">삭제</button></div>
+      ${stRef(x) ? `<div class="p" style="margin-top:4px">${esc(stRef(x))}</div>` : ''}
+      <div class="t">${esc(x.term || '(단어·문장 없음)')}</div>
+      ${x.meaning ? `<div class="s pre">${esc(x.meaning)}</div>` : ''}
+      ${x.source ? `<div class="hint" style="margin-top:4px">출처: ${esc(x.source)}</div>` : ''}
+    </div>`; }).join('') : `<div class="empty">${show ? '답을 기다리는 질문이 없습니다.' : '아직 기록이 없습니다. 궁금한 단어나 문장을 적어 보세요.'}</div>`;
+}
+$('#stBookBtn').onclick = () => openBookSheet($('#stBook'), () => $('#stCh').focus({preventScroll:true}));
+$('#stBook').addEventListener('change', () => { $('#stCh').value = ''; $('#stV').value = ''; stBookLabel(); stLinks(); });
+['#stCh','#stV','#stTerm'].forEach(id => $(id).addEventListener('input', stLinks));
+$('#stAsk').onclick = async () => {
+  const x = stCurrent(); if (!x.term) return toast('질문할 단어나 문장을 먼저 적어 주세요');
+  const text = `${stRef(x) ? '[' + stRef(x) + '] ' : ''}${x.term}${/[?？]$/.test(x.term) ? '' : '\n이 말씀의 뜻이 궁금합니다.'}`;
+  if (navigator.share) { try { await navigator.share({text}); return; } catch(e) { if (e.name === 'AbortError') return; } }
+  try { await navigator.clipboard.writeText(text); toast('복사했습니다 · 카톡이나 문자로 목사님께 보내세요'); } catch(e) { toast('복사할 수 없는 환경입니다'); }
+};
+$('#stReset').onclick = () => resetStudy();
+$('#studyForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const x = Object.assign(stCurrent(), {id: $('#stId').value || uid(), kind: $('[name=stKind]:checked').value,
+    meaning: $('#stMeaning').value.trim(), source: $('#stSource').value.trim(), updatedAt: new Date().toISOString()});
+  if (!x.term && !x.meaning) return toast('단어·문장이나 해석 중 하나는 적어 주세요');
+  const i = db.studies.findIndex(y => y.id === x.id);
+  if (i >= 0) db.studies[i] = x; else db.studies.push(x);
+  save(); resetStudy(); renderStudy(); toast(i >= 0 ? '수정했습니다' : '저장했습니다');
+});
+$('#v-study').addEventListener('change', e => { if (e.target.name === 'stShow') renderStudy(); });
+$('#stQ').addEventListener('input', renderStudy);
+$('#studyList').addEventListener('click', e => {
+  const del = e.target.closest('[data-stdel]');
+  if (del) { const i = db.studies.findIndex(x => x.id === del.dataset.stdel); if (i < 0) return;
+    const [gone] = db.studies.splice(i, 1); save(); if ($('#stId').value === gone.id) resetStudy(); renderStudy();
+    return toast('해석 노트를 삭제했습니다', () => { db.studies.splice(i, 0, gone); save(); renderStudy(); toast('되돌렸습니다'); }); }
+  const ed = e.target.closest('[data-stedit]');
+  if (ed) { resetStudy(db.studies.find(x => x.id === ed.dataset.stedit)); $('#studyForm').scrollIntoView({behavior:'smooth'}); }
+});
 
 // ───────── 백업 · 내보내기 ─────────
 function download(name, text, type){
@@ -1176,6 +1408,7 @@ $('#toggleRestore').onclick = () => { const b = $('#restoreBox'); b.style.displa
 function importData(d){
   const merge = (a, b) => { const m = new Map(a.map(x => [x.id, x])); (b||[]).forEach(x => m.set(x.id, x)); return [...m.values()]; };
   db.sermons = merge(db.sermons, d.sermons); db.events = merge(db.events, d.events);
+  db.books = merge(db.books, d.books); db.studies = merge(db.studies, d.studies);
   db.weekNotes = Object.assign({}, db.weekNotes, d.weekNotes);
   db.daily = Object.assign({}, db.daily, d.daily);
   save(); renderStats(); updateBackupNote(); toast(`불러왔습니다 (설교 ${d.sermons?.length || 0}건)`);
@@ -1214,7 +1447,7 @@ $('#exportDailyCsv').onclick = () => {
 $('#wipe').onclick = () => {
   if (!confirm('모든 설교·행사 기록을 삭제합니다. 백업은 받아 두셨나요?')) return;
   if (prompt('정말 삭제하려면 "삭제"라고 입력하세요') !== '삭제') return;
-  db = {sermons:[], events:[], weekNotes:{}, daily:{}}; save(); renderStats(); toast('모두 삭제했습니다');
+  db = {sermons:[], events:[], weekNotes:{}, daily:{}, books:[], studies:[]}; save(); renderStats(); toast('모두 삭제했습니다');
 };
 $('#loadSample').onclick = () => {
   const d = lastSunday();
@@ -1249,7 +1482,7 @@ yearOptions($('#fYear')); monthOptions($('#fMonth')); fillBookFilter();
   if (real) { fillForm(d); toast('작성 중이던 내용을 불러왔습니다'); } else fillForm();
 })();
 Object.values(db.daily || {}).forEach(d => { d.readings = normRanges(d.readings || []); });
-renderStats(); updateBackupNote(); resetEvent();
+renderStats(); updateBackupNote(); resetEvent(); resetBook(); resetStudy();
 if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
 // 새 버전이 올라오면 앱으로 돌아올 때 확인해서 바로 새 화면으로 바꿉니다. 쓰던 글은 자동저장되어 있어 사라지지 않습니다.
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
