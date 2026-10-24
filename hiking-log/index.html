@@ -35,6 +35,15 @@ h2{font-family:var(--display);font-size:1.15rem;margin:0;color:var(--pine)}
 .maplinks{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:4px}
 .maplinks a{display:inline-block;padding:6px 10px;border:1px solid var(--pine);border-radius:8px;color:var(--pine);font-weight:700;font-size:.85rem;text-decoration:none}
 #preBox>summary h2{display:inline}
+.sub{margin:6px 0 -4px;font-size:.8rem;letter-spacing:.08em;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line);padding-bottom:4px}
+.sub:first-child{margin-top:0}
+.mtn{display:grid;grid-template-columns:minmax(0,1fr) 6.5em;gap:12px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:block;text-align:center;padding:9px 4px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-weight:500;font-size:.9rem}
+.seg input:checked+span{background:var(--pine);color:var(--pine-ink);border-color:var(--pine);font-weight:700}
+.seg input:focus-visible+span{outline:2px solid var(--pine);outline-offset:2px}
 .total{display:grid;gap:2px;background:var(--moss);border-radius:8px;padding:12px 14px}
 .total .tl{font-size:.85rem;color:var(--muted)}
 .total b{font-family:var(--display);font-size:1.3rem;color:var(--pine);font-variant-numeric:tabular-nums}
@@ -99,15 +108,30 @@ button.small{padding:6px 10px;font-size:.85rem}
         <details class="group" id="preBox" open style="border:0">
           <summary style="padding:0"><h2>1. 산행 전 준비</h2> <span class="cnt">전날 미리 입력</span></summary>
           <div class="gbody" style="padding:12px 0 0">
+            <h3 class="sub">산 정보</h3>
             <label class="field"><span>산행 날짜</span><input type="date" id="date" name="date"></label>
             <label class="field"><span>지역</span><input type="text" id="region" name="region" placeholder="예: 경북 청송군"></label>
-            <label class="field"><span>산 이름</span><input type="text" id="mountain" name="mountain" placeholder="예: 주왕산"></label>
+            <div class="mtn">
+              <label class="field"><span>산 이름</span><input type="text" id="mountain" name="mountain" placeholder="예: 주왕산"></label>
+              <label class="field"><span>높이 (m)</span><input type="text" inputmode="numeric" id="height" name="height" placeholder="721"></label>
+            </div>
+            <div class="field">
+              <span>난이도</span>
+              <div class="seg" role="radiogroup" aria-label="난이도">
+                <label><input type="radio" name="level" value="하"><span>하 · 쉬움</span></label>
+                <label><input type="radio" name="level" value="중"><span>중 · 보통</span></label>
+                <label><input type="radio" name="level" value="상"><span>상 · 힘듦</span></label>
+              </div>
+            </div>
+            <label class="field"><span>주요 특징</span><textarea id="feature" name="feature" rows="2" placeholder="예: 100대 명산, 기암 절벽·폭포, 가을 단풍 명소"></textarea></label>
+
+            <h3 class="sub">코스 · 주차</h3>
             <div class="field">
               <span style="display:flex;justify-content:space-between;align-items:center;gap:8px"><label for="course">코스</label><label class="pic"><input type="checkbox" id="loop" name="loop"> 원점회귀</label></span>
               <input type="text" id="course" name="course" placeholder="예: 대전사–주봉–후리메기">
             </div>
             <div class="field">
-              <label for="addr">들머리 주소 (내비·주차장)</label>
+              <label for="addr">들머리 주소 (내비 입력용)</label>
               <input type="text" id="addr" name="addr" placeholder="예: 경북 청송군 주왕산면 공원길 169-7">
               <span class="maplinks" id="mapLinks" hidden>
                 <button type="button" class="ghost small" id="copyAddr">주소 복사</button>
@@ -115,9 +139,14 @@ button.small{padding:6px 10px;font-size:.85rem}
                 <a class="small" id="kakaoMap" target="_blank" rel="noopener">카카오맵</a>
               </span>
             </div>
+            <label class="field"><span>주차 정보</span><input type="text" id="parking" name="parking" placeholder="예: 상의주차장, 소형 4,000원, 주말 혼잡"></label>
+            <label class="field"><span>들머리 정보</span><input type="text" id="entry" name="entry" placeholder="예: 매표소 지나 대전사 왼쪽 등산로, 화장실 있음"></label>
+            <label class="field" id="exitBox"><span>날머리·하산 후 교통</span><input type="text" id="exit" name="exit" placeholder="예: 절골 하산 → 택시로 주차장 복귀(약 15분)"></label>
+
+            <h3 class="sub">일정 · 준비</h3>
             <label class="field"><span>모임 장소·시각</span><input type="text" id="meet" name="meet" placeholder="예: 안동역 앞 06:30, 산악회 버스"></label>
             <label class="field"><span>동행</span><input type="text" id="party" name="party" placeholder="예: 산악회 12명, 아내와 둘이"></label>
-            <label class="field"><span>준비 메모</span><textarea id="prep" name="prep" rows="2" placeholder="준비물, 입산 통제·예약 여부, 하산 후 교통편, 비상 연락처 등"></textarea></label>
+            <label class="field"><span>준비 메모</span><textarea id="prep" name="prep" rows="2" placeholder="준비물, 입산 통제·예약 여부, 비상 연락처 등"></textarea></label>
           </div>
         </details>
       </section>
@@ -189,10 +218,10 @@ button.small{padding:6px 10px;font-size:.85rem}
   const form=document.getElementById('log');
   const groupsEl=document.getElementById('groups');
   const msg=t=>{document.getElementById('msg').textContent=t};
-  const labels={date:'날짜',region:'지역',mountain:'산 이름',course:'코스',addr:'들머리 주소',meet:'모임 장소·시각',party:'동행',prep:'준비 메모',weather:'날씨',start:'출발 시각',finish:'하산 시각',dist:'총 거리',steps:'걸음 수',
+  const labels={date:'날짜',region:'지역',mountain:'산 이름',height:'높이',level:'난이도',feature:'주요 특징',course:'코스',addr:'들머리 주소',parking:'주차',entry:'들머리 정보',exit:'날머리·하산 후 교통',meet:'모임 장소·시각',party:'동행',prep:'준비 메모',weather:'날씨',start:'출발 시각',finish:'하산 시각',dist:'총 거리',steps:'걸음 수',
     best:'오늘의 한 장면',tip:'다른 등산객에게 한마디',feeling:'한 줄 소감',etc:'기타 메모'};
-  const head=['date','region','mountain','course','addr','meet','party','prep','weather','start','finish','dist','steps'];
-  const units={dist:' km',steps:'보'};
+  const head=['date','region','mountain','height','level','feature','course','addr','parking','entry','exit','meet','party','prep','weather','start','finish','dist','steps'];
+  const units={dist:' km',steps:'보',height:' m'};
   const tail=['best','tip','feeling','etc'];
   // 이전 버전에서 쓰던 칸: 불러올 때 기타 메모로 옮겨 내용이 사라지지 않게 함
   const oldLabels={distance:'총 거리·동행자',purpose:'산행 목적·기대',trees:'나무 관찰',flowers:'꽃·풀·열매·버섯',forest:'숲 해설 소재',wildlife:'새·곤충·동물·소리',view:'조망과 풍경',trail:'등산로·갈림길·시설',safety:'주의할 점',photos:'사진 기록표',lesson:'느낀 점',recommend:'다른 등산객에게 전할 정보',blog:'블로그 핵심 문장'};
@@ -248,6 +277,7 @@ button.small{padding:6px 10px;font-size:.85rem}
   }
   function updateCounts(){
     updateTotal(); updateMap();
+    document.getElementById('exitBox').hidden=form.elements.loop.checked;
     for(let g=0;g<MEMOS/PER;g++){
       let n=0;
       for(let i=g*PER+1;i<=g*PER+PER;i++) if(memoFilled(i)) n++;
@@ -266,12 +296,13 @@ button.small{padding:6px 10px;font-size:.85rem}
     const fields={};
     form.querySelectorAll('input,textarea').forEach(el=>{
       if(el.type==='checkbox'){ if(el.checked) fields[el.name]=true }
+      else if(el.type==='radio'){ if(el.checked) fields[el.name]=el.value }
       else if(el.value.trim()) fields[el.name]=el.value;
     });
     return {fields};
   }
   function setData(d){
-    form.querySelectorAll('input,textarea').forEach(el=>{ if(el.type==='checkbox') el.checked=false; else el.value='' });
+    form.querySelectorAll('input,textarea').forEach(el=>{ if(el.type==='checkbox'||el.type==='radio') el.checked=false; else el.value='' });
     const f=Object.assign({},(d&&d.fields)||{});
     // 이전 버전 기록 옮기기
     const extra=[];
@@ -301,13 +332,16 @@ button.small{padding:6px 10px;font-size:.85rem}
   function collectText(){
     const f=getData().fields; let out='[산행 현장 기록장]\n\n';
     const put=(t,v)=>{ if(v&&String(v).trim()) out+=t+': '+String(v).trim()+'\n' };
-    out+='■ 산행 전 준비\n';
+    // 소제목은 그 아래 적힌 내용이 있을 때만 넣음
+    let pending='■ 산행 전 준비\n';
     head.forEach(k=>{
-      if(k==='weather') out+='\n■ 당일 기록\n';
+      if(k==='weather') pending=(out.endsWith('\n\n')?'':'\n')+'■ 당일 기록\n';
       let v=f[k]&&String(f[k]).trim()?String(f[k]).trim()+(units[k]||''):'';
       if(k==='course'&&f.loop) v=(v?v+' ':'')+'(원점회귀)';
+      if(v){ out+=pending; pending=''; }
       put(labels[k],v);
     });
+    if(pending&&calcTotal()!==null) out+=pending;
     const dur=calcTotal();
     if(dur!==null){
       const km=parseFloat(String(f.dist||'').replace(',','.'));
