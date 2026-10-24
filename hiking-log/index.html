@@ -67,7 +67,8 @@ button.small{padding:6px 10px;font-size:.85rem}
 .list .t b{display:block}
 .list .t small{color:var(--muted)}
 .list .acts{display:flex;gap:6px;flex-wrap:wrap}
-.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--moss);border-radius:8px;padding:10px}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--moss);border:2px solid var(--warn);border-radius:8px;padding:10px;font-weight:500}
+.confirm button{flex:1 1 40%}
 #plain{font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
 </style>
 
@@ -121,7 +122,6 @@ button.small{padding:6px 10px;font-size:.85rem}
     <h2>저장한 산행 기록</h2>
     <p class="hint" id="listHint">‘기록 저장’을 누르면 여기에 쌓입니다. 불러오면 위 칸에 다시 채워집니다.</p>
     <ul class="list" id="saved"></ul>
-    <div id="confirmBox"></div>
   </section>
 
   <section id="plainBox" hidden>
@@ -132,6 +132,7 @@ button.small{padding:6px 10px;font-size:.85rem}
 </div>
 
 <div class="bar"><div class="in">
+  <div id="barConfirm" style="flex-basis:100%"></div>
   <button type="button" id="save">기록 저장</button>
   <button type="button" class="ghost" id="download">TXT 내려받기</button>
   <button type="button" class="ghost" id="copy">전체 복사</button>
@@ -274,7 +275,7 @@ button.small{padding:6px 10px;font-size:.85rem}
   form.addEventListener('submit',e=>e.preventDefault());
 
   // --- 보관함 ---
-  const listEl=document.getElementById('saved'), confirmBox=document.getElementById('confirmBox');
+  const listEl=document.getElementById('saved'), confirmBox=document.getElementById('barConfirm');
   let cache=[];
   async function loadList(){
     let items=[];
@@ -310,7 +311,7 @@ button.small{padding:6px 10px;font-size:.85rem}
     const y=document.createElement('button'); y.type='button'; y.textContent=label;
     const n=document.createElement('button'); n.type='button'; n.className='ghost'; n.textContent='취소';
     y.onclick=()=>{confirmBox.innerHTML='';fn()}; n.onclick=()=>{confirmBox.innerHTML=''};
-    box.append(p,y,n); confirmBox.appendChild(box); box.scrollIntoView({block:'center',behavior:'smooth'});
+    box.append(p,y,n); confirmBox.appendChild(box);
   }
   async function removeItem(id){
     try{
@@ -364,7 +365,7 @@ button.small{padding:6px 10px;font-size:.85rem}
       setData(null); currentId=null; document.getElementById('date').value=localDate();
       for(let g=1;g<MEMOS/PER;g++) document.getElementById('grp'+g).open=false;
       document.getElementById('afterBox').open=false;
-      onEdit(); renderList(cache); msg('새 기록을 시작했습니다.'); window.scrollTo({top:0});
+      updateCounts(); flush(); renderList(cache); msg('새 기록을 시작했습니다.'); window.scrollTo({top:0});
     });
   });
 
