@@ -17,6 +17,7 @@
   --bg:#141a16; --paper:#1c241f; --ink:#e4ebe3; --muted:#9caea0; --line:#334038;
   --pine:#7fbf95; --pine-ink:#10251a; --moss:#24322a; --warn:#f0a080; --ok:#8fd3a6; color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
 .wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 140px;display:grid;gap:14px}
 header h1{font-family:var(--display);font-size:1.6rem;margin:0;text-wrap:balance}
@@ -31,6 +32,9 @@ h2{font-family:var(--display);font-size:1.15rem;margin:0;color:var(--pine)}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .field{display:grid;gap:4px;min-width:0}
 .field>span,.field>label{font-weight:500;font-size:.92rem}
+.maplinks{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:4px}
+.maplinks a{display:inline-block;padding:6px 10px;border:1px solid var(--pine);border-radius:8px;color:var(--pine);font-weight:700;font-size:.85rem;text-decoration:none}
+#preBox>summary h2{display:inline}
 .total{display:grid;gap:2px;background:var(--moss);border-radius:8px;padding:12px 14px}
 .total .tl{font-size:.85rem;color:var(--muted)}
 .total b{font-family:var(--display);font-size:1.3rem;color:var(--pine);font-variant-numeric:tabular-nums}
@@ -92,13 +96,34 @@ button.small{padding:6px 10px;font-size:.85rem}
   <form id="log" autocomplete="off">
     <div style="display:grid;gap:14px">
       <section>
-        <h2>1. 기본 정보</h2>
-        <label class="field"><span>날짜</span><input type="date" id="date" name="date"></label>
-        <label class="field"><span>산 이름</span><input type="text" id="mountain" name="mountain" placeholder="예: 주왕산"></label>
-        <div class="field">
-          <span style="display:flex;justify-content:space-between;align-items:center;gap:8px"><label for="course">코스</label><label class="pic"><input type="checkbox" id="loop" name="loop"> 원점회귀</label></span>
-          <input type="text" id="course" name="course" placeholder="예: 대전사–주봉–후리메기">
-        </div>
+        <details class="group" id="preBox" open style="border:0">
+          <summary style="padding:0"><h2>1. 산행 전 준비</h2> <span class="cnt">전날 미리 입력</span></summary>
+          <div class="gbody" style="padding:12px 0 0">
+            <label class="field"><span>산행 날짜</span><input type="date" id="date" name="date"></label>
+            <label class="field"><span>지역</span><input type="text" id="region" name="region" placeholder="예: 경북 청송군"></label>
+            <label class="field"><span>산 이름</span><input type="text" id="mountain" name="mountain" placeholder="예: 주왕산"></label>
+            <div class="field">
+              <span style="display:flex;justify-content:space-between;align-items:center;gap:8px"><label for="course">코스</label><label class="pic"><input type="checkbox" id="loop" name="loop"> 원점회귀</label></span>
+              <input type="text" id="course" name="course" placeholder="예: 대전사–주봉–후리메기">
+            </div>
+            <div class="field">
+              <label for="addr">들머리 주소 (내비·주차장)</label>
+              <input type="text" id="addr" name="addr" placeholder="예: 경북 청송군 주왕산면 공원길 169-7">
+              <span class="maplinks" id="mapLinks" hidden>
+                <button type="button" class="ghost small" id="copyAddr">주소 복사</button>
+                <a class="small" id="naverMap" target="_blank" rel="noopener">네이버 지도</a>
+                <a class="small" id="kakaoMap" target="_blank" rel="noopener">카카오맵</a>
+              </span>
+            </div>
+            <label class="field"><span>모임 장소·시각</span><input type="text" id="meet" name="meet" placeholder="예: 안동역 앞 06:30, 산악회 버스"></label>
+            <label class="field"><span>동행</span><input type="text" id="party" name="party" placeholder="예: 산악회 12명, 아내와 둘이"></label>
+            <label class="field"><span>준비 메모</span><textarea id="prep" name="prep" rows="2" placeholder="준비물, 입산 통제·예약 여부, 하산 후 교통편, 비상 연락처 등"></textarea></label>
+          </div>
+        </details>
+      </section>
+
+      <section>
+        <h2>2. 당일 기록</h2>
         <label class="field"><span>날씨</span><input type="text" id="weather" name="weather" placeholder="예: 맑음, 서늘함"></label>
         <div class="grid2 times">
           <div class="field"><label for="start">출발 시각</label><span class="timebox"><input type="time" id="start" name="start"><button type="button" class="ghost small" data-now="start">지금</button></span></div>
@@ -116,14 +141,14 @@ button.small{padding:6px 10px;font-size:.85rem}
       </section>
 
       <section>
-        <h2>2. 현장 메모</h2>
+        <h2>3. 현장 메모</h2>
         <p class="hint">‘지금’을 누르면 현재 시각이 들어갑니다. 사진을 찍었으면 ‘사진 있음’만 체크하세요.</p>
         <div id="groups" style="display:grid;gap:10px"></div>
       </section>
 
       <section>
         <details class="group" id="afterBox" style="border:0">
-          <summary style="padding:0">3. 하산 후 정리 <span class="cnt">선택 · 나중에 써도 됩니다</span></summary>
+          <summary style="padding:0">4. 하산 후 정리 <span class="cnt">선택 · 나중에 써도 됩니다</span></summary>
           <div class="gbody" style="padding:12px 0 0">
             <label class="field"><span>오늘의 한 장면</span><textarea id="best" name="best" rows="2" placeholder="가장 기억에 남는 풍경·나무·꽃 한 가지"></textarea></label>
             <label class="field"><span>다른 등산객에게 한마디</span><textarea id="tip" name="tip" rows="2" placeholder="길 상태, 주의할 곳, 주차·화장실 등"></textarea></label>
@@ -164,9 +189,9 @@ button.small{padding:6px 10px;font-size:.85rem}
   const form=document.getElementById('log');
   const groupsEl=document.getElementById('groups');
   const msg=t=>{document.getElementById('msg').textContent=t};
-  const labels={date:'날짜',mountain:'산 이름',course:'코스',weather:'날씨',start:'출발 시각',finish:'하산 시각',dist:'총 거리',steps:'걸음 수',
+  const labels={date:'날짜',region:'지역',mountain:'산 이름',course:'코스',addr:'들머리 주소',meet:'모임 장소·시각',party:'동행',prep:'준비 메모',weather:'날씨',start:'출발 시각',finish:'하산 시각',dist:'총 거리',steps:'걸음 수',
     best:'오늘의 한 장면',tip:'다른 등산객에게 한마디',feeling:'한 줄 소감',etc:'기타 메모'};
-  const head=['date','mountain','course','weather','start','finish','dist','steps'];
+  const head=['date','region','mountain','course','addr','meet','party','prep','weather','start','finish','dist','steps'];
   const units={dist:' km',steps:'보'};
   const tail=['best','tip','feeling','etc'];
   // 이전 버전에서 쓰던 칸: 불러올 때 기타 메모로 옮겨 내용이 사라지지 않게 함
@@ -213,8 +238,16 @@ button.small{padding:6px 10px;font-size:.85rem}
     tt.textContent=fmtDur(d);
     sub.textContent=(km>0&&d>0)?'평균 '+(km/(d/60)).toFixed(1)+' km/h (휴식 포함)':'';
   }
+  function updateMap(){
+    const a=form.elements.addr.value.trim(), q=a||[form.elements.region.value.trim(),form.elements.mountain.value.trim()].filter(Boolean).join(' ');
+    const box=document.getElementById('mapLinks');
+    box.hidden=!q;
+    document.getElementById('copyAddr').hidden=!a;
+    document.getElementById('naverMap').href='https://map.naver.com/p/search/'+encodeURIComponent(q);
+    document.getElementById('kakaoMap').href='https://map.kakao.com/?q='+encodeURIComponent(q);
+  }
   function updateCounts(){
-    updateTotal();
+    updateTotal(); updateMap();
     for(let g=0;g<MEMOS/PER;g++){
       let n=0;
       for(let i=g*PER+1;i<=g*PER+PER;i++) if(memoFilled(i)) n++;
@@ -268,7 +301,9 @@ button.small{padding:6px 10px;font-size:.85rem}
   function collectText(){
     const f=getData().fields; let out='[산행 현장 기록장]\n\n';
     const put=(t,v)=>{ if(v&&String(v).trim()) out+=t+': '+String(v).trim()+'\n' };
+    out+='■ 산행 전 준비\n';
     head.forEach(k=>{
+      if(k==='weather') out+='\n■ 당일 기록\n';
       let v=f[k]&&String(f[k]).trim()?String(f[k]).trim()+(units[k]||''):'';
       if(k==='course'&&f.loop) v=(v?v+' ':'')+'(원점회귀)';
       put(labels[k],v);
@@ -317,6 +352,12 @@ button.small{padding:6px 10px;font-size:.85rem}
   form.addEventListener('input',onEdit);
   form.addEventListener('change',onEdit);
   form.addEventListener('submit',e=>e.preventDefault());
+
+  document.getElementById('copyAddr').addEventListener('click',()=>{
+    const a=form.elements.addr.value.trim();
+    navigator.clipboard.writeText(a).then(()=>msg('주소를 복사했습니다. 내비 앱에 붙여 넣으세요.'))
+      .catch(()=>{const el=form.elements.addr; el.focus(); el.select(); msg('자동 복사가 막혀 있습니다. 선택된 주소를 길게 눌러 복사하세요.')});
+  });
 
   // --- 보관함 ---
   const listEl=document.getElementById('saved'), confirmBox=document.getElementById('barConfirm');
@@ -408,7 +449,7 @@ button.small{padding:6px 10px;font-size:.85rem}
     askConfirm('화면을 비우고 새 산행 기록을 시작합니다. 보관함에 저장한 기록은 그대로 남습니다.','새 기록 시작',()=>{
       setData(null); currentId=null; document.getElementById('date').value=localDate();
       for(let g=1;g<MEMOS/PER;g++) document.getElementById('grp'+g).open=false;
-      document.getElementById('afterBox').open=false;
+      document.getElementById('afterBox').open=false; document.getElementById('preBox').open=true;
       updateCounts(); flush(); renderList(cache); msg('새 기록을 시작했습니다.'); window.scrollTo({top:0});
     });
   });
