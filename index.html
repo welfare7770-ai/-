@@ -580,7 +580,7 @@ function view_recur(){
   const grp=o=>{const all=S.recur.filter(r=>ownerOf(r)===o),act=all.filter(r=>r.active);return {all,act,total:act.reduce((s,r)=>s+(+r.amount||0),0),pending:act.filter(r=>!posted(r,ym))};};
   const me=grp('me'),pa=grp('parent');
   const section=(o,g,title,where)=>`<section class="card"${o==='parent'?' style="--acc:var(--c-care)"':''}><h2>${title}<span class="sp"></span><b style="font-size:15px">${won(g.total)}</b></h2>
-    ${(()=>{const m=missingRecur(o);return m.length?`<div class="xfer" style="margin:0 0 8px;background:var(--over-bg)"><span style="color:var(--over)">납부일이 지났는데 기록 안 된 고정비 <b>${m.length}건</b> (${[...new Set(m.map(x=>Number(x.ym.slice(5))+'월'))].join('·')})</span><span class="amt" style="display:flex;gap:6px"><button class="btn sm" data-act="skipMissing" data-owner="${o}">기록 안 함</button><button class="btn sm primary" data-act="postMissing" data-owner="${o}">기록하기</button></span></div>`:'';})()}
+    ${(()=>{const m=missingRecur(o);return m.length?`<div class="xfer" style="margin:0 0 8px;background:var(--over-bg)"><span style="color:var(--over)">납부일이 지났는데 기록 안 된 고정비 <b>${m.length}건</b> (${[...new Set(m.map(x=>Number(x.ym.slice(5))+'월'))].join('·')})</span><button class="btn sm primary amt" data-act="postMissing" data-owner="${o}">하나씩 정리</button></div>`:'';})()}
     ${o==='me'&&g.all.some(looksParent)?`<div class="xfer" style="margin:0 0 8px;background:color-mix(in srgb,var(--c-care) 12%,var(--card))"><span>${esc(pn)} 집 관련으로 보이는 항목: <b>${g.all.filter(looksParent).map(r=>esc(r.name)).join(', ')}</b></span><span class="amt" style="display:flex;gap:6px"><button class="btn sm" data-act="keepMine">내 것 맞아요</button><button class="btn sm primary" style="--acc:var(--c-care)" data-act="moveRecur">옮기기</button></span></div>`:''}
     <div class="toolbar" style="margin:0 0 4px"><button class="btn sm primary" data-act="addRecur" data-owner="${o}">＋ 추가</button>${g.all.length?(o==='me'?`<button class="btn sm" data-act="moveRecur">${esc(pn)} 고정비로 옮기기</button>`:`<button class="btn sm" data-act="moveRecur" data-dir="toMe">내 고정비로 옮기기</button>`):''}<button class="btn sm" data-act="postRecur" data-owner="${o}"${g.pending.length?'':' disabled'}>이번 달 남은 것 미리 기록${g.pending.length?` (${g.pending.length}건)`:''}</button></div>
     ${g.all.length?`<ul class="list">${[...g.all].sort((a,b)=>(b.active-a.active)||(a.day-b.day)).map(recurRow).join('')}</ul>`:`<p class="empty">${o==='me'?'통신비·보험료·구독료 등 내가 매달 내는 돈을 등록하세요.':pn+' 집 관리비·공과금·재산세처럼 부모님 쪽에서 매달 나가는 돈을 등록하세요.'}</p>`}</section>`;
@@ -668,6 +668,39 @@ function missingRecur(o){
   return res;
 }
 const autoPost=()=>{const a=postPensions(),b=postRecurAuto();return a||b;};
+/* 빠진 고정비 정리: 항목마다 '기록' 또는 '기록 안 함'을 고른다.
+   기본값은 현금(통장)과 맞추는 쪽으로 미리 골라 둔다.
+   - 아버지 것 중 부모님 자금에서 나간 것: 잔액 확인일 전이면 이미 통장 잔액에 반영됨 → 기록 안 함
+   - 가족이 대신 낸 것: 가족 정산에 필요 → 기록
+   - 내 것: 같은 달·같은 금액의 기록이 이미 가계부에 있으면 직접 넣은 것으로 보고 기록 안 함, 없으면 기록 */
+function reviewMissing(owner){
+  const miss=missingRecur(owner),fs=fundCfg();
+  if(!miss.length)return;
+  const guess=m=>{
+    const r=m.r,d=payday(r,m.ym);
+    if(ownerOf(r)==='parent'){
+      const who=r.from||SELF;
+      if(who===SELF&&fs.startDate&&d<fs.startDate)return [false,'통장 잔액에 이미 반영됨'];
+      if(who===SELF)return [true,'부모님 자금에서 차감'];
+      return [true,`낸 사람: ${whoLabel(who)} · 가족 정산용`];
+    }
+    const dupe=S.tx.find(t=>t.type==='out'&&t.date.startsWith(m.ym)&&+t.amount===+r.amount);
+    return dupe?[false,`비슷한 기록 있음: ${t2(dupe)}`]:[true,'내 가계부 지출로 기록'];
+  };
+  const t2=t=>`${t.date.slice(5).replace('-','/')} ${t.memo||t.cat}`;
+  dlgForm.innerHTML=`<h2>빠진 고정비 정리</h2>
+   <p class="hint">납부일이 지났는데 기록이 없는 항목입니다. <b>체크한 것만 기록</b>하고, 체크하지 않은 것은 ‘기록 안 함’으로 정리합니다. 통장 잔액과 맞도록 미리 골라 두었으니 확인만 하세요. 아직 납부일이 안 된 항목은 여기 없고, 그날이 되면 자동으로 기록됩니다.</p>
+   <ul class="list" id="msList">${miss.map((m,i)=>{const [on,why]=guess(m);return `<li class="row" style="cursor:default"><label style="display:flex;gap:10px;align-items:center;flex:1;min-width:0"><input type="checkbox" data-i="${i}"${on?' checked':''}><span class="grow"><b>${Number(m.ym.slice(5))}월 ${esc(m.r.name)}${ownerOf(m.r)==='parent'?` <small style="display:inline;color:var(--c-care)">${esc(careName())}</small>`:''}</b><small>${payday(m.r,m.ym)} · ${esc(why)}</small></span><span class="amt">${num(m.r.amount)}</span></label></li>`;}).join('')}</ul>
+   <div class="actions"><span class="sp"></span><button type="button" data-x="cancel">나중에</button><button type="submit" class="primary">정리하기</button></div>`;
+  dlgForm.querySelector('[data-x=cancel]').onclick=()=>dlg.close();
+  dlgForm.onsubmit=e=>{e.preventDefault();
+    let rec=0,skip=0;
+    dlgForm.querySelectorAll('#msList input').forEach(i=>{const m=miss[+i.dataset.i];
+      if(i.checked){recurPostOne(m.r,m.ym);rec++;}else{m.r.posted=[...(m.r.posted||[]),m.ym].slice(-36);skip++;}});
+    save();dlg.close();render();toast(`기록 ${rec}건 · 기록 안 함 ${skip}건으로 정리했습니다`);
+  };
+  showDlg();
+}
 function recurRow(r){const ym=today().slice(0,7);{const due=recurDue(r),n=dday(due);return `<li class="row" data-act="editRecur" data-id="${r.id}"><span class="pill ${!r.active?'none':posted(r,ym)?'ok':n<=3?'soon':'info'}">${!r.active?'중지':posted(r,ym)?'기록됨':'매월 '+r.day+'일'}</span><div class="grow"><b>${esc(r.name)}</b><small>${esc(r.cat)} · ${ownerOf(r)==='parent'?esc(whoLabel(r.from||SELF)):esc(r.pay||'')}${r.memo?' · '+esc(r.memo):''}</small>${r.active?`<small>다음 납부 ${due} (${ddayLabel(n)})</small>`:''}</div><span class="amt">${num(r.amount)}</span></li>`;}
 }
 
@@ -1405,16 +1438,8 @@ const ACT={
     list.forEach(r=>recurPostOne(r,ym));
     save();render();toast(`${list.length}건 기록했습니다`);
   },
-  postMissing:async d=>{
-    const miss=missingRecur(d.owner);if(!miss.length)return;
-    if(!await askConfirm(`납부일이 지났는데 기록되지 않은 고정비 ${miss.length}건을 기록할까요?\n\n${miss.map(m=>`· ${Number(m.ym.slice(5))}월 ${m.r.name} ${num(m.r.amount)}원`).join('\n')}\n\n이미 다른 방법으로 기록했거나 그달엔 안 냈다면 ‘취소’ 후 해당 항목만 따로 처리하세요.`,'모두 기록'))return;
-    miss.forEach(m=>recurPostOne(m.r,m.ym));save();render();toast(`${miss.length}건 기록했습니다`);
-  },
-  skipMissing:async d=>{
-    const miss=missingRecur(d.owner);if(!miss.length)return;
-    if(!await askConfirm(`빠진 ${miss.length}건을 ‘기록 안 함’으로 처리할까요? (이미 직접 기록했거나 내지 않은 경우)`,'기록 안 함'))return;
-    miss.forEach(m=>{m.r.posted=[...(m.r.posted||[]),m.ym].slice(-36);});save();render();toast('정리했습니다');
-  },
+  postMissing:d=>reviewMissing(d.owner),
+  skipMissing:d=>reviewMissing(d.owner),
   addSched:d=>crud('sched','기한',schedFields(),null,d.cat?{cat:d.cat}:null),
   editSched:d=>crud('sched','기한',schedFields(),find('sched',d.id)),
   addGift:()=>openForm('경조사 기록 추가',[...giftFields,{k:'_ledger',label:'가계부에도 기록 (보냄=지출, 받음=수입)',type:'checkbox',def:true}],giftQ?{person:giftQ.trim()}:null,v=>{
