@@ -1218,7 +1218,7 @@ const hikeFields=()=>[
   {k:'course',label:'코스',type:'text',ph:'예: 우이동 → 백운대 → 도선사'},
   {k:'start',label:'출발 시각',type:'time'},
   {k:'end',label:'하산 완료 시각',type:'time'},
-  {k:'minutes',label:'산행시간(분)',type:'number',ph:'출발·하산 시각을 넣으면 자동 계산'},
+  {k:'minutes',label:'산행시간(분) — 이 값으로 합계·유산소 계산',type:'number',ph:'출발·하산 시각을 넣으면 자동으로 채워짐'},
   {k:'distance',label:'등산거리(km)',type:'number',dec:1},
   {k:'steps',label:'걸음수',type:'number'},
   {k:'ascent',label:'누적 오르막(m)',type:'number',ph:'앱·시계에 나오면 입력'},
@@ -1237,13 +1237,24 @@ function hikeMin(h){
   const [a,b]=h.start.split(':').map(Number),[c,d]=h.end.split(':').map(Number);
   const m=c*60+d-(a*60+b);return m>0?m:null;
 }
-const hm=m=>m==null?'':`${Math.floor(m/60)}시간 ${m%60}분`;
+const hm=m=>m==null?'':m<60?`${m}분`:`${Math.floor(m/60)}시간${m%60?` ${m%60}분`:''}`;
 // 운동시간 연동용: 시각 → 직접 입력한 분 → 거리로 추정(휴식 포함 평균 시속 2km) 순서
 function hikeMinutes(h){
-  const t=hikeMin(h);if(t)return {m:t,est:false};
-  if(+h.minutes>0)return {m:+h.minutes,est:false};
+  if(+h.minutes>0)return {m:+h.minutes,est:false,src:'input'};
+  const t=hikeMin(h);if(t)return {m:t,est:false,src:'span'};
   if(+h.distance>0)return {m:Math.round(h.distance/2*60),est:true};
   return {m:0,est:false};
+}
+// 산행 입력 창: 출발·하산 시각 → 산행시간(분) 자동 계산 표시
+function hikeTimeHelper(){
+  const el=n=>dlgForm.elements.namedItem(n),st=el('start'),en=el('end'),mi=el('minutes');if(!st||!en||!mi)return;
+  mi.closest('.fld').insertAdjacentHTML('beforeend','<small class="mh" id="hkspan"></small>');
+  let auto=!mi.value;
+  const upd=()=>{const m=hikeMin({start:st.value,end:en.value});const box=document.getElementById('hkspan');
+    if(!m){box.textContent='';return;}
+    if(auto||!mi.value){mi.value=m;auto=true;}
+    box.textContent=`출발~하산 ${hm(m)}`+(+mi.value&&+mi.value!==m?` · 합계에는 입력한 산행시간 ${hm(+mi.value)}이 쓰입니다`:'');};
+  mi.addEventListener('input',()=>{auto=false;upd();});st.addEventListener('input',upd);en.addEventListener('input',upd);st.addEventListener('change',upd);en.addEventListener('change',upd);upd();
 }
 let hikeYear='전체',hikeQ='',hikeSido='전체';
 function view_hike(){
@@ -1267,7 +1278,7 @@ function view_hike(){
   const t100=new Set(S.hike.filter(h=>h.top100).map(h=>h.mountain)).size;
   const card=h=>{
     const hmn=hikeMinutes(h),m=hmn.m||null,spd=m&&!hmn.est&&h.distance?(h.distance/(m/60)).toFixed(1):null;
-    const chips=[h.distance?`🥾 <b>${h.distance}</b>km`:'',h.steps?`👣 <b>${num(h.steps)}</b>보`:'',m?`⏱ <b>${hmn.est?'약 ':''}${hm(m)}</b>`:'',spd?`평균 ${spd}km/h`:'',h.ascent?`⬆ ${num(h.ascent)}m`:'',h.kcal?`🔥 ${num(h.kcal)}kcal`:'',h.cost?`💰 ${num(h.cost)}원`:''].filter(Boolean);
+    const chips=[h.distance?`🥾 <b>${h.distance}</b>km`:'',h.steps?`👣 <b>${num(h.steps)}</b>보`:'',m?`⏱ <b>${hmn.est?'약 ':''}${hm(m)}</b>${hmn.src==='input'&&hikeMin(h)&&hikeMin(h)!==m?` <small style="color:var(--muted)">(출발~하산 ${hm(hikeMin(h))})</small>`:''}`:'',spd?`평균 ${spd}km/h`:'',h.ascent?`⬆ ${num(h.ascent)}m`:'',h.kcal?`🔥 ${num(h.kcal)}kcal`:'',h.cost?`💰 ${num(h.cost)}원`:''].filter(Boolean);
     return `<div class="hike" data-act="editHike" data-id="${h.id}">
       <h3>⛰ ${esc(h.mountain)}${h.peak?` <small>${esc(h.peak)}</small>`:''}${h.height?` <small>${num(h.height)}m</small>`:''}<span class="sp" style="flex:1"></span><small>${'★'.repeat(+h.stars||0)}</small><button class="btn sm" data-act="editHike" data-id="${h.id}" style="margin-left:6px">수정</button></h3>
       <div class="meta">${h.date.slice(0,4)}년 ${dLabel(h.date)} ${h.weather?' · '+esc(h.weather):''}${h.temp?' '+esc(h.temp)+'℃':''}${sidoOf(h)||h.region?' · '+esc([sidoOf(h),h.region].filter(Boolean).join(' ')):''}${h.start?` · ${esc(h.start)}~${esc(h.end||'')}`:''}</div>
@@ -1284,7 +1295,7 @@ function view_hike(){
     <div class="stat"><small>최고봉</small><b>${top?num(top.height)+'m':'-'}</b><small>${top?esc(top.mountain):'해발고도 입력 시'}</small></div>
     <div class="stat"><small>총 거리</small><b>${(Math.round(sum('distance')*10)/10).toLocaleString('ko-KR')}km</b></div>
     <div class="stat"><small>총 걸음</small><b>${sum('steps')?num(sum('steps'))+'보':'-'}</b></div>
-    <div class="stat"><small>총 산행시간</small><b>${Math.floor(mins/60)}시간 ${mins%60}분</b></div></div>
+    <div class="stat"><small>총 산행시간</small><b>${mins?hm(mins):"0분"}</b></div></div>
    <div class="goal" style="margin-top:12px"><div><span>산림청 100대 명산 <b>${t100}곳</b> / 100곳</span><span>${100-t100}곳 남음</span></div><div class="bar"><span style="width:${t100}%"></span></div></div>
    ${Object.keys(bySido).length>1?`<div class="chips" style="margin-top:10px">${Object.entries(bySido).sort((a,b)=>b[1]-a[1]).map(([k,c])=>`<span class="chip">${esc(k)} <b>${c}</b>회</span>`).join('')}</div>`:''}
    </section>
@@ -1550,7 +1561,7 @@ function hikeLine(h){const m=hikeMinutes(h);return [`${Number(h.date.slice(5,7))
 function hikeTotals(){
   const y=today().slice(0,4),yr=S.hike.filter(h=>h.date.startsWith(y));
   const km=a=>Math.round(a.reduce((x,h)=>x+(+h.distance||0),0)*10)/10,mins=a=>a.reduce((x,h)=>x+hikeMinutes(h).m,0);
-  return `올해 ${yr.length}회 · ${km(yr)}km · ${Math.round(mins(yr)/60)}시간 · 누적 ${S.hike.length}회 ${km(S.hike)}km · 오른 산 ${new Set(S.hike.filter(h=>h.summit!==false).map(h=>h.mountain)).size}곳`;
+  return `올해 ${yr.length}회 · ${km(yr)}km · ${hm(mins(yr))} · 누적 ${S.hike.length}회 ${km(S.hike)}km · 오른 산 ${new Set(S.hike.filter(h=>h.summit!==false).map(h=>h.mountain)).size}곳`;
 }
 function gymLine(list){
   const str=list.filter(g=>g.kind==='근력'),car=list.filter(g=>g.kind!=='근력');
@@ -1562,7 +1573,7 @@ function gymLine(list){
 }
 function gymTotals(){
   const t=today(),y=t.slice(0,4),ym=t.slice(0,7),days=a=>new Set(a.map(g=>g.date)).size,yr=S.gym.filter(g=>g.date.startsWith(y));
-  return `이번 달 ${days(S.gym.filter(g=>g.date.startsWith(ym)))}일 · 올해 ${days(yr)}일 ${Math.round(yr.reduce((x,g)=>x+(+g.minutes||0),0)/60)}시간 · 누적 ${days(S.gym)}일`;
+  return `이번 달 ${days(S.gym.filter(g=>g.date.startsWith(ym)))}일 · 올해 ${days(yr)}일 ${hm(yr.reduce((x,g)=>x+(+g.minutes||0),0))} · 누적 ${days(S.gym)}일`;
 }
 function hikeNudge(){
   const t=today(),ws=weekStart(t),dow=(parseD(t).getDay()+6)%7,left=6-dow;
@@ -1978,13 +1989,13 @@ const ACT={
   lockNowAct:()=>lockNow(),
   lockOff:()=>openForm('잠금 끄기',[{k:'cur',label:'현재 비밀번호',type:'password',req:1,attrs:' inputmode="numeric" maxlength="6"'}],null,async v=>{
     if(await hashPin(v.cur,S.lock.salt)!==S.lock.hash){toast('비밀번호가 틀렸습니다');return false;}S.lock=null;}),
-  addHike:()=>openForm('산행 기록 추가',[...hikeFields(),{k:'_ledger',label:'경비를 가계부에도 기록',type:'checkbox',def:true}],null,v=>{
+  addHike:()=>{openForm('산행 기록 추가',[...hikeFields(),{k:'_ledger',label:'경비를 가계부에도 기록',type:'checkbox',def:true}],null,v=>{
     const {_ledger,...r0}=v,r={id:uid(),ts:Date.now(),...r0};S.hike.push(r);
     linkNew('hike',r,_ledger);
     if(weekStart(r.date)===weekStart(today()))setTimeout(()=>{const w=weekStats();toast(`이번 주 유산소 ${w.cardio}분 / 150분${w.cardio>=150?' 달성!':''}`);},0);
-  }),
+  });hikeTimeHelper();},
   hikeFind:d=>{hikeQ=d.m;render();window.scrollTo(0,0);},
-  editHike:d=>crud('hike','산행 기록',hikeFields(),find('hike',d.id)),
+  editHike:d=>{crud('hike','산행 기록',hikeFields(),find('hike',d.id));hikeTimeHelper();},
   addGym:d=>crud('gym','운동 기록',gymFields(),null,(d.date||d.kind)?{date:d.date||today(),kind:d.kind||'근력'}:null),
   editGym:d=>crud('gym','운동 기록',gymFields(),find('gym',d.id)),
   gymYM:d=>{gymYM=shiftYM(gymYM,+d.n);render();},
