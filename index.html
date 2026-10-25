@@ -715,7 +715,8 @@ function view_recur(){
     ${g.all.length?`<ul class="list">${[...g.all].sort((a,b)=>(b.active-a.active)||(a.day-b.day)).map(recurRow).join('')}</ul>`:`<p class="empty">${o==='me'?'통신비·보험료·구독료 등 내가 매달 내는 돈을 등록하세요.':pn+' 집 관리비·공과금·재산세처럼 부모님 쪽에서 매달 나가는 돈을 등록하세요.'}</p>`}</section>`;
   return `
   <section class="card"><div class="stats"><div class="stat"><small>내 고정비 / 월</small><b class="neg">${won(me.total)}</b></div><div class="stat"><small>${esc(pn)} 고정비 / 월</small><b style="color:var(--c-care)">${won(pa.total)}</b></div><div class="stat"><small>합계 / 연</small><b>${short((me.total+pa.total)*12)}원</b></div></div>
-  <p class="hint" style="margin:10px 0 0"><b>납부일이 지나면 자동으로 기록됩니다.</b> 내 것은 내 가계부로, ${esc(pn)} 것은 ${esc(pn)} 장부로 들어가고, 부모님 통장에서 나가는 항목은 부모님 자금 잔액에서 빠집니다. 전기·가스처럼 금액이 달라지는 항목은 ‘금액 확인’ 표시가 붙으니 실제 금액으로 고쳐 주세요.</p></section>
+  <p class="hint" style="margin:10px 0 0"><b>납부일이 지나면 자동으로 기록됩니다.</b> 내 것은 내 가계부로, ${esc(pn)} 것은 ${esc(pn)} 장부로 들어가고, 부모님 통장에서 나가는 항목은 부모님 자금 잔액에서 빠집니다. 전기·가스처럼 금액이 달라지는 항목은 ‘금액 확인’ 표시가 붙으니 실제 금액으로 고쳐 주세요.</p>
+  ${S.recurAuto?`<p class="hint" style="margin:6px 0 0">기록 시작일 <b>${S.recurAuto.replace(/-/g,'.')}</b> · 그 전 납부분은 통장 잔액에 이미 들어 있으므로 빠진 것으로 묻지 않습니다 <button class="linkbtn" data-act="recurFrom" style="margin:0;font-size:inherit">바꾸기</button></p>`:''}</section>
   ${section('me',me,'내 고정비','내 가계부')}
   ${section('parent',pa,esc(pn)+' 집·생활 고정비',esc(pn)+' 장부')}`;
 }
@@ -802,11 +803,11 @@ function receiptDue(){
     }
   return res;
 }
-// 자동 기록 시작 전에 납부일이 지났는데 기록 안 된 것 (지난달·이번 달)
+// 납부일이 지났는데 기록 안 된 것 (지난달·이번 달). 기록 시작일(recurAuto) 이전 납부분은 통장 잔액에 이미 들어 있으므로 묻지 않는다
 function missingRecur(o){
   const t=today(),res=[];
   for(const r of S.recur.filter(x=>x.active&&!x.manual&&(!o||ownerOf(x)===o)))
-    for(const ym of [shiftYM(t.slice(0,7),-1),t.slice(0,7)]){const d=payday(r,ym);if(d<=t&&!posted(r,ym)&&!(r.since&&d<r.since))res.push({r,ym});}
+    for(const ym of [shiftYM(t.slice(0,7),-1),t.slice(0,7)]){const d=payday(r,ym);if(d<=t&&!posted(r,ym)&&!(r.since&&d<r.since)&&!(S.recurAuto&&d<S.recurAuto))res.push({r,ym});}
   return res;
 }
 /* ---------- 내 재산 ----------
@@ -1934,6 +1935,7 @@ const ACT={
     list.forEach(r=>recurPostOne(r,ym));
     save();render();toast(`${list.length}건 기록했습니다`);
   },
+  recurFrom:()=>openForm('기록 시작일',[{k:'d',label:'이 날짜부터 납부한 고정비만 빠진 것으로 확인',type:'date',req:1}],{d:S.recurAuto},v=>{S.recurAuto=v.d;}),
   postMissing:d=>reviewMissing(d.owner),
   skipMissing:d=>reviewMissing(d.owner),
   addSched:d=>crud('sched','기한',schedFields(),null,d.cat?{cat:d.cat}:null),
