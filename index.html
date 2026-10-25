@@ -62,6 +62,18 @@ main{max-width:760px;margin:0 auto;padding-block:14px 90px;padding-left:max(16px
 .card h2{font-size:15.5px;font-weight:700;margin:0 0 12px;display:flex;align-items:center;gap:8px;text-wrap:balance}
 .card h2::before{content:"";width:4px;height:15px;border-radius:2px;background:var(--acc)}
 .card h2 .sp{flex:1}
+.nudge{display:grid;gap:8px;margin-bottom:12px}
+.nrow{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:18px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.nrow>.ic{width:42px;height:42px;padding:9px;border-radius:13px;background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
+.nrow b{display:block;font-size:15px;line-height:1.4;word-break:keep-all}
+.nrow small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;word-break:keep-all}
+.nrow .btn{flex:0 0 auto;padding:6px 10px}
+.nrow.warn{background:color-mix(in srgb,var(--acc) 11%,var(--card));border:1.5px solid color-mix(in srgb,var(--acc) 55%,var(--line))}
+.nrow.warn b{color:var(--acc)}
+.nrow.urgent>.ic{background:var(--acc);color:var(--on-acc);animation:nudge 1.6s ease-in-out infinite}
+.nrow.done b{color:var(--ok)}
+.streak{display:inline-block;margin-left:4px;font-size:11.5px;font-weight:700;color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,transparent);border-radius:999px;padding:1px 7px;vertical-align:1px}
+@keyframes nudge{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .hero{border-radius:22px;padding:18px;margin-bottom:12px;background:linear-gradient(140deg,color-mix(in srgb,var(--acc) 20%,var(--card)),color-mix(in srgb,var(--acc) 6%,var(--card)));border:1px solid color-mix(in srgb,var(--acc) 25%,var(--line));position:relative;overflow:hidden}
 .hero::after{content:"";position:absolute;right:-30px;bottom:-40px;width:180px;height:120px;background:var(--acc);opacity:.08;clip-path:polygon(0 100%,35% 30%,55% 60%,75% 15%,100% 100%)}
 .hero-date{font-size:13px;color:var(--muted);font-weight:500}
@@ -722,6 +734,7 @@ function view_hike(){
       ${h.course?`<p>🗺 ${esc(h.course)}</p>`:''}${h.with||h.transport?`<p class="meta" style="margin:4px 0 0">${[h.with?'동행: '+esc(h.with):'',h.transport?'교통: '+esc(h.transport):''].filter(Boolean).join(' · ')}</p>`:''}${h.memo?`<p>${esc(h.memo)}</p>`:''}
     </div>`;};
   return `
+  ${nudgeBox(['hike'])}
   <div class="toolbar"><select id="hikeYear" style="width:auto" aria-label="연도">${optHTML([['전체','전체 연도'],...years.map(y=>[y,y+'년'])],hikeYear)}</select><select id="hikeSido" style="width:auto" aria-label="시·도">${optHTML(sidoOpts,hikeSido)}</select><button class="btn primary" data-act="addHike">＋ 산행 기록</button><input type="search" id="hikeQ" placeholder="산 이름·지역·동행 검색" value="${esc(q)}" style="flex:1 1 100%"></div>
   <section class="card"><h2>${hikeYear==='전체'?'전체':hikeYear+'년'}${hikeSido==='전체'?'':' · '+hikeSido} 산행 요약</h2>
    <div class="stats">
@@ -807,6 +820,7 @@ function view_gym(){
   const last={};S.gym.filter(g=>g.kind==='근력'&&g.name).forEach(g=>{if(!last[g.name]||g.date>last[g.name].date)last[g.name]=g;});
   const bestArr=Object.values(best).sort((a,b)=>(last[b.name].date).localeCompare(last[a.name].date));
   return `
+  ${nudgeBox(['gym'])}
   <div class="toolbar"><button class="btn primary" data-act="addGym" data-kind="근력">＋ 근력</button><button class="btn primary" data-act="addGym" data-kind="런닝머신">＋ 런닝머신</button><button class="btn" data-act="addGym" data-kind="실내자전거">＋ 기타</button></div>
   <section class="card"><h2>이번 주 목표<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${w.ws.slice(5).replace('-','/')} ~</small></h2>${goalBars(w)}
    <div class="stats" style="margin-top:12px"><div class="stat"><small>운동한 날</small><b>${w.days}일</b></div><div class="stat"><small>총 운동시간</small><b>${w.total}분</b></div><div class="stat"><small>소모 칼로리</small><b>${num(w.kcal)}kcal</b></div></div>
@@ -815,6 +829,39 @@ function view_gym(){
   ${bestArr.length?`<section class="card"><h2>근력 운동별 기록</h2><div class="tblwrap"><table class="tbl"><tr><th>운동</th><th class="r">최고 무게</th><th class="r">최근</th></tr>${bestArr.map(b=>{const l=last[b.name];return `<tr><td>${esc(b.name)}</td><td class="r">${b.weight?b.weight+'kg':'맨몸'} × ${b.reps||'-'}회</td><td class="r">${l.weight?l.weight+'kg':'맨몸'} × ${l.reps||'-'}회<br><small>${l.date.slice(5).replace('-','/')}</small></td></tr>`;}).join('')}</table></div><p class="hint" style="margin:6px 0 0">같은 무게로 정해진 횟수를 2회 연속 채우면 무게를 2~5% 올리는 것이 일반적인 점진적 과부하 방법입니다.</p></section>`:''}
   <section class="card"><h2>운동 기록<span class="sp"></span><span class="monthnav" style="font-size:14px"><button class="btn sm" data-act="gymYM" data-n="-1" aria-label="이전 달">◀</button>${ymLabel(gymYM)}<button class="btn sm" data-act="gymYM" data-n="1" aria-label="다음 달">▶</button></span></h2>
    <p class="hint" style="margin:0 0 4px">이 달 ${mDays}일 · ${num(mMin)}분 · ${num(mK)}kcal</p>${html||'<p class="empty">근력은 세트·횟수, 런닝머신은 시간·칼로리만 입력해도 됩니다.</p>'}</section>`;
+}
+
+/* ---------- 운동 독려 ----------
+   등산: 매주(월~일) 1회 이상이 목표. 헬스: 마지막 운동 후 3일째부터 독려. */
+function shiftWeek(ws,n){const d=parseD(ws);d.setDate(d.getDate()+n*7);return fmtD(d);}
+function hikeNudge(){
+  const t=today(),ws=weekStart(t),dow=(parseD(t).getDay()+6)%7,left=6-dow;
+  const past=S.hike.filter(h=>h.date<=t).sort((a,b)=>b.date.localeCompare(a.date));
+  const thisWk=past.filter(h=>h.date>=ws);
+  let streak=0,w=thisWk.length?ws:shiftWeek(ws,-1);
+  while(past.some(h=>weekStart(h.date)===w)){streak++;w=shiftWeek(w,-1);}
+  const last=past[0],since=last?-dday(last.date):null;
+  const st=streak>1?`<span class="streak">${streak}주 연속</span>`:'';
+  if(thisWk.length)return {cls:'done',title:`이번 주 산행 완료 ✔ ${esc(thisWk[0].mountain)}`+st,sub:streak>1?`${streak}주째 매주 산에 가고 있어요. 다음 주도 이어가세요!`:'다음 주에도 한 번! 매주 1회 산행을 이어가세요.',btn:'기록'};
+  const lastTxt=last?`마지막 산행 ${esc(last.mountain)} · ${since}일 전`:'아직 산행 기록이 없어요';
+  const keep=streak?` ${streak}주 연속 기록이 끊기기 직전이에요.`:'';
+  if(left===0)return {cls:'warn urgent',title:'오늘이 이번 주 마지막 날! 아직 산에 못 갔어요',sub:`가까운 산 한 바퀴라도 다녀오세요.${keep} ${lastTxt}`,btn:'＋ 기록'};
+  if(left<=2)return {cls:'warn urgent',title:`이번 주가 ${left+1}일 남았어요. 등산 가세요!`,sub:`이번 주 산행 0회.${keep} ${lastTxt}`,btn:'＋ 기록'};
+  return {cls:'warn',title:'이번 주 등산 아직이에요. 산행 계획을 세워볼까요?',sub:`매주 1회 산행이 목표예요. ${lastTxt}`,btn:'＋ 기록'};
+}
+function gymNudge(){
+  const t=today(),past=S.gym.filter(g=>g.date<=t).sort((a,b)=>b.date.localeCompare(a.date)),last=past[0];
+  const wkDays=new Set(past.filter(g=>g.date>=weekStart(t)).map(g=>g.date)).size;
+  if(!last)return {cls:'warn',title:'헬스 기록이 아직 없어요. 오늘 30분부터 시작해요!',sub:'근력은 세트·횟수, 런닝머신은 시간·칼로리만 적으면 돼요.',btn:'＋ 기록'};
+  const d=-dday(last.date);
+  if(d===0)return {cls:'done',title:'오늘 운동 완료 ✔ 잘하셨어요!',sub:`이번 주 ${wkDays}일 운동했어요.`,btn:'추가'};
+  if(d<3)return {cls:'',title:`마지막 운동 ${d}일 전 · ${3-d}일 안에 다시 운동하세요`,sub:`이번 주 ${wkDays}일 운동 · 3일 넘게 쉬지 않는 게 목표예요.`,btn:'＋ 기록'};
+  if(d<7)return {cls:'warn urgent',title:`헬스 ${d}일째 쉬는 중이에요. 오늘은 꼭 운동하세요!`,sub:'런닝머신 20분만 걸어도 다시 시작이에요. 미루면 습관이 끊겨요.',btn:'＋ 기록'};
+  return {cls:'warn urgent',title:`벌써 ${d}일째 운동을 안 했어요!`,sub:'오래 쉬었다면 평소 무게의 절반, 가벼운 유산소부터 다시 시작하세요.',btn:'＋ 기록'};
+}
+function nudgeBox(which=['hike','gym']){
+  const map={hike:[hikeNudge,'addHike'],gym:[gymNudge,'addGym']};
+  return `<section class="nudge">${which.map(k=>{const n=map[k][0]();return `<div class="nrow ${n.cls}" style="--acc:var(--c-${k})">${ICON[k]}<div class="grow"><b>${n.title}</b><small>${n.sub}</small></div><button class="btn sm${n.cls.includes('warn')?' primary':''}" data-act="${map[k][1]}">${n.btn}</button></div>`;}).join('')}</section>`;
 }
 
 /* ---------- 홈 ---------- */
@@ -831,6 +878,7 @@ function view_home(){
   const recent=[...S.tx].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   const Q=[['addTx','ledger','가계부'],['addFuel','car','주유'],['addMaint','car','정비'],['addHealth','health','혈압·혈당'],['addGym','gym','운동'],['addHike','hike','등산']];
   return `
+  ${nudgeBox()}
   <section class="hero"><div class="hero-date">${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일</div>
    <div class="hero-label">${d.getMonth()+1}월 지출</div><div class="hero-num">${won(out)}</div>
    <div class="hero-sub">수입 ${won(inc)} · 잔액 <b>${won(inc-out)}</b></div>${budgetBar(out-(S.tx.filter(x=>x.type==='out'&&x.cat==='저축·투자'&&x.date.startsWith(ym)).reduce((s,x)=>s+(+x.amount||0),0)))}</section>
