@@ -115,6 +115,25 @@ textarea.report{font-size:12.5px;min-height:180px;font-family:var(--font);margin
 .hold{display:grid;grid-template-columns:1fr auto auto;gap:4px 10px;font-size:12.5px;color:var(--muted);margin:8px 0 0;padding:8px 10px;background:var(--card2);border-radius:10px}
 .hold b{color:var(--text);font-weight:600}
 .hold .r{text-align:right}
+#bnav{display:none}
+#qbtn{padding:6px 12px;font-size:13px}
+@media (max-width:760px){
+  nav#tabs{display:none!important}
+  #qbtn{display:none}
+  #bnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+  main{padding-bottom:110px}
+  #toast{bottom:calc(86px + env(safe-area-inset-bottom,0px))}
+}
+#bnav button{border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font:inherit;font-size:11.5px;font-weight:600;padding:4px 0;min-width:0}
+#bnav button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#bnav button .ic{width:23px;height:23px}
+#bnav button.on{color:var(--acc)}
+#bnav .plus .ic{width:48px;height:48px;padding:12px;border-radius:50%;background:var(--acc);color:var(--on-acc);margin-top:-20px;box-shadow:0 4px 14px rgba(0,0,0,.22)}
+.sheet{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-bottom:16px}
+.sheet h3{grid-column:1/-1;font-size:12.5px;color:var(--muted);margin:10px 0 0;font-weight:600}
+.sheet button{display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:14px;padding:12px 4px;font:inherit;font-size:12.5px;font-weight:600}
+.sheet button .ic{width:36px;height:36px;padding:8px;border-radius:11px;background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
+.sheet button.hot{border-color:var(--soon);background:var(--soon-bg)}
 .hero{border-radius:22px;padding:18px;margin-bottom:12px;background:linear-gradient(140deg,color-mix(in srgb,var(--acc) 20%,var(--card)),color-mix(in srgb,var(--acc) 6%,var(--card)));border:1px solid color-mix(in srgb,var(--acc) 25%,var(--line));position:relative;overflow:hidden}
 .hero::after{content:"";position:absolute;right:-30px;bottom:-40px;width:180px;height:120px;background:var(--acc);opacity:.08;clip-path:polygon(0 100%,35% 30%,55% 60%,75% 15%,100% 100%)}
 .hero-date{font-size:13px;color:var(--muted);font-weight:500}
@@ -219,9 +238,10 @@ details.ref .tbl{margin-top:8px;font-size:12.5px}
 </style>
 </head>
 <body>
-<header class="top"><span class="logo" id="logo"></span><h1>생활기록장</h1><span id="sync"></span><button id="lockBtn" hidden aria-label="지금 잠그기" title="지금 잠그기"></button></header>
+<header class="top"><span class="logo" id="logo"></span><h1>생활기록장</h1><button id="qbtn" class="btn primary" hidden>＋ 입력</button><span id="sync"></span><button id="lockBtn" hidden aria-label="지금 잠그기" title="지금 잠그기"></button></header>
 <nav id="tabs"></nav>
 <main id="view"></main>
+<nav id="bnav" aria-label="주요 메뉴"></nav>
 <dialog id="dlg"><form id="dlgForm" novalidate></form></dialog>
 <dialog id="cfm"><form id="cfmForm" style="padding:16px"><p id="cfmMsg" style="white-space:pre-line;margin:0 0 4px"></p><div class="actions"><span class="sp"></span><button type="button" id="cfmNo">취소</button><button type="submit" class="primary" id="cfmYes">확인</button></div></form></dialog>
 <div id="toast"></div>
@@ -353,6 +373,8 @@ const ICON={
   health:ic('<path d="M12 20s-7.5-4.6-9.2-9.4A4.6 4.6 0 0 1 12 7.5a4.6 4.6 0 0 1 9.2 3.1C19.5 15.4 12 20 12 20z"/><path d="M7 12h2.5l1.5-2.5 2 4 1.5-1.5H17"/>'),
   assets:ic('<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="12" cy="12" r="3.2"/><path d="M12 8.8v.8M12 14.4v.8M6.5 19v1.5M17.5 19v1.5M3 9h2M19 15h2"/>'),
   care:ic('<path d="M3 19V7M3 14h18v5M21 14v-2.5a3 3 0 0 0-3-3h-7V14"/><circle cx="7" cy="11" r="1.8"/><path d="M16 3.5v3M14.5 5h3"/>'),
+  plus:ic('<path d="M12 5v14M5 12h14"/>'),
+  menu:ic('<path d="M4 7h16M4 12h16M4 17h16"/>'),
   settings:ic('<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>')
 };
 const short=v=>v>=100000?Math.round(v/10000)+'만':v>=10000?(v/10000).toFixed(1).replace(/\.0$/,'')+'만':num(v);
@@ -600,6 +622,7 @@ const recurFields=()=>{const f=[
   {k:'pay',label:'결제수단',type:'select',options:PAY,def:'자동이체',show:['me'],showBy:'owner'},
   {k:'acct',label:'어느 통장에서 나가나 (카드는 비워 두기)',type:'select',options:()=>acctOpts(),def:()=>mainAcct(),show:['me'],showBy:'owner'},
   {k:'from',label:'누구 돈으로',type:'select',options:[[SELF,careName()+' 돈 (자동이체)'],[ME,'내 돈 (내가 대신 냄)']],def:SELF,show:['parent'],showBy:'owner'},
+  {k:'manual',label:'영수증 받고 직접 입력 (자동으로 빼지 않고, 납부일에 입력 알림)',type:'checkbox'},
   {k:'variable',label:'매달 금액이 달라짐 (자동 기록 뒤 실제 금액으로 고치도록 표시)',type:'checkbox'},
   {k:'active',label:'사용 중',type:'checkbox',def:true},
   {k:'memo',label:'메모',type:'text',ph:'예: ○○카드 / 달러 결제(환율 따라 변동)'}
@@ -614,7 +637,7 @@ function recurDue(r){
 const posted=(r,ym)=>(r.posted||[]).includes(ym);
 function view_recur(){
   const ym=today().slice(0,7),pn=careName();
-  const grp=o=>{const all=S.recur.filter(r=>ownerOf(r)===o),act=all.filter(r=>r.active);return {all,act,total:act.reduce((s,r)=>s+(+r.amount||0),0),pending:act.filter(r=>!posted(r,ym))};};
+  const grp=o=>{const all=S.recur.filter(r=>ownerOf(r)===o),act=all.filter(r=>r.active);return {all,act,total:act.reduce((s,r)=>s+(+r.amount||0),0),pending:act.filter(r=>!r.manual&&!posted(r,ym))};};
   const me=grp('me'),pa=grp('parent');
   const section=(o,g,title,where)=>`<section class="card"${o==='parent'?' style="--acc:var(--c-care)"':''}><h2>${title}<span class="sp"></span><b style="font-size:15px">${won(g.total)}</b></h2>
     ${(()=>{const m=missingRecur(o);return m.length?`<div class="xfer" style="margin:0 0 8px;background:var(--over-bg)"><span style="color:var(--over)">납부일이 지났는데 기록 안 된 고정비 <b>${m.length}건</b> (${[...new Set(m.map(x=>Number(x.ym.slice(5))+'월'))].join('·')})</span><button class="btn sm primary amt" data-act="postMissing" data-owner="${o}">하나씩 정리</button></div>`:'';})()}
@@ -691,16 +714,29 @@ function postRecurAuto(){
   if(!S.recurAuto){S.recurAuto=t;return true;}
   let ch=false;
   for(const r of S.recur){
-    if(!r.active)continue;
+    // 요양병원비는 영수증 보고 입력하는 방식이 기본
+    if(r.manual===undefined&&/요양병원/.test(r.name)){r.manual=true;ch=true;}
+    if(!r.active||r.manual)continue;
     const start=[S.recurAuto,r.since||''].sort().pop();
     for(let ym=start.slice(0,7),g=0;ym<=t.slice(0,7)&&g<36;ym=shiftYM(ym,1),g++){const d=payday(r,ym);if(d>=start&&d<=t&&recurPostOne(r,ym))ch=true;}
   }
   return ch;
 }
+// 영수증 입력 대기: 이번 달은 납부일 3일 전부터, 지난달은 등록 이후 것 중 아직 입력 안 한 것
+function receiptDue(){
+  const t=today(),ym=t.slice(0,7),res=[];
+  for(const r of S.recur.filter(x=>x.active&&x.manual))
+    for(const m of [shiftYM(ym,-1),ym]){
+      const d=payday(r,m);if(posted(r,m))continue;
+      if(m===ym?dday(d)>3:(!r.since||d<r.since))continue;
+      res.push({r,ym:m,date:d});
+    }
+  return res;
+}
 // 자동 기록 시작 전에 납부일이 지났는데 기록 안 된 것 (지난달·이번 달)
 function missingRecur(o){
   const t=today(),res=[];
-  for(const r of S.recur.filter(x=>x.active&&(!o||ownerOf(x)===o)))
+  for(const r of S.recur.filter(x=>x.active&&!x.manual&&(!o||ownerOf(x)===o)))
     for(const ym of [shiftYM(t.slice(0,7),-1),t.slice(0,7)]){const d=payday(r,ym);if(d<=t&&!posted(r,ym)&&!(r.since&&d<r.since))res.push({r,ym});}
   return res;
 }
@@ -757,6 +793,7 @@ function fatherCard(){
   const ym=today().slice(0,7),st=careStats(S.care.filter(c=>c.date.startsWith(ym))),pn=careName();
   return `<section class="card nw" style="--acc:var(--c-care)" data-act="go" data-tab="care"><h2>${esc(pn)} 돈<span class="sp"></span><button class="btn sm primary" data-act="addCare" data-type="out">＋ 지출</button></h2>
    <div class="big" style="color:var(--c-care)">${won(fs.bal)}</div>
+   ${receiptDue().filter(d=>ownerOf(d.r)==='parent').map(d=>`<div class="xfer" style="background:var(--soon-bg);margin:6px 0"><span>${esc(d.r.name)} ${Number(d.ym.slice(5))}월분 영수증 입력</span><button class="btn sm primary amt" data-act="receipt" data-id="${d.r.id}" data-ym="${d.ym}">입력</button></div>`).join('')}
    <div class="hint" style="margin:2px 0 0">${Number(ym.slice(5))}월 들어온 돈 <b class="pos">+${num(st.inc)}</b> · 쓴 돈 <b class="neg">−${num(st.self)}</b>${st.mine?` · 내 돈으로 낸 것 ${num(st.mine)}`:''}${fs.runway!=null?` · 약 ${fs.runway}개월분`:''}</div></section>`;
 }
 function netWorthCard(){
@@ -950,7 +987,7 @@ function reviewMissing(owner){
   };
   showDlg();
 }
-function recurRow(r){const ym=today().slice(0,7);{const due=recurDue(r),n=dday(due);return `<li class="row" data-act="editRecur" data-id="${r.id}"><span class="pill ${!r.active?'none':posted(r,ym)?'ok':n<=3?'soon':'info'}">${!r.active?'중지':posted(r,ym)?'기록됨':'매월 '+r.day+'일'}</span><div class="grow"><b>${esc(r.name)}</b><small>${esc(r.cat)} · ${ownerOf(r)==='parent'?esc(whoLabel(r.from||SELF)):esc(r.pay||'')}${r.memo?' · '+esc(r.memo):''}</small>${r.active?`<small>다음 납부 ${due} (${ddayLabel(n)})</small>`:''}</div><span class="amt">${num(r.amount)}</span></li>`;}
+function recurRow(r){const ym=today().slice(0,7);{const due=recurDue(r),n=dday(due);return `<li class="row" data-act="editRecur" data-id="${r.id}"><span class="pill ${!r.active?'none':posted(r,ym)?'ok':r.manual?'soon':n<=3?'soon':'info'}">${!r.active?'중지':posted(r,ym)?'기록됨':r.manual?'영수증 입력':'매월 '+r.day+'일'}</span><div class="grow"><b>${esc(r.name)}</b><small>${esc(r.cat)} · ${ownerOf(r)==='parent'?esc(whoLabel(r.from||SELF)):esc(r.pay||'')}${r.memo?' · '+esc(r.memo):''}</small>${r.active?`<small>다음 납부 ${due} (${ddayLabel(n)})</small>`:''}</div><span class="amt">${num(r.amount)}</span></li>`;}
 }
 
 /* ---------- 기한관리 ---------- */
@@ -1343,7 +1380,7 @@ function fundCard(){
   return `<section class="card"><h2>${esc(careName())} 돈 잔액<span class="sp"></span><button class="btn sm" data-act="careIncome">연금 금액</button><button class="btn sm" data-act="careFund">설정</button></h2>
    <div class="stats"><div class="stat" style="grid-column:span 3"><small>원금 ${won(f.start)} (고정) + 연금 − 지출${f.note?' · '+esc(f.note):''}</small><b style="font-size:22px;color:var(--acc)">${won(st.bal)}</b></div>
    <div class="stat"><small>매월 연금</small><b class="pos">${short(st.monthlyIn)}원</b></div><div class="stat"><small>월평균 지출</small><b class="neg">${short(st.avgOut)}원</b></div><div class="stat"><small>월 증감</small><b class="${st.net<0?'neg':'pos'}">${st.net>=0?'+':'-'}${short(Math.abs(st.net))}원</b></div></div>
-   <p class="hint" style="margin:6px 0 0">월 지출 계산: ${st.basis==='hist'?`지난 ${st.based}개월 평균`:st.basis==='fixed'?'고정지출에 등록한 금액 기준 (기록이 3개월 쌓이면 실제 평균으로 바뀜)':'이번 달 기록 기준 — 요양병원비·공과금을 고정지출로 등록하면 정확해집니다'}</p>
+   <p class="hint" style="margin:6px 0 0">월 지출 계산: ${st.basis==='hist'?`지난 ${st.based}개월 평균`:st.basis==='fixed'?'고정지출에 등록한 금액 기준 (영수증 입력이 3개월 쌓이면 실제 평균으로 바뀜)':'이번 달 기록 기준 — 요양병원비·공과금을 고정지출로 등록하면 정확해집니다'}</p>
    ${!S.recur.some(r=>r.active&&ownerOf(r)==='parent'&&/병원|요양|장기요양|주간보호/.test(r.name+r.cat))?`<div class="xfer" style="margin-top:8px"><span>매달 나가는 <b>요양병원비</b>를 고정지출로 등록하면 매달 자동으로 빠지고 예측도 정확해져요</span><button class="btn sm primary amt" data-act="addRecur" data-owner="parent" data-preset="hospital">등록</button></div>`:''}
    <p class="hint" style="margin:10px 0 0">${st.net>=0?(st.avgOut?'연금으로 병원비를 충당하고 있어 잔액이 줄지 않습니다.':`아직 ${esc(careName())} 돈으로 낸 지출이 없습니다.`):`지금 속도면 <b style="color:var(--over)">약 ${num(st.runway)}개월 뒤(${end}경)</b> 잔액이 바닥납니다. 그 뒤로는 내 돈으로 내야 합니다.`}</p>
    ${barChart(st.series)}
@@ -1394,6 +1431,7 @@ function view_care(){
   <section class="hero" style="padding:16px"><div class="hero-date">${esc(pn)}${cfg.hospital?' · '+esc(cfg.hospital):''}${admitDays>0?` · 입원 ${num(admitDays)}일째`:''}</div>
    <div class="hero-two"><div><div class="hero-label">${label} 들어온 돈</div><div class="hero-num in">${won(st.inc)}</div></div><div><div class="hero-label">${label} 쓴 돈</div><div class="hero-num out">${won(st.total)}</div></div></div>
    <div class="hero-sub" style="margin-top:6px">${esc(pn)} 돈으로 ${won(st.self)}${st.mine?` · 내 돈으로 ${won(st.mine)}`:''}</div></section>
+  ${receiptDue().filter(d=>ownerOf(d.r)==='parent').map(d=>`<div class="xfer" style="margin:0 0 10px;background:var(--soon-bg)"><span><b>${esc(d.r.name)} ${Number(d.ym.slice(5))}월분</b> 영수증 금액을 입력하세요 <small style="color:var(--muted)">(예상 ${won(d.r.amount)})</small></span><button class="btn sm primary amt" data-act="receipt" data-id="${d.r.id}" data-ym="${d.ym}">입력</button></div>`).join('')}
   ${dups.length?`<div class="xfer" style="margin:0 0 12px;background:var(--over-bg)"><span style="color:var(--over)">같은 연금이 두 번 들어간 기록 <b>${dups.length}건</b>이 있어요 (${dups.map(c=>esc(c.memo||c.cat)).join(', ')})</span><button class="btn sm primary amt" data-act="fixPenDup">중복 지우기</button></div>`:''}
   ${fundCard()}
   <div class="toolbar"><button class="btn primary" data-act="addCare" data-type="out">＋ 지출</button><button class="btn primary" data-act="addCare" data-type="in">＋ 입금</button><span class="grow"></span><button class="btn" data-act="careCfg">${esc(pn)} 정보</button></div>
@@ -1450,6 +1488,7 @@ function collectAlerts(){
   S.rules.map(maintStatus).filter(s=>s.level==='over'||s.level==='soon').forEach(s=>a.push({tab:'car',level:s.level,badge:s.label,title:`${s.rule.item} 교체`,sub:[s.remKm!=null?(s.remKm>0?num(s.remKm)+'km 남음':num(-s.remKm)+'km 초과'):'',s.nextDate?s.nextDate+' ('+ddayLabel(s.days)+')':''].filter(Boolean).join(' · '),k:s.level==='over'?-9999:(s.days??30)}));
   S.sched.forEach(s=>{const nx=schedNext(s),n=dday(nx);if(n<=(s.alert??30))a.push({tab:'sched',level:n<0?'over':n<=7?'soon':'info',badge:ddayLabel(n),title:s.title,sub:nx+' · '+s.cat,k:n});});
   const ym=today().slice(0,7);
+  receiptDue().forEach(d=>a.push({tab:ownerOf(d.r)==='parent'?'care':'recur',act:'receipt',id:d.r.id,ym:d.ym,level:dday(d.date)<0?'over':'soon',badge:'영수증',title:`${d.r.name} ${Number(d.ym.slice(5))}월분 금액 입력`,sub:`예상 ${won(d.r.amount)} · 눌러서 영수증 금액 입력`,k:-70}));
   const stale=S.accounts.filter(x=>staleDays(x)>30);
   if(stale.length)a.push({tab:'assets',level:'soon',badge:'잔액 확인',title:`${stale.map(x=>x.name).slice(0,2).join(', ')}${stale.length>2?` 외 ${stale.length-2}개`:''} 잔액 업데이트`,sub:'확인한 지 30일이 넘었어요 · 통장 앱 금액으로 맞추기',k:-40});
   const chk=[...S.tx.filter(t=>t.check).map(()=>'ledger'),...S.care.filter(c=>c.check).map(()=>'care')];
@@ -1462,7 +1501,6 @@ function collectAlerts(){
 function view_home(){
   const t=today(),d=parseD(t),ym=t.slice(0,7),{inc,out}=monthSum(ym),al=collectAlerts(),w=weekStats();
   const recent=[...S.tx].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
-  const Q=[['addTx','ledger','가계부'],['addFuel','car','주유'],['addMaint','car','정비'],['addHealth','health','혈압·혈당'],['addGym','gym','운동'],['addHike','hike','등산']];
   return `
   ${nudgeBox()}
   <section class="hero" data-act="go" data-tab="ledger" style="cursor:pointer"><div class="hero-date">${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일</div>
@@ -1470,8 +1508,7 @@ function view_home(){
    <div class="hero-sub" style="margin-top:6px">남은 돈 <b>${won(inc-out)}</b>${(()=>{const sv=S.tx.filter(x=>x.type==='out'&&x.cat==='저축·투자'&&x.date.startsWith(ym)).reduce((s,x)=>s+(+x.amount||0),0);return sv?` · 저축 ${won(sv)}`:'';})()}</div>${budgetBar(out-(S.tx.filter(x=>x.type==='out'&&x.cat==='저축·투자'&&x.date.startsWith(ym)).reduce((s,x)=>s+(+x.amount||0),0)))}</section>
   ${netWorthCard()}
   ${fatherCard()}
-  <div class="quick">${Q.map(([a,k,l])=>`<button data-act="${a}" style="--acc:var(--c-${k})">${ICON[k]}<span>${l}</span></button>`).join('')}</div>
-  <section class="card"><h2>알림 · 다가오는 일</h2>${al.length?`<ul class="list">${al.map(x=>`<li class="row" data-act="go" data-tab="${x.tab}"><span class="pill ${x.level}">${esc(x.badge)}</span><div class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)}</small></div></li>`).join('')}</ul>`:'<p class="empty">임박한 일이 없습니다.</p>'}</section>
+  <section class="card"><h2>알림 · 다가오는 일</h2>${al.length?`<ul class="list">${al.map(x=>`<li class="row" data-act="${x.act||'go'}" data-tab="${x.tab}"${x.id?` data-id="${x.id}" data-ym="${x.ym}"`:''}><span class="pill ${x.level}">${esc(x.badge)}</span><div class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)}</small></div></li>`).join('')}</ul>`:'<p class="empty">임박한 일이 없습니다.</p>'}</section>
   <section class="card" style="--acc:var(--c-gym)"><h2>이번 주 운동<span class="sp"></span><button class="btn sm" data-act="go" data-tab="gym">헬스</button></h2>${goalBars(w)}</section>
   <section class="card"><h2>최근 가계부<span class="sp"></span><button class="btn sm" data-act="go" data-tab="ledger">전체</button></h2>${recent.length?`<ul class="list">${recent.map(txRow).join('')}</ul>`:'<p class="empty">아직 기록이 없습니다.</p>'}</section>
   ${!S.tx.length&&!S.maint.length?`<section class="card"><h2>처음 사용하시나요?</h2><p class="hint" style="margin:0">① 가계부는 설정 없이 바로 쓸 수 있습니다.<br>② 자동차 탭에서 차량정보와 현재 주행거리를 넣고, 소모품별 최근 교체일을 한 번씩 입력하면 다음 교체 시기를 자동 계산합니다.<br>③ 건강 탭의 「키·성별」을 넣으면 BMI와 복부비만 기준을 함께 보여줍니다.</p></section>`:''}`;
@@ -1492,7 +1529,7 @@ function view_settings(){
 }
 
 /* ---------- 렌더 & 동작 ---------- */
-const TABS=[['home','홈'],['ledger','가계부'],['assets','내 재산'],['car','자동차'],['recur','고정지출'],['sched','기한관리'],['gift','경조사'],['care','병원비'],['hike','등산'],['gym','헬스'],['health','건강'],['settings','설정']];
+const TABS=[['home','홈'],['ledger','가계부'],['assets','내 재산'],['care','아버지 장부'],['recur','고정지출'],['sched','기한관리'],['gift','경조사'],['car','자동차'],['health','건강'],['gym','헬스'],['hike','등산'],['settings','설정']];
 let tab='home';try{tab=localStorage.getItem(KEY+'.tab')||'home';}catch(e){}
 /* ---------- 앱 잠금 ----------
    숫자 비밀번호(4~6자리)는 원문을 저장하지 않고 무작위 값과 섞은 해시만 저장(계정 동기화로 모든 기기에 적용).
@@ -1568,16 +1605,40 @@ document.addEventListener('keydown',e=>{if(!needLock()||dlg.open||$('#cfm').open
 function render(){
   const lb=$('#lockBtn');lb.hidden=!lockOn()||needLock();lb.innerHTML=LOCK_ICON;
   if(needLock()){
-    document.body.dataset.tab='home';$('#logo').innerHTML=LOCK_ICON;$('#tabs').hidden=true;
+    document.body.dataset.tab='home';$('#logo').innerHTML=LOCK_ICON;$('#tabs').hidden=true;$('#bnav').hidden=true;$('#qbtn').hidden=true;
     $('#view').innerHTML=lockHTML();return;
   }
-  $('#tabs').hidden=false;
+  $('#tabs').hidden=false;$('#bnav').hidden=false;$('#qbtn').hidden=false;
   if(autoPost())save();
+  const pn=careName(),rc=receiptDue().length;
+  $('#bnav').innerHTML=[['home','홈'],['ledger','가계부'],['__plus','입력'],['care',pn],['__menu','전체']].map(([k,l])=>k==='__plus'?`<button class="plus" data-b="plus" style="--acc:var(--c-${tab==='home'?'home':tab})" aria-label="빠른 입력">${ICON.plus}<span>${l}</span></button>`:k==='__menu'?`<button data-b="menu">${ICON.menu}<span>${l}</span></button>`:`<button data-tab="${k}" class="${k===tab?'on':''}" style="--acc:var(--c-${k})">${ICON[k]}<span>${esc(l)}${k==='care'&&rc?` ●`:''}</span></button>`).join('');
   document.body.dataset.tab=tab;$('#logo').innerHTML=ICON[tab]||ICON.home;
-  $('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${ICON[k]}<span>${k==='care'?esc(S.careCfg.name||'부모님')+' 장부':l}</span></button>`).join('');
+  $('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${ICON[k]}<span>${k==='care'?esc(careName())+' 장부':l}</span></button>`).join('');
   $('#view').innerHTML=(window['view_'+tab]||view_home)();
 }
 function go(t){tab=t;try{localStorage.setItem(KEY+'.tab',t);}catch(e){}render();window.scrollTo(0,0);}
+$('#bnav').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.tab)go(b.dataset.tab);else if(b.dataset.b==='plus')openQuick();else if(b.dataset.b==='menu')openMenu();});
+$('#qbtn').addEventListener('click',()=>openQuick());
+// 전체 메뉴(묶음별)
+function openMenu(){
+  const G=[['돈 관리',['ledger','assets','care','recur']],['생활',['sched','gift','car']],['건강·운동',['health','gym','hike']],['기타',['home','settings']]];
+  const nm=k=>k==='care'?careName()+' 장부':(TABS.find(t=>t[0]===k)||['',''])[1];
+  dlgForm.innerHTML=`<h2>전체 메뉴</h2><div class="sheet">${G.map(([g,ks])=>`<h3>${g}</h3>`+ks.map(k=>`<button type="button" data-go="${k}" style="--acc:var(--c-${k})">${ICON[k]}<span>${esc(nm(k))}</span></button>`).join('')).join('')}</div>`;
+  dlgForm.onsubmit=e=>e.preventDefault();
+  dlgForm.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{dlg.close();go(b.dataset.go);});
+  showDlg();
+}
+// 빠른 입력: 어느 화면에서든 한 번에
+function openQuick(){
+  const pn=careName(),due=receiptDue();
+  const items=[...due.map(d=>['receipt',{id:d.r.id,ym:d.ym},ownerOf(d.r)==='parent'?'care':'ledger',`${d.r.name} ${Number(d.ym.slice(5))}월 영수증`,true]),
+    ['addTx',{},'ledger','내 지출·수입'],['addCare',{type:'out'},'care',`${pn} 돈 지출`],['addHealth',{},'health','혈압·혈당'],
+    ['addGym',{},'gym','운동'],['addHike',{},'hike','등산'],['addFuel',{},'car','주유'],['addMaint',{},'car','정비'],['addSched',{},'sched','기한·일정'],['addGift',{},'gift','경조사']];
+  dlgForm.innerHTML=`<h2>무엇을 기록할까요?</h2><div class="sheet">${items.map(([a,d,k,l,hot],i)=>`<button type="button" data-i="${i}" class="${hot?'hot':''}" style="--acc:var(--c-${k})">${ICON[k]}<span>${esc(l)}</span></button>`).join('')}</div>`;
+  dlgForm.onsubmit=e=>e.preventDefault();
+  dlgForm.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const [a,d]=items[+b.dataset.i];dlg.close();ACT[a](d);});
+  showDlg();
+}
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(b){go(b.dataset.tab);b.scrollIntoView({inline:'center',block:'nearest'});}});
 
 async function download(name,text,type){
@@ -1637,7 +1698,7 @@ const ACT={
       save();dlg.close();render();toast('저장했습니다');};
     showDlg();
   },
-  addRecur:d=>{crud('recur','고정지출',recurFields(),null,d.preset==='hospital'?{owner:'parent',name:'요양병원비',cat:'병원비(월 정산)',from:SELF,variable:true,day:10,active:true}:{owner:d.owner||'me'},r=>{r.since=today();});
+  addRecur:d=>{crud('recur','고정지출',recurFields(),null,d.preset==='hospital'?{owner:'parent',name:'요양병원비',cat:'병원비(월 정산)',from:SELF,manual:true,day:10,active:true}:{owner:d.owner||'me'},r=>{r.since=today();});
     // 구독 서비스 이름을 고르면 분류를 '구독·서비스'로 자동 선택
     const nm=dlgForm.elements.namedItem('name'),cat=dlgForm.elements.namedItem('cat'),pay=dlgForm.elements.namedItem('pay');
     const vr=dlgForm.elements.namedItem('variable');nm.addEventListener('change',()=>{vr.checked=/전기|가스|수도|관리비/.test(nm.value);});
@@ -1692,7 +1753,7 @@ const ACT={
     showDlg();
   },
   postRecur:async d=>{
-    const o=d.owner||'me',ym=today().slice(0,7),list=S.recur.filter(r=>r.active&&!posted(r,ym)&&ownerOf(r)===o);
+    const o=d.owner||'me',ym=today().slice(0,7),list=S.recur.filter(r=>r.active&&!r.manual&&!posted(r,ym)&&ownerOf(r)===o);
     if(!list.length)return;
     const where=o==='me'?'내 가계부':careName()+' 장부';
     if(!await askConfirm(`${ymLabel(ym)} ${o==='me'?'내':careName()} 고정비 ${list.length}건(${won(list.reduce((s,r)=>s+(+r.amount||0),0))})을 ${where}에 기록할까요?\n실제 금액이 다르면 기록한 뒤 고치세요.`,'기록'))return;
@@ -1723,6 +1784,24 @@ const ACT={
     const ids=new Set(d.map(c=>c.id)),f=fundCfg();
     S.care=S.care.filter(c=>!ids.has(c.id));f.skip=[...(f.skip||[]),...d.filter(c=>c.auto).map(c=>c.id)];S.careCfg.fund=f;
     save();render();toast(`${d.length}건을 지웠습니다`);},
+  receipt:d=>{
+    const r=find('recur',d.id);if(!r)return;const ym=d.ym||today().slice(0,7),mo=Number(ym.slice(5)),pd=payday(r,ym),fsd=fundCfg().startDate||'',date=pd>today()||(ownerOf(r)==='parent'&&pd<fsd)?today():pd; // 계산 시작일 전 날짜면 잔액에서 안 빠지므로 오늘로
+    const done=()=>{r.posted=[...(r.posted||[]),ym].slice(-36);};
+    if(ownerOf(r)==='parent'){
+      openForm(`${r.name} ${mo}월분 영수증 입력`,careFields(),{type:'out',date,amount:r.amount,cat:CARE_OUT.includes(r.cat)?r.cat:'병원비(월 정산)',who:(r.from||SELF)===SELF?SELF:ME,memo:`${r.name} ${mo}월분`,tax:/병원|장기요양|약제|외래/.test(r.cat)},v=>{
+        S.care.push({id:`rc-${ym}-${r.id}`,ts:Date.now(),...v});
+        if(v.who!==SELF)addTx({type:'out',date:v.date,amount:v.amount,cat:'부모님·가족',acct:mainAcct(),memo:`[${careName()}] ${v.memo}`});
+        done();
+      });
+    }else{
+      openForm(`${r.name} ${mo}월분 금액 입력`,[{k:'date',label:'날짜',type:'date',req:1},{k:'amount',label:'영수증 금액(원)',type:'number',req:1},{k:'memo',label:'내용',type:'text'}],{date,amount:r.amount,memo:`${r.name} ${mo}월분`},v=>{
+        S.tx.push({id:`rc-${ym}-${r.id}`,ts:Date.now(),type:'out',cat:r.cat,pay:r.pay||'',acct:r.acct||'',...v});done();
+      });
+    }
+    dlgForm.querySelector('.actions').insertAdjacentHTML('afterbegin',`<button type="button" data-x="none">이번 달 없음</button>`);
+    dlgForm.querySelector('[data-x=none]').onclick=()=>{done();save();dlg.close();render();toast(`${mo}월분은 기록하지 않고 넘겼습니다`);};
+    dlgForm.querySelector('.actions').insertAdjacentHTML('beforebegin',`<p class="hint">등록한 예상 금액 ${won(r.amount)}이 들어가 있습니다. <b>영수증 금액으로 고쳐서 저장</b>하세요.</p>`);
+  },
   careIncome:()=>{
     const f=fundCfg(),inc=f.incomes||[];
     if(!inc.length)return ACT.careFund();
