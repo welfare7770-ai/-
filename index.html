@@ -1720,9 +1720,9 @@ function lockNow(){if(!lockOn())return;unlocked=false;pinBuf='';lockMsg='';lockE
 function lockHTML(){
   const n=S.lock.len||4,wait=Math.ceil((waitUntil-Date.now())/1000);
   return `<div class="lock"><div class="lock-box"><span class="logo">${LOCK_ICON}</span><h2>김현수 행정사 비밀노트</h2>
-   <p class="${lockErr?'err':''}" id="lockMsg">${wait>0?`${wait}초 뒤에 다시 입력하세요`:esc(lockMsg||'비밀번호를 입력하세요')}</p>
+   <p class="${lockErr?'err':''}" id="lockMsg">${wait>0?`${wait}초 뒤에 다시 입력하세요`:esc(lockMsg||`비밀번호 ${n}자리를 입력하세요`)}</p>
    <div class="dots" id="dots">${Array.from({length:n},(_,i)=>`<i class="${i<pinBuf.length?'on':''}"></i>`).join('')}</div>
-   <div class="pad">${[1,2,3,4,5,6,7,8,9].map(d=>`<button data-pin="${d}">${d}</button>`).join('')}<button class="sm" data-pin="hint">힌트</button><button data-pin="0">0</button><button class="sm" data-pin="del" aria-label="한 글자 지우기">지우기</button></div>
+   <div class="pad">${[1,2,3,4,5,6,7,8,9].map(d=>`<button data-pin="${d}">${d}</button>`).join('')}<button class="sm" data-pin="hint">힌트</button><button data-pin="0">0</button><button class="sm" data-pin="del" aria-label="한 글자 지우기" style="color:var(--text)">⌫ 지우기</button></div>
    <button class="linkbtn" data-pin="forgot">비밀번호를 잊었어요</button></div></div>`;
 }
 async function pinKey(k){
@@ -1733,9 +1733,11 @@ async function pinKey(k){
     if(await askConfirm('비밀번호만 지우고 들어갑니다.\n기록은 하나도 지워지지 않습니다.\n들어간 뒤 설정에서 새 비밀번호를 정하세요.','비밀번호 지우기')){S.lock=null;unlocked=true;pinBuf='';fails=0;waitUntil=0;save();render();toast('비밀번호를 지웠습니다. 설정에서 새로 정하세요');}
     return;
   }
+  // 지우기는 언제 눌러도 바로 먹힌다 (대기·확인 중이어도)
+  if(k==='del'){pinBuf=pinBuf.slice(0,-1);if(Date.now()>=waitUntil){lockErr=false;lockMsg='';}pinDots();return;}
   if(Date.now()<waitUntil){render();return;}
   if(pinChecking&&Date.now()-pinChecking<3000)return;pinChecking=0;
-  if(k==='del')pinBuf=pinBuf.slice(0,-1);else if(/^\d$/.test(k)&&pinBuf.length<(S.lock.len||4))pinBuf+=k;
+  if(/^\d$/.test(k)&&pinBuf.length<(S.lock.len||4))pinBuf+=k;
   lockErr=false;lockMsg='';
   // 화면 전체를 다시 그리지 않고 점만 바꾼다 (빠르게 누를 때 숫자가 빠지지 않도록)
   pinDots();
@@ -1751,8 +1753,9 @@ async function pinKey(k){
 }
 function pinDots(){
   const d=$('#dots'),m=$('#lockMsg');if(!d){render();return;}
-  [...d.children].forEach((x,i)=>x.classList.toggle('on',i<pinBuf.length));
-  if(m){m.className='';m.textContent='비밀번호를 입력하세요';}
+  [...d.children].forEach((x,i)=>x.classList.toggle('on',i<pinBuf.length));d.classList.remove('shake');
+  const wait=Math.ceil((waitUntil-Date.now())/1000);
+  if(m){m.className=wait>0?'err':'';m.textContent=wait>0?`${wait}초 뒤에 다시 입력하세요`:`비밀번호 ${S.lock.len||4}자리를 입력하세요`;}
 }
 async function lockSetup(change){
   const fields=[
