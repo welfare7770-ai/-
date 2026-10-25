@@ -1277,6 +1277,17 @@ function whoLabel(w){return w===SELF?careName()+' 돈':'내 돈';}
 const fundCfg=()=>S.careCfg.fund||{start:0,startDate:'',incomes:[],skip:[],year:''};
 const penKey=(ym,who,kind)=>`${ym}|${String(who).trim()}|${String(kind).trim()}`;
 const splitMemo=m=>{const i=String(m||'').indexOf(' ');return i<0?[m,'']:[m.slice(0,i),m.slice(i+1)];};
+const PEN_CATS=['기초연금','국민연금','연금·기초연금','기타 연금'];
+function pensionSurplus(){
+  const inc=fundCfg().incomes||[],expect={};inc.forEach(r=>{if(+r.amount>0){const k=r.kind+'|'+(+r.amount);expect[k]=(expect[k]||0)+1;}});
+  const groups={};
+  S.care.forEach(c=>{if(c.type==='in'&&c.who===SELF&&PEN_CATS.includes(c.cat)){const k=c.date.slice(0,7)+'|'+c.cat+'|'+(+c.amount);(groups[k]=groups[k]||[]).push(c);}});
+  const extra=[];
+  for(const k in groups){const [ym,cat,amt]=k.split('|'),n=expect[cat+'|'+amt]||0;if(!n)continue;
+    const g=groups[k].slice().sort((a,b)=>(b.auto?1:0)-(a.auto?1:0));  // 자동 기록을 먼저 남김
+    if(g.length>n)extra.push(...g.slice(n));}
+  return extra;
+}
 // 이미 생긴 중복 연금 기록 정리(같은 달·같은 사람·같은 종류는 하나만 남김)
 function dedupePensions(){
   const seen=new Set(),before=S.care.length;
@@ -1293,6 +1304,8 @@ function postPensions(){
       const last=new Date(+ym.slice(0,4),+ym.slice(5),0).getDate(),d=`${ym}-${String(Math.min(+r.day||25,last)).padStart(2,'0')}`;
       const id=`pen-${ym}-${r.id}`,key=penKey(ym,r.who,r.kind);
       if(d<f.startDate||d>t||(f.skip||[]).includes(id)||(f.skip||[]).includes(key)||S.care.some(c=>c.id===id||(c.auto&&c.type==='in'&&penKey(c.date.slice(0,7),...splitMemo(c.memo))===key)))continue;
+      const same=S.care.filter(c=>c.type==='in'&&c.who===SELF&&c.cat===r.kind&&+c.amount===+r.amount&&c.date.startsWith(ym)).length,need=f.incomes.filter(x=>x.kind===r.kind&&+x.amount===+r.amount).length;
+      if(same>=need)continue;
       S.care.push({id,ts:Date.now(),auto:true,type:'in',date:d,amount:+r.amount,cat:r.kind,who:SELF,memo:`${r.who} ${r.kind}`,tax:false});changed=true;
     }
     ym=shiftYM(ym,1);
@@ -1360,7 +1373,7 @@ function view_care(){
   const [a,b,label]=careRange();
   if(autoPost())save();
   const list=S.care.filter(c=>c.date>=a&&c.date<=b).sort((x,y)=>y.date.localeCompare(x.date));
-  const st=careStats(list);
+  const st=careStats(list),dups=pensionSurplus(),dupIds=new Set(dups.map(c=>c.id));
   const cats={};list.filter(c=>c.type==='out'&&c.cat!=='잔액 조정').forEach(c=>cats[c.cat]=(cats[c.cat]||0)+(+c.amount||0));
   const catArr=Object.entries(cats).sort((x,y)=>y[1]-x[1]),mx=catArr[0]?.[1]||1;
   const years=[...new Set([today().slice(0,4),...S.care.map(c=>c.date.slice(0,4))])].sort().reverse();
@@ -1368,7 +1381,7 @@ function view_care(){
   let html='',cur='';
   for(const c of list){
     if(c.date!==cur){if(cur)html+='</ul>';cur=c.date;html+=`<div class="daygrp"><span>${dLabel(cur)}</span></div><ul class="list">`;}
-    html+=`<li class="row" data-act="editCare" data-id="${c.id}">${c.check?'<span class="pill soon">금액 확인</span>':''}<span class="pill ${c.who===SELF?'none':'soon'}">${esc(whoLabel(c.who))}</span><div class="grow"><b>${esc(c.memo||c.cat)}</b><small>${esc(c.cat)}${c.type==='out'&&c.tax?' · 공제대상':''}${c.receipt?' · 영수증✔':''}</small></div><span class="amt ${c.type==='in'?'pos':'neg'}">${c.type==='in'?'+':'-'}${num(c.amount)}</span></li>`;
+    html+=`<li class="row" data-act="editCare" data-id="${c.id}">${c.check?'<span class="pill soon">금액 확인</span>':''}${dupIds.has(c.id)?'<span class="pill over">중복</span>':''}<span class="pill ${c.who===SELF?'none':'soon'}">${esc(whoLabel(c.who))}</span><div class="grow"><b>${esc(c.memo||c.cat)}</b><small>${esc(c.cat)}${c.auto?' · 자동':c.type==='in'&&PEN_CATS.includes(c.cat)?' · 직접 입력':''}${c.type==='out'&&c.tax?' · 공제대상':''}${c.receipt?' · 영수증✔':''}</small></div><span class="amt ${c.type==='in'?'pos':'neg'}">${c.type==='in'?'+':'-'}${num(c.amount)}</span></li>`;
   }
   if(cur)html+='</ul>';
   const nav=careMode==='month'?`<span class="monthnav" style="font-size:15px"><button class="btn sm" data-act="careNav" data-n="-1" aria-label="이전 달">◀</button>${ymLabel(careYM)}<button class="btn sm" data-act="careNav" data-n="1" aria-label="다음 달">▶</button></span>`:careMode==='year'?`<select id="careY" style="width:auto">${optHTML(years.map(y=>[y,y+'년']),careY)}</select>`:'';
@@ -1377,6 +1390,7 @@ function view_care(){
   <section class="hero" style="padding:16px"><div class="hero-date">${esc(pn)}${cfg.hospital?' · '+esc(cfg.hospital):''}${admitDays>0?` · 입원 ${num(admitDays)}일째`:''}</div>
    <div class="hero-two"><div><div class="hero-label">${label} 들어온 돈</div><div class="hero-num in">${won(st.inc)}</div></div><div><div class="hero-label">${label} 쓴 돈</div><div class="hero-num out">${won(st.total)}</div></div></div>
    <div class="hero-sub" style="margin-top:6px">${esc(pn)} 돈으로 ${won(st.self)}${st.mine?` · 내 돈으로 ${won(st.mine)}`:''}</div></section>
+  ${dups.length?`<div class="xfer" style="margin:0 0 12px;background:var(--over-bg)"><span style="color:var(--over)">같은 연금이 두 번 들어간 기록 <b>${dups.length}건</b>이 있어요 (${dups.map(c=>esc(c.memo||c.cat)).join(', ')})</span><button class="btn sm primary amt" data-act="fixPenDup">중복 지우기</button></div>`:''}
   ${fundCard()}
   <div class="toolbar"><button class="btn primary" data-act="addCare" data-type="out">＋ 지출</button><button class="btn primary" data-act="addCare" data-type="in">＋ 입금</button><span class="grow"></span><button class="btn" data-act="careCfg">${esc(pn)} 정보</button></div>
   <div class="toolbar"><select id="careMode" style="width:auto">${optHTML([['month','월별'],['year','연도별'],['all','전체 기간']],careMode)}</select>${nav}</div>
@@ -1700,6 +1714,11 @@ const ACT={
     el('cat').addEventListener('change',upd);el('type').addEventListener('change',upd);upd();},
   editCare:d=>{const rec=find('care',d.id);
     openForm('기록 수정',careFields(),rec,v=>{Object.assign(rec,v);delete rec.check;},()=>{S.care=S.care.filter(x=>x.id!==rec.id);if(rec.auto){const f=fundCfg();f.skip=[...(f.skip||[]),rec.id,penKey(rec.date.slice(0,7),...splitMemo(rec.memo))];S.careCfg.fund=f;}});},
+  fixPenDup:async()=>{const d=pensionSurplus();if(!d.length)return;
+    if(!await askConfirm(`중복된 연금 기록 ${d.length}건을 지울까요?\n\n${d.map(c=>`· ${c.date} ${c.memo||c.cat} ${num(c.amount)}원${c.auto?'':' (직접 입력)'}`).join('\n')}`,'지우기'))return;
+    const ids=new Set(d.map(c=>c.id)),f=fundCfg();
+    S.care=S.care.filter(c=>!ids.has(c.id));f.skip=[...(f.skip||[]),...d.filter(c=>c.auto).map(c=>c.id)];S.careCfg.fund=f;
+    save();render();toast(`${d.length}건을 지웠습니다`);},
   careIncome:()=>{
     const f=fundCfg(),inc=f.incomes||[];
     if(!inc.length)return ACT.careFund();
