@@ -580,7 +580,7 @@ function view_recur(){
   const me=grp('me'),pa=grp('parent');
   const section=(o,g,title,where)=>`<section class="card"${o==='parent'?' style="--acc:var(--c-care)"':''}><h2>${title}<span class="sp"></span><b style="font-size:15px">${won(g.total)}</b></h2>
     ${o==='me'&&g.all.some(looksParent)?`<div class="xfer" style="margin:0 0 8px;background:color-mix(in srgb,var(--c-care) 12%,var(--card))"><span>${esc(pn)} 집 관련으로 보이는 항목 <b>${g.all.filter(looksParent).length}건</b>이 내 고정비에 있어요</span><button class="btn sm primary amt" style="--acc:var(--c-care)" data-act="moveRecur">옮기기</button></div>`:''}
-    <div class="toolbar" style="margin:0 0 4px"><button class="btn sm primary" data-act="addRecur" data-owner="${o}">＋ 추가</button>${o==='me'&&g.all.length?`<button class="btn sm" data-act="moveRecur">${esc(pn)} 고정비로 옮기기</button>`:''}<button class="btn sm" data-act="postRecur" data-owner="${o}"${g.pending.length?'':' disabled'}>이번 달분 ${where}에 기록${g.pending.length?` (${g.pending.length}건)`:''}</button></div>
+    <div class="toolbar" style="margin:0 0 4px"><button class="btn sm primary" data-act="addRecur" data-owner="${o}">＋ 추가</button>${g.all.length?(o==='me'?`<button class="btn sm" data-act="moveRecur">${esc(pn)} 고정비로 옮기기</button>`:`<button class="btn sm" data-act="moveRecur" data-dir="toMe">내 고정비로 옮기기</button>`):''}<button class="btn sm" data-act="postRecur" data-owner="${o}"${g.pending.length?'':' disabled'}>이번 달분 ${where}에 기록${g.pending.length?` (${g.pending.length}건)`:''}</button></div>
     ${g.all.length?`<ul class="list">${[...g.all].sort((a,b)=>(b.active-a.active)||(a.day-b.day)).map(recurRow).join('')}</ul>`:`<p class="empty">${o==='me'?'통신비·보험료·구독료 등 내가 매달 내는 돈을 등록하세요.':pn+' 집 관리비·공과금·재산세처럼 부모님 쪽에서 매달 나가는 돈을 등록하세요.'}</p>`}</section>`;
   return `
   <section class="card"><div class="stats"><div class="stat"><small>내 고정비 / 월</small><b class="neg">${won(me.total)}</b></div><div class="stat"><small>${esc(pn)} 고정비 / 월</small><b style="color:var(--c-care)">${won(pa.total)}</b></div><div class="stat"><small>합계 / 연</small><b>${short((me.total+pa.total)*12)}원</b></div></div>
@@ -591,7 +591,44 @@ function view_recur(){
 // 아버지 집 생활비로 보이는 항목(관리비·공과금·통신·렌탈)
 const PARENT_HINT=/도시가스|가스|전기|관리비|수도|정수기|렌탈|인터넷|TV|티비|휴대폰|핸드폰|재산세|화재보험/i;
 const looksParent=r=>PARENT_HINT.test(r.name)&&!/구독|ChatGPT|Claude/i.test(r.name);
+const myCatOf=(c,n)=>c==='통신비'||/휴대폰|핸드폰|인터넷|TV|티비/i.test(n)?'통신':c==='보험료·세금'?(/세/.test(n)?'세금':'보험'):/관리비/.test(n)?'주거·관리비':'공과금';
 const careCatOf=n=>/휴대폰|핸드폰|인터넷|TV|티비|통신/i.test(n)?'통신비':/보험|세/.test(n)?'보험료·세금':'집 관리비·공과금';
+// 아버지 고정비 → 내 고정비 (반대 방향)
+function moveToMe(){
+  const theirs=S.recur.filter(r=>ownerOf(r)==='parent'),pn=careName(),me=members()[0]?.name;
+  dlgForm.innerHTML=`<h2>내 고정비로 옮기기</h2>
+   <p class="hint">${esc(pn)} 고정비 중 내가 내는 것으로 바꿀 항목을 고르세요. 옮기면 ${esc(pn)} 고정비에서는 빠집니다.</p>
+   <ul class="list" id="mvList">${theirs.map(r=>`<li class="row" style="cursor:default"><label style="display:flex;gap:10px;align-items:center;flex:1;min-width:0"><input type="checkbox" value="${r.id}"><span class="grow"><b>${esc(r.name)}</b><small>${esc(r.cat)} · ${esc(whoLabel(r.from||SELF))} · 매월 ${r.day}일</small></span><span class="amt">${num(r.amount)}</span></label></li>`).join('')}</ul>
+   <div class="fld" style="margin-top:12px"><label for="mvPay">결제수단</label><select id="mvPay">${optHTML(PAY,'자동이체')}</select></div>
+   <label class="fld chk" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mvTx" checked> 이미 ${esc(pn)} 장부에 기록된 같은 고정비도 내 가계부로 옮기기</label>
+   <div class="actions"><span class="sp"></span><button type="button" data-x="cancel">취소</button><button type="submit" class="primary">옮기기</button></div>`;
+  dlgForm.querySelector('[data-x=cancel]').onclick=()=>dlg.close();
+  dlgForm.onsubmit=e=>{e.preventDefault();
+    const ids=[...dlgForm.querySelectorAll('#mvList input:checked')].map(i=>i.value);
+    if(!ids.length){toast('옮길 항목을 고르세요');return;}
+    const pay=dlgForm.querySelector('#mvPay').value,moveTx=dlgForm.querySelector('#mvTx').checked,used=new Set();
+    let moved=0,dup=0,txMoved=0;
+    for(const id of ids){
+      const r=find('recur',id);if(!r)continue;
+      const cat=myCatOf(r.cat,r.name),oldFrom=r.from||SELF;
+      const twin=S.recur.find(x=>x!==r&&ownerOf(x)==='me'&&x.name===r.name&&+x.amount===+r.amount);
+      if(twin){S.recur=S.recur.filter(x=>x!==r);dup++;}
+      else{Object.assign(r,{owner:'me',cat,pay});delete r.from;moved++;}
+      if(moveTx){
+        S.care.filter(c=>c.type==='out'&&c.memo===`[고정] ${r.name}`&&+c.amount===+r.amount&&!used.has(c)).forEach(c=>{used.add(c);
+          // 내가 대신 내서 내 가계부에 '부모님·가족'으로 이미 있던 기록은 원래 분류로 되돌리고, 없으면 새로 만듦
+          const mirror=me&&c.who===me&&S.tx.find(t=>t.memo===`[${pn} 고정] ${r.name}`&&t.date===c.date&&+t.amount===+c.amount&&!used.has(t));
+          if(mirror){used.add(mirror);Object.assign(mirror,{cat,pay,memo:`[고정] ${r.name}`});}
+          else addTx({type:'out',date:c.date,amount:c.amount,cat,pay,memo:`[고정] ${r.name}`});
+          S.care=S.care.filter(x=>x!==c);txMoved++;
+        });
+      }
+    }
+    save();dlg.close();render();
+    toast(`${moved+dup}건을 내 고정비로 옮겼습니다${dup?` (중복 ${dup}건 정리)`:''}${txMoved?` · 기록 ${txMoved}건 이동`:''}`);
+  };
+  showDlg();
+}
 function recurRow(r){const ym=today().slice(0,7);{const due=recurDue(r),n=dday(due);return `<li class="row" data-act="editRecur" data-id="${r.id}"><span class="pill ${!r.active?'none':posted(r,ym)?'ok':n<=3?'soon':'info'}">${!r.active?'중지':posted(r,ym)?'기록됨':'매월 '+r.day+'일'}</span><div class="grow"><b>${esc(r.name)}</b><small>${esc(r.cat)} · ${ownerOf(r)==='parent'?esc(whoLabel(r.from||SELF)):esc(r.pay||'')}${r.memo?' · '+esc(r.memo):''}</small>${r.active?`<small>다음 납부 ${due} (${ddayLabel(n)})</small>`:''}</div><span class="amt">${num(r.amount)}</span></li>`;}
 }
 
@@ -1274,7 +1311,8 @@ const ACT={
     const nm=dlgForm.elements.namedItem('name'),cat=dlgForm.elements.namedItem('cat'),pay=dlgForm.elements.namedItem('pay');
     nm.addEventListener('change',()=>{if(/ChatGPT|Claude|넷플릭스|유튜브|쿠팡|네이버플러스|Google|디즈니|티빙|구독/i.test(nm.value)){cat.value='구독·서비스';pay.value='카드';}});},
   editRecur:d=>crud('recur','고정지출',recurFields(),find('recur',d.id)),
-  moveRecur:()=>{
+  moveRecur:d=>{
+    if(d.dir==='toMe')return moveToMe();
     const mine=S.recur.filter(r=>ownerOf(r)==='me'),pn=careName();
     dlgForm.innerHTML=`<h2>${esc(pn)} 고정비로 옮기기</h2>
      <p class="hint">옮길 항목을 고르세요. 아버지 집 관련으로 보이는 항목은 미리 체크해 두었습니다. 옮기면 내 고정비에서는 빠집니다(삭제할 필요 없음).</p>
