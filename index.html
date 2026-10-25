@@ -875,7 +875,7 @@ function fatherCard(){
   return `<section class="card nw" style="--acc:var(--c-care)" data-act="go" data-tab="care"><h2>${esc(pn)} 돈<span class="sp"></span><button class="btn sm primary" data-act="addCare" data-type="out">＋ 지출</button></h2>
    <div class="big" style="color:var(--c-care)">${won(fs.bal)}</div>
    ${receiptDue().filter(d=>ownerOf(d.r)==='parent').map(d=>`<div class="xfer" style="background:var(--soon-bg);margin:6px 0"><span>${esc(d.r.name)} ${Number(d.ym.slice(5))}월분 영수증 입력</span><button class="btn sm primary amt" data-act="receipt" data-id="${d.r.id}" data-ym="${d.ym}">입력</button></div>`).join('')}
-   <div class="hint" style="margin:2px 0 0">${Number(ym.slice(5))}월 들어온 돈 <b class="pos">+${num(st.inc)}</b> · 쓴 돈 <b class="neg">−${num(st.self)}</b>${st.mine?` · 내 돈으로 낸 것 ${num(st.mine)}`:''}${fs.runway!=null?` · 약 ${fs.runway}개월분`:''}</div></section>`;
+   <div class="hint" style="margin:2px 0 0">${Number(ym.slice(5))}월 들어온 돈 <b class="pos">+${num(st.inc)}</b> · 쓴 돈 <b class="neg">−${num(st.self)}</b>${st.mine?` · 내 돈으로 낸 것 ${num(st.mine)}`:''}</div></section>`;
 }
 function netWorthCard(){
   if(!S.accounts.length)return `<section class="card nw" style="--acc:var(--c-assets)" data-act="go" data-tab="assets"><h2>내 재산<span class="sp"></span><button class="btn sm primary" data-act="addAcct">＋ 재산 추가</button></h2><p class="hint" style="margin:0">통장·적금·증권·부동산을 등록하면 여기에서 전체 재산을 한눈에 봅니다.</p></section>`;
@@ -1500,17 +1500,16 @@ function fundBreakdown(){
    ${outs.map(c=>`<tr data-act="editCare" data-id="${c.id}"><td>− ${c.date.slice(5).replace('-','/')} ${esc(c.memo||c.cat)}</td><td class="r neg">−${num(c.amount)}</td></tr>`).join('')}
    <tr><th>= 지금 잔액</th><th class="r">${num((+f.start||0)+inSum-outSum)}</th></tr></table></div>
    <p class="hint" style="margin:6px 0 0">나간 돈 줄을 누르면 고치거나 지울 수 있습니다.</p>
-   ${(()=>{const st=fundStats();if(!st)return '';const m=st.byMonth||[];return `<p class="hint" style="margin:8px 0 0">매달 지출(평균): ${st.basis==='hist'?m.map(x=>`${Number(x.m.slice(5))}월 ${short(x.v)}원`).join(' · ')+'의 평균':st.basis==='fixed'?'고정지출에 등록한 금액':'이번 달 기록'}${st.runway!=null?` · 이대로면 약 ${num(st.runway)}개월분`:''}</p>
-   <p class="hint" style="margin:4px 0 0">연금: ${(f.incomes||[]).filter(r=>+r.amount).map(r=>`${esc(r.who)} ${esc(r.kind)} ${num(r.amount)}`).join(' · ')||'없음'} <button class="linkbtn" data-act="careIncome" style="margin:0;font-size:inherit">고치기</button> · <button class="linkbtn" data-act="careTrue" style="margin:0;font-size:inherit">잔액 맞추기</button></p>`;})()}</details>`;
+   ${(()=>{const st=fundStats();if(!st)return '';return `<p class="hint" style="margin:8px 0 0">연금: ${(f.incomes||[]).filter(r=>+r.amount).map(r=>`${esc(r.who)} ${esc(r.kind)} ${num(r.amount)}`).join(' · ')||'없음'} <button class="linkbtn" data-act="careIncome" style="margin:0;font-size:inherit">고치기</button> · <button class="linkbtn" data-act="careTrue" style="margin:0;font-size:inherit">잔액 맞추기</button></p>`;})()}</details>`;
 }
 function fundCard(){
   const f=fundCfg(),st=fundStats();
   if(!st)return `<section class="card"><h2>${esc(careName())} 돈</h2><p class="hint" style="margin:0 0 10px">원금과 매달 들어오는 연금만 넣으면 잔액을 계산합니다.</p><button class="btn primary" data-act="careFund">원금·연금 넣기</button></section>`;
   const janWarn=today().slice(5,7)<='02'&&f.year!==today().slice(0,4);
-  // 한눈에: 잔액 / 매달 들어오는 돈 / 매달 나가는 돈 — 자세한 건 '잔액 계산 보기' 안에
+  // 한눈에: 잔액 / 매달 연금 / 이번 달 실제 들어온 돈·쓴 돈 (추정치는 보여 주지 않음) — 자세한 건 '잔액 계산 보기' 안에
   return `<section class="card"><h2>${esc(careName())} 돈 잔액<span class="sp"></span><button class="btn sm" data-act="careFund">설정</button></h2>
    <div class="stats"><div class="stat" style="grid-column:span 3"><small>원금 ${won(f.start)} + 연금 − 지출</small><b style="font-size:21px;color:var(--acc)">${won(st.bal)}</b></div>
-   <div class="stat"><small>매달 연금</small><b class="pos">${short(st.monthlyIn)}원</b></div><div class="stat"><small>매달 지출(평균)</small><b class="neg">${short(st.avgOut)}원</b></div><div class="stat"><small>매달</small><b class="${st.net<0?'neg':'pos'}">${st.net>=0?'+':'−'}${short(Math.abs(st.net))}원</b></div></div>
+   <div class="stat"><small>매달 연금</small><b class="pos">${short(st.monthlyIn)}원</b></div><div class="stat"><small>이번 달 들어온 돈</small><b class="pos">${short(st.thisIn)}원</b></div><div class="stat"><small>이번 달 쓴 돈</small><b class="neg">${short(st.thisOut)}원</b></div></div>
    ${janWarn?`<div class="xfer" style="margin-top:8px;background:var(--soon-bg)"><span style="color:var(--soon)">새해 연금이 올랐으면 금액을 고쳐 주세요</span><button class="btn sm primary amt" data-act="careIncome">연금 금액</button></div>`:''}
    <div style="margin-top:8px">${fundBreakdown()}</div></section>`;
 }
