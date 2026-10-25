@@ -92,7 +92,7 @@ textarea.report{font-size:12.5px;min-height:180px;font-family:var(--font);margin
 .dots.shake{animation:shake .35s}
 @keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}}
 .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.pad button{height:62px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:24px;font-weight:600;box-shadow:var(--shadow)}
+.pad button{touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;height:62px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:24px;font-weight:600;box-shadow:var(--shadow)}
 .pad button:active{background:color-mix(in srgb,var(--acc) 15%,var(--card))}
 .pad button.sm{font-size:14px;font-weight:600;color:var(--muted)}
 .linkbtn{margin-top:18px;border:0;background:none;color:var(--muted);font-size:13px;text-decoration:underline}
@@ -1685,7 +1685,7 @@ let tab='home';try{tab=localStorage.getItem(KEY+'.tab')||'home';}catch(e){}
    다른 사람이 휴대폰을 집어 들었을 때 기록을 못 보게 하는 화면 잠금이다. */
 const LOCK_ICON=ic('<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>');
 const AUTO=[[0,'열 때마다'],[1,'1분 뒤'],[5,'5분 뒤'],[30,'30분 뒤']];
-let unlocked=false,pinBuf='',lockMsg='',lockErr=false,fails=0,waitUntil=0,lastActive=Date.now();
+let unlocked=false,pinBuf='',pinChecking=false,lockMsg='',lockErr=false,fails=0,waitUntil=0,lastActive=Date.now();
 const lockOn=()=>!!(S.lock&&S.lock.hash);
 const needLock=()=>lockOn()&&!unlocked;
 // 새로고침 직후(1분 이내)에는 다시 묻지 않음. 단 '열 때마다' 설정이면 항상 묻는다
@@ -1714,16 +1714,25 @@ async function pinKey(k){
     return;
   }
   if(Date.now()<waitUntil){render();return;}
+  if(pinChecking)return;
   if(k==='del')pinBuf=pinBuf.slice(0,-1);else if(/^\d$/.test(k)&&pinBuf.length<(S.lock.len||4))pinBuf+=k;
   lockErr=false;lockMsg='';
+  // 화면 전체를 다시 그리지 않고 점만 바꾼다 (빠르게 누를 때 숫자가 빠지지 않도록)
+  pinDots();
   if(pinBuf.length===(S.lock.len||4)){
-    const ok=await hashPin(pinBuf,S.lock.salt)===S.lock.hash;pinBuf='';
+    const pin=pinBuf;pinBuf='';pinChecking=true;
+    await new Promise(r=>setTimeout(r,150)); // 마지막 점이 채워진 것을 보여 준 뒤 확인
+    let ok=false;try{ok=await hashPin(pin,S.lock.salt)===S.lock.hash;}finally{pinChecking=false;}
     if(ok){unlocked=true;fails=0;touch();render();return;}
     fails++;lockErr=true;lockMsg=`비밀번호가 틀렸습니다 (${fails}회)`;
     if(fails>=5){waitUntil=Date.now()+30000*(fails-4);setTimeout(()=>{if(needLock())render();},30000*(fails-4)+50);}
     render();const d=$('#dots');if(d)d.classList.add('shake');return;
   }
-  render();
+}
+function pinDots(){
+  const d=$('#dots'),m=$('#lockMsg');if(!d){render();return;}
+  [...d.children].forEach((x,i)=>x.classList.toggle('on',i<pinBuf.length));
+  if(m){m.className='';m.textContent='비밀번호를 입력하세요';}
 }
 async function lockSetup(change){
   const fields=[
