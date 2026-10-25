@@ -252,7 +252,16 @@ const GIFT_REL=['가족·친척','친구','직장','이웃·지인','모임·동
 function blank(){return {tx:[],budget:0,car:{name:'',plate:'',odo:0,fuelType:'휘발유',year:''},rules:DEFAULT_RULES.map(r=>({...r})),maint:[],fuel:[],recur:[],sched:[],gift:[],health:[],hike:[],gym:[],lab:[],profile:{height:'',sex:''},care:[],careCfg:{name:'아버지',hospital:'',admit:'',members:[]},lock:null,recurAuto:'',accounts:[],moves:[],assetHist:{}};}
 let S;
 try{S=Object.assign(blank(),JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){S=blank();}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}cloud.push();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}dailyBackup();cloud.push();}
+// 자동 보관본: 이 기기 브라우저에 날짜별로 최근 7개 (실수로 지워지거나 동기화로 덮어써져도 되살릴 수 있게)
+function backupList(){const out=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith(KEY+'.bk.'))out.push(k);}}catch(e){}return out.sort().reverse();}
+function backupLocal(label){
+  try{const k=KEY+'.bk.'+new Date().toISOString().replace(/[:.]/g,'-');localStorage.setItem(k,JSON.stringify({label,at:new Date().toISOString(),data:S}));
+    const all=backupList();all.slice(10).forEach(x=>localStorage.removeItem(x));}catch(e){}
+}
+let lastBk='';
+function dailyBackup(){const t=today();if(lastBk===t)return;try{if(backupList().some(k=>k.startsWith(KEY+'.bk.'+t)))return lastBk=t;}catch(e){}
+  if(S.tx.length||S.accounts.length||S.care.length){backupLocal('하루 자동 보관');lastBk=t;}}
 /* ---------- 클라우드 동기화 (claude.ai 아티팩트로 열었을 때) ----------
    본인 전용 경로 data/users/<id>/ 에 저장 → 같은 계정이면 휴대폰·PC 어디서나 같은 기록,
    다른 사람은 볼 수 없음. 가계부는 연도별 문서로 나눠 문서 크기 제한을 피함. */
@@ -285,13 +294,24 @@ const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
   apply(snap){
     if(snap.metadata.hasPendingWrites||this.busy||this.pending)return;
     const got={};snap.docs.forEach(d=>{got[d.id]=d.data();});
+    // 서버 내용으로 바꾸기 전에, 이 기기에만 있던 기록이 사라지는지 확인해 보관
+    const COLS=['maint','fuel','recur','sched','gift','health','hike','gym','lab','care','accounts','moves'];
+    const lost=COLS.filter(k=>(S[k]||[]).length&&!(got[k]&&(got[k].items||[]).length));
+    if(lost.length)backupLocal('동기화 전 자동 보관 ('+lost.join(',')+')');
     const n=blank();
     if(got.meta){n.budget=got.meta.budget||0;n.car={...n.car,...got.meta.car};if(Array.isArray(got.meta.rules))n.rules=got.meta.rules;if(got.meta.profile)n.profile={...n.profile,...got.meta.profile};if('lock' in got.meta)n.lock=got.meta.lock;if(got.meta.recurAuto)n.recurAuto=got.meta.recurAuto;if(got.meta.assetHist)n.assetHist=JSON.parse(JSON.stringify(got.meta.assetHist));if(got.meta.careCfg)n.careCfg={...n.careCfg,...got.meta.careCfg};}
-    for(const k of ['maint','fuel','recur','sched','gift','health','hike','gym','lab','care','accounts','moves'])if(got[k])n[k]=JSON.parse(JSON.stringify(got[k].items||[]));
+    let keep=false;
+    for(const k of COLS){
+      if(got[k])n[k]=JSON.parse(JSON.stringify(got[k].items||[]));
+      else if((S[k]||[]).length){n[k]=S[k];keep=true;} // 서버에 한 번도 올라간 적 없는 묶음 → 이 기기 것 유지 후 올림
+    }
+    const hasTx=Object.keys(got).some(id=>id.startsWith('tx-'));
     for(const id in got)if(id.startsWith('tx-'))n.tx.push(...JSON.parse(JSON.stringify(got[id].items||[])));
+    if(!hasTx&&S.tx.length){n.tx=S.tx;keep=true;}
+    if(!got.meta){['budget','car','rules','profile','careCfg','lock','recurAuto','assetHist'].forEach(k=>{n[k]=S[k];});keep=true;}
     this.sent={};for(const id in got)this.sent[id]=JSON.stringify(got[id]);
     S=n;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
-    if(autoPost())this.push();
+    if(autoPost()||keep)this.push();
     if(!dlg.open)render();
   },
   async refresh(){
@@ -1519,6 +1539,7 @@ function view_settings(){
   <section class="card"><h2>백업 · 복원</h2><p class="hint">${cloud.db?'claude.ai 계정에 저장되어 휴대폰·PC 어디서 열어도 같은 기록이 보입니다. 다른 사람은 이 기록을 볼 수 없습니다. 만일을 위해 가끔 백업 파일도 받아 두세요.':'지금은 이 기기의 이 브라우저에만 저장됩니다. 브라우저 데이터 삭제·기기 변경 시 사라지므로 백업 파일을 보관하세요.'}<br>현재: ${cnt}<br>마지막 백업: ${lastBk||'없음'}</p>
    <div class="toolbar"><button class="btn primary" data-act="backup">백업 파일 저장(JSON)</button><button class="btn" data-act="restore">백업 불러오기</button><button class="btn" data-act="csv">가계부 엑셀(CSV) 내보내기</button></div>
    <input type="file" id="restoreFile" accept=".json,application/json" hidden></section>
+  <section class="card"><h2>자동 보관본 (이 기기)</h2><p class="hint" style="margin:0 0 8px">이 기기 브라우저에 하루 한 번, 그리고 다른 기기와 맞추다 기록이 사라질 것 같을 때 자동으로 보관합니다. 실수로 지워진 기록을 되살릴 때 쓰세요.</p>${(()=>{const L=backupList();return L.length?`<ul class="list">${L.map(k=>{let o={};try{o=JSON.parse(localStorage.getItem(k))||{};}catch(e){}const d=o.data||{};return `<li class="row" style="cursor:default"><div class="grow"><b>${esc((o.at||'').slice(0,16).replace('T',' '))}</b><small>${esc(o.label||'')} · 가계부 ${(d.tx||[]).length} · 계좌 ${(d.accounts||[]).length} · 아버지 장부 ${(d.care||[]).length}</small></div><button class="btn sm" data-act="restoreBk" data-k="${esc(k)}">되살리기</button></li>`;}).join('')}</ul>`:'<p class="empty">아직 보관본이 없습니다.</p>';})()}</section>
   <section class="card"><h2>앱 잠금 (비밀번호)</h2>${lockOn()?`<p class="hint" style="margin:0 0 10px">켜짐 · ${S.lock.len}자리 · 자동 잠금: ${(AUTO.find(a=>a[0]===(S.lock.auto??5))||AUTO[2])[1]}${S.lock.hint?' · 힌트 있음':''}<br>휴대폰·PC 모든 기기에 같은 비밀번호가 적용됩니다.</p><div class="toolbar" style="margin:0"><button class="btn" data-act="lockNowAct">지금 잠그기</button><button class="btn" data-act="lockChange">비밀번호·자동잠금 변경</button><button class="btn danger" data-act="lockOff">잠금 끄기</button></div>`:`<p class="hint" style="margin:0 0 10px">앱을 열 때 숫자 비밀번호를 묻습니다. 가계부·건강·부모님 병원비처럼 남이 보면 안 되는 기록을 가려 줍니다. 비밀번호를 잊으면 되찾을 수 없으니 백업 파일을 꼭 받아 두세요.</p><button class="btn primary" data-act="lockSet">비밀번호 설정</button>`}</section>
   <section class="card"><h2>화면</h2><div class="toolbar" style="margin:0"><button class="btn" data-act="theme" data-v="">시스템 설정</button><button class="btn" data-act="theme" data-v="light">밝게</button><button class="btn" data-act="theme" data-v="dark">어둡게</button></div></section>
   <section class="card"><h2>휴대폰에서 앱처럼 쓰기</h2><p class="hint" style="margin:0">브라우저 메뉴의 <b>홈 화면에 추가</b>를 누르면 아이콘으로 바로 열 수 있습니다. 인터넷 없이도 동작합니다.</p></section>
@@ -1843,6 +1864,9 @@ const ACT={
     {k:'name',label:'호칭',type:'text',ph:'예: 아버지'},
     {k:'hospital',label:'병원',type:'text',ph:'예: ○○요양병원'},
     {k:'admit',label:'입원일',type:'date'}],{name:S.careCfg.name,hospital:S.careCfg.hospital,admit:S.careCfg.admit},v=>{Object.assign(S.careCfg,{name:v.name||'부모님',hospital:v.hospital,admit:v.admit});}),
+  restoreBk:async d=>{let o;try{o=JSON.parse(localStorage.getItem(d.k));}catch(e){}if(!o||!o.data)return toast('보관본을 읽을 수 없습니다');
+    if(!await askConfirm(`${(o.at||'').slice(0,16).replace('T',' ')} 보관본으로 되살릴까요?\n지금 기록은 바뀌기 전에 따로 보관해 둡니다.`,'되살리기'))return;
+    backupLocal('되살리기 전 보관');S=Object.assign(blank(),o.data);save();render();toast('되살렸습니다. 다른 기기에도 반영됩니다');},
   lockSet:()=>lockSetup(false),
   lockChange:()=>lockSetup(true),
   lockNowAct:()=>lockNow(),
