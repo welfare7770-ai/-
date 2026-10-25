@@ -294,6 +294,10 @@ const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
     if(autoPost())this.push();
     if(!dlg.open)render();
   },
+  async refresh(){
+    if(!this.db||this.pending||this.busy)return;
+    try{const snap=await this.db.collection(this.base).get();if(!snap.empty)this.apply(snap);}catch(e){}
+  },
   async start(){
     if(!window.claude?.use)return setSync('이 기기에만 저장');
     const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);
@@ -1271,20 +1275,29 @@ function whoLabel(w){return w===SELF?careName()+' 돈':'내 돈';}
 /* ---------- 부모님 자금: 보유금 + 매월 연금 입금 − 부모님 돈으로 낸 지출 ----------
    연금은 설정한 지급일이 지나면 자동으로 입금 기록(같은 달·같은 항목은 한 번만, 기기 여러 대여도 중복 없음) */
 const fundCfg=()=>S.careCfg.fund||{start:0,startDate:'',incomes:[],skip:[],year:''};
+const penKey=(ym,who,kind)=>`${ym}|${String(who).trim()}|${String(kind).trim()}`;
+const splitMemo=m=>{const i=String(m||'').indexOf(' ');return i<0?[m,'']:[m.slice(0,i),m.slice(i+1)];};
+// 이미 생긴 중복 연금 기록 정리(같은 달·같은 사람·같은 종류는 하나만 남김)
+function dedupePensions(){
+  const seen=new Set(),before=S.care.length;
+  S.care=S.care.filter(c=>{if(!(c.auto&&c.type==='in'))return true;const k=penKey(c.date.slice(0,7),...splitMemo(c.memo));if(seen.has(k))return false;seen.add(k);return true;});
+  return S.care.length!==before;
+}
 function postPensions(){
-  const f=fundCfg();if(!f.startDate||!(f.incomes||[]).length)return false;
+  const dd=dedupePensions();
+  const f=fundCfg();if(!f.startDate||!(f.incomes||[]).length)return dd;
   const t=today();let ym=f.startDate.slice(0,7),changed=false,guard=0;
   while(ym<=t.slice(0,7)&&guard++<600){
     for(const r of f.incomes){
       if(!(+r.amount>0))continue;
       const last=new Date(+ym.slice(0,4),+ym.slice(5),0).getDate(),d=`${ym}-${String(Math.min(+r.day||25,last)).padStart(2,'0')}`;
-      const id=`pen-${ym}-${r.id}`;
-      if(d<f.startDate||d>t||(f.skip||[]).includes(id)||S.care.some(c=>c.id===id))continue;
+      const id=`pen-${ym}-${r.id}`,key=penKey(ym,r.who,r.kind);
+      if(d<f.startDate||d>t||(f.skip||[]).includes(id)||(f.skip||[]).includes(key)||S.care.some(c=>c.id===id||(c.auto&&c.type==='in'&&penKey(c.date.slice(0,7),...splitMemo(c.memo))===key)))continue;
       S.care.push({id,ts:Date.now(),auto:true,type:'in',date:d,amount:+r.amount,cat:r.kind,who:SELF,memo:`${r.who} ${r.kind}`,tax:false});changed=true;
     }
     ym=shiftYM(ym,1);
   }
-  return changed;
+  return changed||dd;
 }
 function fundStats(){
   const f=fundCfg(),t=today();
@@ -1686,7 +1699,7 @@ const ACT={
     const el=n=>dlgForm.elements.namedItem(n),upd=()=>{el('tax').checked=el('type').value==='out'&&['병원비(월 정산)','장기요양(주간보호·방문요양)','약제비','외래·검사'].includes(el('cat').value);};
     el('cat').addEventListener('change',upd);el('type').addEventListener('change',upd);upd();},
   editCare:d=>{const rec=find('care',d.id);
-    openForm('기록 수정',careFields(),rec,v=>{Object.assign(rec,v);delete rec.check;},()=>{S.care=S.care.filter(x=>x.id!==rec.id);if(rec.auto){const f=fundCfg();f.skip=[...(f.skip||[]),rec.id];S.careCfg.fund=f;}});},
+    openForm('기록 수정',careFields(),rec,v=>{Object.assign(rec,v);delete rec.check;},()=>{S.care=S.care.filter(x=>x.id!==rec.id);if(rec.auto){const f=fundCfg();f.skip=[...(f.skip||[]),rec.id,penKey(rec.date.slice(0,7),...splitMemo(rec.memo))];S.careCfg.fund=f;}});},
   careIncome:()=>{
     const f=fundCfg(),inc=f.incomes||[];
     if(!inc.length)return ACT.careFund();
@@ -1823,6 +1836,7 @@ try{const th=localStorage.getItem(KEY+'.theme');if(th)document.documentElement.d
 render();
 if(autoPost())save();
 cloud.start();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)cloud.refresh();});
 </script>
 </body>
 </html>
