@@ -209,7 +209,7 @@ details.ref .tbl{margin-top:8px;font-size:12.5px}
 'use strict';
 /* ---------- 기본 데이터 ---------- */
 const KEY='lifebook.v1';
-const CAT_OUT=['부모님·가족','식비','외식·카페','생활용품','주거·관리비','공과금','통신','교통·차량','의료·건강','보험','경조사','교육','문화·여가','의류·미용','용돈','저축·투자','세금','기타'];
+const CAT_OUT=['부모님·가족','구독·서비스','식비','외식·카페','생활용품','주거·관리비','공과금','통신','교통·차량','의료·건강','보험','경조사','교육','문화·여가','의류·미용','용돈','저축·투자','세금','기타'];
 const CAT_IN=['급여','연금','사업소득','이자·배당','용돈','환급','경조금','기타'];
 const PAY=['카드','현금','계좌이체','간편결제','자동이체'];
 // 일반적 권장 주기(차량·운행조건마다 다름 → 취급설명서 기준으로 수정)
@@ -554,13 +554,13 @@ function view_car(){
 
 /* ---------- 고정지출 ---------- */
 const recurFields=[
-  {k:'name',label:'항목명',type:'text',req:1,list:['관리비','전기요금','도시가스','수도요금','휴대폰','인터넷·TV','실손보험','자동차보험(월납)','종신·연금보험','넷플릭스','유튜브 프리미엄','적금','후원금'],ph:'예: 휴대폰 요금'},
+  {k:'name',label:'항목명',type:'text',req:1,list:['관리비','전기요금','도시가스','수도요금','휴대폰','인터넷·TV','실손보험','자동차보험(월납)','종신·연금보험','ChatGPT 구독','Claude 구독','넷플릭스','유튜브 프리미엄','쿠팡 와우','네이버플러스 멤버십','Google One','디즈니+','티빙','적금','후원금'],ph:'예: Claude 구독, 휴대폰 요금'},
   {k:'amount',label:'금액(원, 대략)',type:'number',req:1},
   {k:'day',label:'매월 납부일(1~31)',type:'number',req:1,def:25},
   {k:'cat',label:'가계부 분류',type:'select',options:CAT_OUT,def:'공과금'},
   {k:'pay',label:'결제수단',type:'select',options:PAY,def:'자동이체'},
   {k:'active',label:'사용 중',type:'checkbox',def:true},
-  {k:'memo',label:'메모',type:'text',ph:'예: ○○카드 자동이체'}
+  {k:'memo',label:'메모',type:'text',ph:'예: ○○카드 / 달러 결제(환율 따라 변동)'}
 ];
 function recurDue(r){
   const t=today(),d=parseD(t);
@@ -1254,7 +1254,10 @@ const ACT={
       save();dlg.close();render();toast('저장했습니다');};
     showDlg();
   },
-  addRecur:()=>crud('recur','고정지출',recurFields,null),
+  addRecur:()=>{crud('recur','고정지출',recurFields,null);
+    // 구독 서비스 이름을 고르면 분류를 '구독·서비스'로 자동 선택
+    const nm=dlgForm.elements.namedItem('name'),cat=dlgForm.elements.namedItem('cat'),pay=dlgForm.elements.namedItem('pay');
+    nm.addEventListener('change',()=>{if(/ChatGPT|Claude|넷플릭스|유튜브|쿠팡|네이버플러스|Google|디즈니|티빙|구독/i.test(nm.value)){cat.value='구독·서비스';pay.value='카드';}});},
   editRecur:d=>crud('recur','고정지출',recurFields,find('recur',d.id)),
   postRecur:async()=>{
     const ym=today().slice(0,7),list=S.recur.filter(r=>r.active&&!posted(r,ym));
