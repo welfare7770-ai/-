@@ -845,7 +845,8 @@ function acctDialog(a,mode){
    <p class="hint" id="ahint"></p>
    <div class="actions">${!isNew&&!upd?'<button type="button" class="danger" data-x="del">삭제</button>':''}<span class="sp"></span><button type="button" data-x="cancel">취소</button><button type="submit" class="primary">저장</button></div>`;
   const $d=q=>dlgForm.querySelector(q),hrows=$d('#hrows');
-  const sync=()=>{const ty=$d('#at').value;$d('#hbox').hidden=ty!=='stock';
+  const PH={bank:['예: 농협 자립예탁금','예: 농협, 국민은행'],saving:['예: 농협 자유적금','예: 농협'],deposit:['예: 신협 정기예금','예: 신협'],stock:['예: 키움 위탁종합','예: 키움증권'],cash:['예: 지갑 현금, 비상금','예: 집 금고'],etc:['예: 전세보증금, 보험 해약환급금',''],loan:['예: 주택담보대출','예: 농협']};
+  const sync=()=>{const ty=$d('#at').value;$d('#hbox').hidden=ty!=='stock';$d('#an').placeholder=PH[ty][0];$d('#ai').placeholder=PH[ty][1];
     $d('#abl').textContent=ty==='stock'?'예수금 — 현금(원)':ty==='loan'?'남은 빚(원)':'잔액(원)';
     $d('#ahint').innerHTML=upd?(ty==='stock'?'증권 앱 ‘예수금’ 화면의 <b>인출 가능금(D+2 예수금)</b>을 넣고, 종목은 ‘잔고’ 화면의 보유수량·현재가로 맞추세요. 평소 사고팔 때는 ‘매수/매도’ 버튼을 쓰면 이 화면을 열 필요가 없습니다.':'통장 앱에 지금 찍힌 금액을 넣으세요. 확인일부터 다시 계산합니다.'):ty==='stock'?'예수금은 증권 앱 ‘예수금’ 화면의 금액, 주식은 수량과 현재가로 계산합니다. 대용금은 넣지 마세요.':ty==='loan'?'대출은 순자산에서 빠집니다. 상환하면 ‘계좌 간 이동’으로 대출 계좌로 보내세요.':'';};
   $d('#at').addEventListener('change',sync);sync();
