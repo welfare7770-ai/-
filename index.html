@@ -390,9 +390,9 @@ function openForm(title,fields,rec,onSave,onDelete){
   dlgForm.innerHTML=`<h2>${esc(title)}</h2>`+fields.map(fd=>fieldHTML(fd,rec?rec[fd.k]:undefined)).join('')+
     `<div class="actions">${onDelete?'<button type="button" class="danger" data-x="del">삭제</button>':''}<span class="sp"></span><button type="button" data-x="cancel">취소</button>${!onDelete&&/추가$/.test(title)?'<button type="button" data-more="1">저장 후 계속</button>':''}<button type="submit" class="primary">저장</button></div>`;
   const shown=fields.filter(fd=>fd.show);
-  if(shown.length){const kind=dlgForm.elements.namedItem('kind');
-    const upd=()=>shown.forEach(fd=>{dlgForm.querySelector(`.fld[data-k="${fd.k}"]`).hidden=!fd.show.includes(kind.value);});
-    kind.addEventListener('change',upd);upd();}
+  [...new Set(shown.map(fd=>fd.showBy||'kind'))].forEach(by=>{const ctl=dlgForm.elements.namedItem(by);if(!ctl)return;
+    const upd=()=>shown.filter(fd=>(fd.showBy||'kind')===by).forEach(fd=>{dlgForm.querySelector(`.fld[data-k="${fd.k}"]`).hidden=!fd.show.includes(ctl.value);});
+    ctl.addEventListener('change',upd);upd();});
   fields.filter(fd=>fd.dep).forEach(fd=>{
     const el=dlgForm.elements.namedItem(fd.k),dep=dlgForm.elements.namedItem(fd.dep);
     const fill=keep=>{const cur=keep??el.value;el.innerHTML=optHTML(fd.map[dep.value]||[],cur);};
@@ -553,15 +553,19 @@ function view_car(){
 }
 
 /* ---------- 고정지출 ---------- */
-const recurFields=[
-  {k:'name',label:'항목명',type:'text',req:1,list:['관리비','전기요금','도시가스','수도요금','휴대폰','인터넷·TV','실손보험','자동차보험(월납)','종신·연금보험','ChatGPT 구독','Claude 구독','넷플릭스','유튜브 프리미엄','쿠팡 와우','네이버플러스 멤버십','Google One','디즈니+','티빙','적금','후원금'],ph:'예: Claude 구독, 휴대폰 요금'},
+// 고정지출은 '나'와 '부모님(아버지 장부)' 두 갈래. 부모님 것은 일괄 기록 시 아버지 장부로 들어가 부모님 자금에서 빠진다
+const ownerOf=r=>r.owner==='parent'?'parent':'me';
+const recurFields=()=>{const f=[
+  {k:'owner',label:'누구의 고정비',type:'select',options:[['me','나 (내 가계부)'],['parent',careName()+' (부모님 장부)']],def:'me'},
+  {k:'name',label:'항목명',type:'text',req:1,list:['관리비','재산세','주택화재보험','전기요금','도시가스','수도요금','휴대폰','인터넷·TV','실손보험','자동차보험(월납)','종신·연금보험','ChatGPT 구독','Claude 구독','넷플릭스','유튜브 프리미엄','쿠팡 와우','네이버플러스 멤버십','Google One','디즈니+','티빙','적금','후원금'],ph:'예: Claude 구독, 휴대폰 요금'},
   {k:'amount',label:'금액(원, 대략)',type:'number',req:1},
   {k:'day',label:'매월 납부일(1~31)',type:'number',req:1,def:25},
-  {k:'cat',label:'가계부 분류',type:'select',options:CAT_OUT,def:'공과금'},
-  {k:'pay',label:'결제수단',type:'select',options:PAY,def:'자동이체'},
+  {k:'cat',label:'분류',type:'select',dep:'owner',map:{me:CAT_OUT,parent:null}},
+  {k:'pay',label:'결제수단',type:'select',options:PAY,def:'자동이체',show:['me'],showBy:'owner'},
+  {k:'from',label:'어디서 나가나',type:'select',options:[[SELF,'부모님 자금(통장 자동이체)'],...members().map(m=>[m.name,m.name+'이(가) 냄']),[POOL,'공동통장']],def:SELF,show:['parent'],showBy:'owner'},
   {k:'active',label:'사용 중',type:'checkbox',def:true},
   {k:'memo',label:'메모',type:'text',ph:'예: ○○카드 / 달러 결제(환율 따라 변동)'}
-];
+];f.find(x=>x.k==='cat').map.parent=CARE_OUT.filter(c=>c!=='잔액 조정'&&c!=='병원비(월 정산)'&&c!=='간병비').concat(['병원비(월 정산)','간병비']);return f;};
 function recurDue(r){
   const t=today(),d=parseD(t);
   const make=(y,m)=>{const last=new Date(y,m+1,0).getDate();return fmtD(new Date(y,m,Math.min(Math.max(1,r.day||1),last)));};
@@ -571,14 +575,19 @@ function recurDue(r){
 }
 const posted=(r,ym)=>(r.posted||[]).includes(ym);
 function view_recur(){
-  const ym=today().slice(0,7);
-  const act=S.recur.filter(r=>r.active),total=act.reduce((s,r)=>s+(+r.amount||0),0);
-  const pending=act.filter(r=>!posted(r,ym));
-  const rows=[...S.recur].sort((a,b)=>(b.active-a.active)||(a.day-b.day));
+  const ym=today().slice(0,7),pn=careName();
+  const grp=o=>{const all=S.recur.filter(r=>ownerOf(r)===o),act=all.filter(r=>r.active);return {all,act,total:act.reduce((s,r)=>s+(+r.amount||0),0),pending:act.filter(r=>!posted(r,ym))};};
+  const me=grp('me'),pa=grp('parent');
+  const section=(o,g,title,where)=>`<section class="card"${o==='parent'?' style="--acc:var(--c-care)"':''}><h2>${title}<span class="sp"></span><b style="font-size:15px">${won(g.total)}</b></h2>
+    <div class="toolbar" style="margin:0 0 4px"><button class="btn sm primary" data-act="addRecur" data-owner="${o}">＋ 추가</button><button class="btn sm" data-act="postRecur" data-owner="${o}"${g.pending.length?'':' disabled'}>이번 달분 ${where}에 기록${g.pending.length?` (${g.pending.length}건)`:''}</button></div>
+    ${g.all.length?`<ul class="list">${[...g.all].sort((a,b)=>(b.active-a.active)||(a.day-b.day)).map(recurRow).join('')}</ul>`:`<p class="empty">${o==='me'?'통신비·보험료·구독료 등 내가 매달 내는 돈을 등록하세요.':pn+' 집 관리비·공과금·재산세처럼 부모님 쪽에서 매달 나가는 돈을 등록하세요.'}</p>`}</section>`;
   return `
-  <section class="card"><div class="stats"><div class="stat"><small>월 고정지출</small><b class="neg">${won(total)}</b></div><div class="stat"><small>연 환산</small><b>${won(total*12)}</b></div><div class="stat"><small>이번 달 미기록</small><b>${pending.length}건</b></div></div>
-  <div class="toolbar" style="margin:10px 0 0"><button class="btn primary" data-act="addRecur">＋ 고정지출</button><button class="btn" data-act="postRecur"${pending.length?'':' disabled'}>이번 달분 가계부에 일괄 기록</button></div></section>
-  <section class="card"><h2>목록</h2>${rows.length?`<ul class="list">${rows.map(r=>{const due=recurDue(r),n=dday(due);return `<li class="row" data-act="editRecur" data-id="${r.id}"><span class="pill ${!r.active?'none':posted(r,ym)?'ok':n<=3?'soon':'info'}">${!r.active?'중지':posted(r,ym)?'기록됨':'매월 '+r.day+'일'}</span><div class="grow"><b>${esc(r.name)}</b><small>${esc(r.cat)} · ${esc(r.pay||'')}${r.memo?' · '+esc(r.memo):''}</small>${r.active?`<small>다음 납부 ${due} (${ddayLabel(n)})</small>`:''}</div><span class="amt">${num(r.amount)}</span></li>`;}).join('')}</ul>`:'<p class="empty">관리비·통신비·보험료·구독료 등 매월 나가는 돈을 등록하세요.</p>'}</section>`;
+  <section class="card"><div class="stats"><div class="stat"><small>내 고정비 / 월</small><b class="neg">${won(me.total)}</b></div><div class="stat"><small>${esc(pn)} 고정비 / 월</small><b style="color:var(--c-care)">${won(pa.total)}</b></div><div class="stat"><small>합계 / 연</small><b>${short((me.total+pa.total)*12)}원</b></div></div>
+  <p class="hint" style="margin:10px 0 0">내 것은 <b>내 가계부</b>로, ${esc(pn)} 것은 <b>${esc(pn)} 장부</b>로 따로 기록됩니다. 부모님 통장에서 자동이체되는 항목은 부모님 자금 잔액에서 빠집니다.</p></section>
+  ${section('me',me,'내 고정비','내 가계부')}
+  ${section('parent',pa,esc(pn)+' 집·생활 고정비',esc(pn)+' 장부')}`;
+}
+function recurRow(r){const ym=today().slice(0,7);{const due=recurDue(r),n=dday(due);return `<li class="row" data-act="editRecur" data-id="${r.id}"><span class="pill ${!r.active?'none':posted(r,ym)?'ok':n<=3?'soon':'info'}">${!r.active?'중지':posted(r,ym)?'기록됨':'매월 '+r.day+'일'}</span><div class="grow"><b>${esc(r.name)}</b><small>${esc(r.cat)} · ${ownerOf(r)==='parent'?esc(whoLabel(r.from||SELF)):esc(r.pay||'')}${r.memo?' · '+esc(r.memo):''}</small>${r.active?`<small>다음 납부 ${due} (${ddayLabel(n)})</small>`:''}</div><span class="amt">${num(r.amount)}</span></li>`;}
 }
 
 /* ---------- 기한관리 ---------- */
@@ -892,8 +901,8 @@ function view_gym(){
    지출: 누가 냈는지(가족 각자 / 공동통장 / 부모님 본인 돈)를 함께 기록
    입금: 가족 분담금(공동통장으로 보낸 돈) / 부모님 연금·환급·보험금(가족 부담을 줄여줌)
    정산: (가족이 부담한 지출 − 부모님 쪽 수입) × 각자 비율 = 각자 몫, 실제 낸 돈과의 차액을 송금 */
-const CARE_OUT=['잔액 조정','병원비(월 정산)','간병비','약제비','외래·검사','기저귀·소모품','식대·간식','이송·교통','용돈·기타'];
-const CARE_IN=['가족 분담금','부모님 자금 이체','기초연금','국민연금','연금·기초연금','본인부담상한제 환급','보험금(실손 등)','예금 이자','잔액 조정','기타 수입'];
+const CARE_OUT=['병원비(월 정산)','집 관리비·공과금','보험료·세금','통신비','간병비','약제비','외래·검사','기저귀·소모품','식대·간식','이송·교통','용돈·기타','잔액 조정'];
+const CARE_IN=['가족 분담금','부모님 자금 이체','기초연금','국민연금','연금·기초연금','본인부담상한제 환급','보험금(실손 등)','예금 이자','기타 수입','잔액 조정'];
 const POOL='__pool',SELF='__self';
 const careName=()=>S.careCfg.name||'부모님';
 const members=()=>S.careCfg.members||[];
@@ -947,6 +956,7 @@ function fundCard(){
    ${st.based?`<p class="hint" style="margin:6px 0 0">월평균 지출은 지난 ${st.based}개월 기준 (이번 달 제외)</p>`:''}
    <p class="hint" style="margin:10px 0 0">${st.net>=0?(st.avgOut?'연금으로 병원비를 충당하고 있어 잔액이 줄지 않습니다.':'아직 부모님 자금으로 낸 지출이 없습니다. 병원비를 ‘부모님 자금’으로 기록하면 계산됩니다.'):`지금 속도면 <b style="color:var(--over)">약 ${num(st.runway)}개월 뒤(${end}경)</b> 잔액이 바닥납니다. 그 뒤로는 가족 분담이 필요합니다.`}</p>
    ${barChart(st.series)}
+   ${(()=>{const pf=S.recur.filter(r=>r.active&&ownerOf(r)==='parent'&&(r.from||SELF)===SELF).reduce((s,r)=>s+(+r.amount||0),0);return pf?`<p class="hint" style="margin:8px 0 0">부모님 통장에서 매달 자동으로 나가는 고정비 <b>${won(pf)}</b> (고정지출 탭)</p>`:'';})()}
    <dl class="kv" style="margin-top:8px">${(f.incomes||[]).map(r=>`<dt>${esc(r.who)} ${esc(r.kind)}</dt><dd>${+r.amount?won(r.amount):'<span style="color:var(--muted);font-weight:400">금액 미입력</span>'} <small style="color:var(--muted);font-weight:400">매월 ${r.day||25}일</small></dd>`).join('')}</dl>
    ${janWarn?`<p class="hint" style="margin:8px 0 0;color:var(--soon)">기초연금·국민연금은 매년 1월 물가 반영으로 금액이 바뀝니다. 통장 입금액을 확인해 ‘보유금·연금’에서 금액을 고쳐 주세요.</p>`:''}</section>`;
 }
@@ -1088,7 +1098,7 @@ function collectAlerts(){
   S.rules.map(maintStatus).filter(s=>s.level==='over'||s.level==='soon').forEach(s=>a.push({tab:'car',level:s.level,badge:s.label,title:`${s.rule.item} 교체`,sub:[s.remKm!=null?(s.remKm>0?num(s.remKm)+'km 남음':num(-s.remKm)+'km 초과'):'',s.nextDate?s.nextDate+' ('+ddayLabel(s.days)+')':''].filter(Boolean).join(' · '),k:s.level==='over'?-9999:(s.days??30)}));
   S.sched.forEach(s=>{const nx=schedNext(s),n=dday(nx);if(n<=(s.alert??30))a.push({tab:'sched',level:n<0?'over':n<=7?'soon':'info',badge:ddayLabel(n),title:s.title,sub:nx+' · '+s.cat,k:n});});
   const ym=today().slice(0,7);
-  S.recur.filter(r=>r.active).forEach(r=>{const due=recurDue(r),n=dday(due);if(n<=5&&!posted(r,due.slice(0,7)))a.push({tab:'recur',level:'info',badge:ddayLabel(n),title:`${r.name} 납부`,sub:`${won(r.amount)} · ${r.pay||''}`,k:n});});
+  S.recur.filter(r=>r.active).forEach(r=>{const due=recurDue(r),n=dday(due);if(n<=5&&!posted(r,due.slice(0,7)))a.push({tab:'recur',level:'info',badge:ddayLabel(n),title:`${ownerOf(r)==='parent'?careName()+' · ':''}${r.name} 납부`,sub:`${won(r.amount)} · ${r.pay||''}`,k:n});});
   return a.sort((x,y)=>x.k-y.k);
 }
 function view_home(){
@@ -1203,7 +1213,7 @@ function render(){
   }
   $('#tabs').hidden=false;
   document.body.dataset.tab=tab;$('#logo').innerHTML=ICON[tab]||ICON.home;
-  $('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${ICON[k]}<span>${k==='care'?esc(S.careCfg.name||'부모님')+' 병원비':l}</span></button>`).join('');
+  $('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${ICON[k]}<span>${k==='care'?esc(S.careCfg.name||'부모님')+' 장부':l}</span></button>`).join('');
   $('#view').innerHTML=(window['view_'+tab]||view_home)();
 }
 function go(t){tab=t;try{localStorage.setItem(KEY+'.tab',t);}catch(e){}render();window.scrollTo(0,0);}
@@ -1254,17 +1264,25 @@ const ACT={
       save();dlg.close();render();toast('저장했습니다');};
     showDlg();
   },
-  addRecur:()=>{crud('recur','고정지출',recurFields,null);
+  addRecur:d=>{crud('recur','고정지출',recurFields(),null,{owner:d.owner||'me'});
     // 구독 서비스 이름을 고르면 분류를 '구독·서비스'로 자동 선택
     const nm=dlgForm.elements.namedItem('name'),cat=dlgForm.elements.namedItem('cat'),pay=dlgForm.elements.namedItem('pay');
     nm.addEventListener('change',()=>{if(/ChatGPT|Claude|넷플릭스|유튜브|쿠팡|네이버플러스|Google|디즈니|티빙|구독/i.test(nm.value)){cat.value='구독·서비스';pay.value='카드';}});},
-  editRecur:d=>crud('recur','고정지출',recurFields,find('recur',d.id)),
-  postRecur:async()=>{
-    const ym=today().slice(0,7),list=S.recur.filter(r=>r.active&&!posted(r,ym));
+  editRecur:d=>crud('recur','고정지출',recurFields(),find('recur',d.id)),
+  postRecur:async d=>{
+    const o=d.owner||'me',ym=today().slice(0,7),list=S.recur.filter(r=>r.active&&!posted(r,ym)&&ownerOf(r)===o);
     if(!list.length)return;
-    if(!await askConfirm(`${ymLabel(ym)} 고정지출 ${list.length}건(${won(list.reduce((s,r)=>s+(+r.amount||0),0))})을 가계부에 기록할까요?\n실제 금액이 다르면 가계부에서 수정하세요.`,'기록'))return;
-    list.forEach(r=>{const last=new Date(+ym.slice(0,4),+ym.slice(5),0).getDate();
-      addTx({type:'out',date:`${ym}-${String(Math.min(r.day||1,last)).padStart(2,'0')}`,amount:r.amount,cat:r.cat,pay:r.pay,memo:`[고정] ${r.name}`});
+    const where=o==='me'?'내 가계부':careName()+' 장부';
+    if(!await askConfirm(`${ymLabel(ym)} ${o==='me'?'내':careName()} 고정비 ${list.length}건(${won(list.reduce((s,r)=>s+(+r.amount||0),0))})을 ${where}에 기록할까요?\n실제 금액이 다르면 기록한 뒤 고치세요.`,'기록'))return;
+    const me=members()[0]?.name;
+    list.forEach(r=>{const last=new Date(+ym.slice(0,4),+ym.slice(5),0).getDate(),date=`${ym}-${String(Math.min(r.day||1,last)).padStart(2,'0')}`;
+      if(o==='me')addTx({type:'out',date,amount:r.amount,cat:r.cat,pay:r.pay,memo:`[고정] ${r.name}`});
+      else{
+        const who=r.from||SELF;
+        S.care.push({id:uid(),type:'out',date,amount:r.amount,cat:CARE_OUT.includes(r.cat)?r.cat:'집 관리비·공과금',who,memo:`[고정] ${r.name}`,tax:false});
+        // 내가 대신 낸 부모님 고정비는 내 가계부에도 '부모님·가족' 지출로
+        if(me&&who===me)addTx({type:'out',date,amount:r.amount,cat:'부모님·가족',memo:`[${careName()} 고정] ${r.name}`});
+      }
       r.posted=[...(r.posted||[]),ym].slice(-24);});
     save();render();toast(`${list.length}건 기록했습니다`);
   },
