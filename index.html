@@ -1371,6 +1371,21 @@ function fundStats(){
   const thisIn=S.care.filter(c=>c.date.startsWith(cm)&&c.who===SELF&&c.type==='in').reduce((s,c)=>s+(+c.amount||0),0);
   return {bal,monthlyIn,avgOut,net,runway,series,thisIn,thisOut,based:months.length,basis,fixedOut};
 }
+// 잔액이 어떻게 나왔는지 한 줄씩 보여 줌 (원금 + 들어온 돈 − 나간 돈, 시작일 이후 기록만)
+function fundBreakdown(){
+  const f=fundCfg(),t=today();if(!f.startDate)return '';
+  const recs=S.care.filter(c=>c.who===SELF&&c.date>=f.startDate&&c.date<=t);
+  const ins={},outs=[];
+  recs.forEach(c=>{if(c.type==='in')ins[c.cat]=(ins[c.cat]||0)+(+c.amount||0);else outs.push(c);});
+  const inSum=Object.values(ins).reduce((x,v)=>x+v,0),outSum=outs.reduce((x,c)=>x+(+c.amount||0),0);
+  outs.sort((a,b)=>a.date.localeCompare(b.date));
+  return `<details class="ref" style="margin:0 0 10px"><summary>잔액 계산 보기 (${f.startDate.replace(/-/g,'.')}부터)</summary><div class="tblwrap"><table class="tbl" style="margin-top:6px">
+   <tr><td>원금 (고정)</td><td class="r">${num(f.start)}</td></tr>
+   ${Object.entries(ins).map(([k,v])=>`<tr><td>+ ${esc(k)}</td><td class="r pos">+${num(v)}</td></tr>`).join('')}
+   ${outs.map(c=>`<tr data-act="editCare" data-id="${c.id}"><td>− ${c.date.slice(5).replace('-','/')} ${esc(c.memo||c.cat)}</td><td class="r neg">−${num(c.amount)}</td></tr>`).join('')}
+   <tr><th>= 지금 잔액</th><th class="r">${num((+f.start||0)+inSum-outSum)}</th></tr></table></div>
+   <p class="hint" style="margin:6px 0 0">나간 돈 줄을 누르면 고치거나 지울 수 있습니다. 같은 돈이 두 번 들어가 있지 않은지 확인하세요.</p></details>`;
+}
 function fundCard(){
   const f=fundCfg(),st=fundStats();
   if(!st)return `<section class="card"><h2>${esc(careName())} 돈</h2><p class="hint" style="margin:0 0 10px">원금(예: 3,900만 원)과 매달 들어오는 기초연금·국민연금만 넣으면, 지출할 때마다 잔액과 앞으로 몇 달 버틸 수 있는지 계산합니다.</p><button class="btn primary" data-act="careFund">원금·연금 넣기</button></section>`;
@@ -1378,6 +1393,7 @@ function fundCard(){
   const end=st.runway!=null?(()=>{const m=shiftYM(ym,st.runway);return `${m.slice(0,4)}년 ${Number(m.slice(5))}월`;})():'';
   const janWarn=today().slice(5,7)<='02'&&f.year!==today().slice(0,4);
   return `<section class="card"><h2>${esc(careName())} 돈 잔액<span class="sp"></span><button class="btn sm" data-act="careIncome">연금 금액</button><button class="btn sm" data-act="careFund">설정</button></h2>
+   ${fundBreakdown()}
    <div class="stats"><div class="stat" style="grid-column:span 3"><small>원금 ${won(f.start)} (고정) + 연금 − 지출${f.note?' · '+esc(f.note):''}</small><b style="font-size:22px;color:var(--acc)">${won(st.bal)}</b></div>
    <div class="stat"><small>매월 연금</small><b class="pos">${short(st.monthlyIn)}원</b></div><div class="stat"><small>월평균 지출</small><b class="neg">${short(st.avgOut)}원</b></div><div class="stat"><small>월 증감</small><b class="${st.net<0?'neg':'pos'}">${st.net>=0?'+':'-'}${short(Math.abs(st.net))}원</b></div></div>
    <p class="hint" style="margin:6px 0 0">월 지출 계산: ${st.basis==='hist'?`지난 ${st.based}개월 평균`:st.basis==='fixed'?'고정지출에 등록한 금액 기준 (영수증 입력이 3개월 쌓이면 실제 평균으로 바뀜)':'이번 달 기록 기준 — 요양병원비·공과금을 고정지출로 등록하면 정확해집니다'}</p>
