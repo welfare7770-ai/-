@@ -45,10 +45,10 @@ main{max-width:760px;margin:0 auto;padding:12px 16px 80px}
 .stat small{display:block;color:var(--muted);font-size:12px}
 .stat b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pos{color:var(--pos)}.neg{color:var(--neg)}
-.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.quick{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
 button{font:inherit;cursor:pointer}
 .btn,.quick button,.toolbar button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:8px 10px;font-weight:600}
-.quick button{padding:10px 4px;font-size:13px}
+.quick button{padding:10px 2px;font-size:12.5px}
 .btn.primary,button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
 :root[data-theme="dark"] button.primary,:root[data-theme="dark"] .btn.primary{color:#0f1a16}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.primary,:root:not([data-theme="light"]) .btn.primary{color:#0f1a16}}
@@ -77,6 +77,11 @@ button{font:inherit;cursor:pointer}
 .empty{color:var(--muted);text-align:center;padding:14px 0;margin:0}
 .hint{color:var(--muted);font-size:13px;margin:4px 0 10px}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.hike{border-top:1px solid var(--line);padding:12px 2px;cursor:pointer}.hike:first-child{border-top:0}
+.hike h3{margin:0;font-size:16px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}.hike h3 small{color:var(--muted);font-weight:400;font-size:13px}
+.hike .meta{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--bg);border-radius:8px;padding:3px 8px;font-size:12.5px;white-space:nowrap}.chip b{font-weight:700}
+.hike p{margin:6px 0 0;font-size:13.5px;white-space:pre-line}
 .kv dt{color:var(--muted)}.kv dd{margin:0;font-weight:600}
 input,select,textarea{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
 textarea{min-height:64px;resize:vertical}
@@ -140,7 +145,7 @@ const REPEAT_M={none:0,'1m':1,'6m':6,'1y':12,'2y':24,'5y':60,'10y':120};
 const GIFT_KIND=['결혼','부고(조의)','돌·생일','회갑·칠순','개업·이전','병문안','출산','기타'];
 const GIFT_REL=['가족·친척','친구','직장','이웃·지인','모임·동호회','기타'];
 
-function blank(){return {tx:[],budget:0,car:{name:'',plate:'',odo:0,fuelType:'휘발유',year:''},rules:DEFAULT_RULES.map(r=>({...r})),maint:[],fuel:[],recur:[],sched:[],gift:[],health:[]};}
+function blank(){return {tx:[],budget:0,car:{name:'',plate:'',odo:0,fuelType:'휘발유',year:''},rules:DEFAULT_RULES.map(r=>({...r})),maint:[],fuel:[],recur:[],sched:[],gift:[],health:[],hike:[]};}
 let S;
 try{S=Object.assign(blank(),JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){S=blank();}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}cloud.push();}
@@ -150,7 +155,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}cloud
 const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
   docs(){
     const out={meta:{budget:S.budget,car:S.car,rules:S.rules}};
-    for(const k of ['maint','fuel','recur','sched','gift','health'])out[k]={items:S[k]};
+    for(const k of ['maint','fuel','recur','sched','gift','health','hike'])out[k]={items:S[k]};
     const years={};S.tx.forEach(t=>{(years[t.date.slice(0,4)]||=[]).push(t);});
     for(const y in years)out['tx-'+y]={items:years[y]};
     for(const id in this.sent)if(id.startsWith('tx-')&&!out[id])out[id]=null; // 비워진 연도는 삭제
@@ -178,7 +183,7 @@ const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
     const got={};snap.docs.forEach(d=>{got[d.id]=d.data();});
     const n=blank();
     if(got.meta){n.budget=got.meta.budget||0;n.car={...n.car,...got.meta.car};if(Array.isArray(got.meta.rules))n.rules=got.meta.rules;}
-    for(const k of ['maint','fuel','recur','sched','gift','health'])if(got[k])n[k]=JSON.parse(JSON.stringify(got[k].items||[]));
+    for(const k of ['maint','fuel','recur','sched','gift','health','hike'])if(got[k])n[k]=JSON.parse(JSON.stringify(got[k].items||[]));
     for(const id in got)if(id.startsWith('tx-'))n.tx.push(...JSON.parse(JSON.stringify(got[id].items||[])));
     this.sent={};for(const id in got)this.sent[id]=JSON.stringify(got[id]);
     S=n;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
@@ -194,7 +199,7 @@ const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
     try{first=await db.collection(this.base).get();}catch(e){return setSync('이 기기에만 저장');}
     this.db=db;
     if(first.empty){ // 처음: 이 기기에 있던 기록을 올림
-      if(S.tx.length||S.maint.length||S.fuel.length||S.recur.length||S.sched.length||S.gift.length||S.health.length||S.car.name)await this.flush();
+      if(S.tx.length||S.maint.length||S.fuel.length||S.recur.length||S.sched.length||S.gift.length||S.health.length||S.hike.length||S.car.name)await this.flush();
       else setSync('☁ 동기화됨');
     }else{this.apply(first);setSync('☁ 동기화됨');}
     db.collection(this.base).onSnapshot(s=>this.apply(s),()=>setSync('⚠ 연결 끊김'));
@@ -512,6 +517,69 @@ function view_health(){
   <section class="card"><h2>측정 기록</h2>${list.length?`<table class="tbl"><tr><th>날짜</th><th class="r">혈압</th><th class="r">맥박</th><th class="r">혈당</th><th class="r">체중</th></tr>${list.map(h=>`<tr data-act="editHealth" data-id="${h.id}"><td>${h.date.slice(2)}<br><small style="color:var(--muted)">${esc(h.time||'')}</small></td><td class="r">${h.sys&&h.dia?h.sys+'/'+h.dia:'-'}</td><td class="r">${h.pulse||'-'}</td><td class="r">${h.sugar?h.sugar+`<br><small style="color:var(--muted)">${esc(h.sugarWhen||'')}</small>`:'-'}</td><td class="r">${h.weight||'-'}</td></tr>`).join('')}</table>`:'<p class="empty">혈압·혈당·체중을 기록하세요.</p>'}</section>`;
 }
 
+/* ---------- 등산 ---------- */
+const MOUNTAINS=['북한산','도봉산','관악산','수락산','불암산','청계산','인왕산','아차산','검단산','소요산','마니산','설악산','오대산','치악산','태백산','소백산','월악산','속리산','계룡산','대둔산','덕유산','지리산','내장산','무등산','월출산','가야산','팔공산','주왕산','금정산','한라산','칠갑산','명지산','운악산','감악산'];
+const WEATHER=['맑음','구름조금','구름많음','흐림','비','눈','안개','바람 강함','미세먼지'];
+const hikeFields=()=>[
+  {k:'date',label:'날짜',type:'date',def:today,req:1},
+  {k:'mountain',label:'오른 산',type:'text',req:1,list:()=>[...new Set([...S.hike.map(h=>h.mountain),...MOUNTAINS])],ph:'예: 북한산'},
+  {k:'peak',label:'정상·봉우리',type:'text',ph:'예: 백운대'},
+  {k:'region',label:'지역',type:'text',list:()=>[...new Set(S.hike.map(h=>h.region).filter(Boolean))],ph:'예: 서울 강북구'},
+  {k:'height',label:'해발고도(m)',type:'number'},
+  {k:'weather',label:'날씨',type:'select',options:WEATHER,def:'맑음'},
+  {k:'temp',label:'기온(℃)',type:'text',ph:'예: 12 또는 8~15'},
+  {k:'course',label:'코스',type:'text',ph:'예: 우이동 → 백운대 → 도선사'},
+  {k:'start',label:'출발 시각',type:'time'},
+  {k:'end',label:'하산 완료 시각',type:'time'},
+  {k:'distance',label:'등산거리(km)',type:'number',dec:1},
+  {k:'steps',label:'걸음수',type:'number'},
+  {k:'ascent',label:'누적 오르막(m)',type:'number',ph:'앱·시계에 나오면 입력'},
+  {k:'kcal',label:'소모 칼로리(kcal)',type:'number'},
+  {k:'level',label:'체감 난이도',type:'select',options:['쉬움','보통','힘듦','매우 힘듦'],def:'보통'},
+  {k:'stars',label:'만족도',type:'select',options:[['5','★★★★★'],['4','★★★★'],['3','★★★'],['2','★★'],['1','★']],def:'4'},
+  {k:'summit',label:'정상까지 올랐음',type:'checkbox',def:true},
+  {k:'top100',label:'산림청 100대 명산',type:'checkbox'},
+  {k:'with',label:'동행',type:'text',ph:'예: 혼자, 산악회, 아내와'},
+  {k:'transport',label:'교통',type:'text',ph:'예: 자가용(○○주차장), 지하철 4호선'},
+  {k:'cost',label:'경비(원)',type:'number',ph:'교통·식사·입장료 등'},
+  {k:'memo',label:'산행 기록·느낀 점',type:'textarea',ph:'예: 단풍 절정, 하산길 미끄러움, 다음엔 ○○코스'}
+];
+function hikeMin(h){
+  if(!h.start||!h.end)return null;
+  const [a,b]=h.start.split(':').map(Number),[c,d]=h.end.split(':').map(Number);
+  const m=c*60+d-(a*60+b);return m>0?m:null;
+}
+const hm=m=>m==null?'':`${Math.floor(m/60)}시간 ${m%60}분`;
+let hikeYear='전체',hikeQ='';
+function view_hike(){
+  const years=[...new Set(S.hike.map(h=>h.date.slice(0,4)))].sort().reverse();
+  const q=hikeQ.trim();
+  const list=S.hike.filter(h=>(hikeYear==='전체'||h.date.startsWith(hikeYear))&&(!q||[h.mountain,h.peak,h.region,h.course,h.with,h.memo].join(' ').includes(q))).sort((a,b)=>b.date.localeCompare(a.date)||(b.start||'').localeCompare(a.start||''));
+  const sum=k=>list.reduce((s,h)=>s+(+h[k]||0),0);
+  const mins=list.reduce((s,h)=>s+(hikeMin(h)||0),0);
+  const peaks=new Set(list.map(h=>h.mountain)).size;
+  const t100=new Set(S.hike.filter(h=>h.top100).map(h=>h.mountain)).size;
+  const cnt={};S.hike.forEach(h=>cnt[h.mountain]=(cnt[h.mountain]||0)+1);
+  const fav=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const card=h=>{
+    const m=hikeMin(h),spd=m&&h.distance?(h.distance/(m/60)).toFixed(1):null;
+    const chips=[h.distance?`🥾 <b>${h.distance}</b>km`:'',h.steps?`👣 <b>${num(h.steps)}</b>보`:'',m?`⏱ <b>${hm(m)}</b>`:'',spd?`평균 ${spd}km/h`:'',h.ascent?`⬆ ${num(h.ascent)}m`:'',h.kcal?`🔥 ${num(h.kcal)}kcal`:'',h.cost?`💰 ${num(h.cost)}원`:''].filter(Boolean);
+    return `<div class="hike" data-act="editHike" data-id="${h.id}">
+      <h3>⛰ ${esc(h.mountain)}${h.peak?` <small>${esc(h.peak)}</small>`:''}${h.height?` <small>${num(h.height)}m</small>`:''}<span class="sp" style="flex:1"></span><small>${'★'.repeat(+h.stars||0)}</small></h3>
+      <div class="meta">${h.date.slice(0,4)}년 ${dLabel(h.date)} · ${esc(h.weather||'')}${h.temp?' '+esc(h.temp)+'℃':''}${h.region?' · '+esc(h.region):''}${h.start?` · ${esc(h.start)}~${esc(h.end||'')}`:''}</div>
+      <div class="chips">${h.top100?'<span class="pill ok">100대 명산</span>':''}${h.summit===false?'<span class="pill none">정상 미등정</span>':''}<span class="pill info">${esc(h.level||'')}</span>${chips.map(c=>`<span class="chip">${c}</span>`).join('')}</div>
+      ${h.course?`<p>🗺 ${esc(h.course)}</p>`:''}${h.with||h.transport?`<p class="meta" style="margin:4px 0 0">${[h.with?'동행: '+esc(h.with):'',h.transport?'교통: '+esc(h.transport):''].filter(Boolean).join(' · ')}</p>`:''}${h.memo?`<p>${esc(h.memo)}</p>`:''}
+    </div>`;};
+  return `
+  <div class="toolbar"><select id="hikeYear" style="width:auto">${optHTML(['전체',...years],hikeYear)}</select><input type="search" id="hikeQ" placeholder="산·지역·동행 검색" value="${esc(q)}" style="flex:1;min-width:120px"><button class="btn primary" data-act="addHike">＋ 산행 기록</button></div>
+  <section class="card"><h2>${hikeYear==='전체'?'전체':hikeYear+'년'} 산행 요약</h2>
+   <div class="stats"><div class="stat"><small>산행 횟수</small><b>${list.length}회</b></div><div class="stat"><small>오른 산</small><b>${peaks}곳</b></div><div class="stat"><small>총 거리</small><b>${(Math.round(sum('distance')*10)/10).toLocaleString('ko-KR')}km</b></div>
+   <div class="stat"><small>총 걸음</small><b>${num(sum('steps'))}보</b></div><div class="stat"><small>총 산행시간</small><b>${Math.floor(mins/60)}시간 ${mins%60}분</b></div><div class="stat"><small>100대 명산</small><b>${t100} / 100</b></div></div>
+   ${t100?`<div class="bar" style="margin-top:10px"><span style="width:${t100}%"></span></div>`:''}
+   ${fav.length>1?`<p class="hint" style="margin:10px 0 0">자주 간 산: ${fav.map(([m,c])=>esc(m)+' '+c+'회').join(' · ')}</p>`:''}</section>
+  <section class="card"><h2>산행 일지</h2>${list.length?list.map(card).join(''):'<p class="empty">다녀온 산행을 기록하세요. 날씨·거리·걸음수·코스·느낀 점까지 남길 수 있습니다.</p>'}</section>`;
+}
+
 /* ---------- 홈 ---------- */
 function collectAlerts(){
   const a=[];
@@ -526,7 +594,7 @@ function view_home(){
   const recent=[...S.tx].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
   return `
   <section class="card"><h2>${ymLabel(ym)} 가계</h2><div class="stats"><div class="stat"><small>수입</small><b class="pos">${won(inc)}</b></div><div class="stat"><small>지출</small><b class="neg">${won(out)}</b></div><div class="stat"><small>잔액</small><b>${won(inc-out)}</b></div></div>${budgetBar(out)}</section>
-  <div class="quick"><button data-act="addTx">＋ 가계부</button><button data-act="addFuel">⛽ 주유</button><button data-act="addMaint">🔧 정비</button><button data-act="addHealth">❤️ 혈압</button></div>
+  <div class="quick"><button data-act="addTx">＋ 가계부</button><button data-act="addFuel">⛽ 주유</button><button data-act="addMaint">🔧 정비</button><button data-act="addHealth">❤️ 혈압</button><button data-act="addHike">⛰ 등산</button></div>
   <section class="card"><h2>알림 · 다가오는 일</h2>${al.length?`<ul class="list">${al.map(x=>`<li class="row" data-act="go" data-tab="${x.tab}"><span class="pill ${x.level}">${esc(x.badge)}</span><div class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)}</small></div></li>`).join('')}</ul>`:'<p class="empty">임박한 일이 없습니다.</p>'}</section>
   <section class="card"><h2>최근 가계부<span class="sp"></span><button class="btn sm" data-act="go" data-tab="ledger">전체</button></h2>${recent.length?`<ul class="list">${recent.map(txRow).join('')}</ul>`:'<p class="empty">아직 기록이 없습니다.</p>'}</section>
   ${!S.tx.length&&!S.maint.length?`<section class="card"><h2>처음 사용하시나요?</h2><p class="hint" style="margin:0">① 설정 없이 바로 가계부를 쓸 수 있습니다.<br>② 자동차 탭 → 차량정보·현재 주행거리 입력 → 소모품별 최근 교체일을 한 번씩 입력하면 다음 교체 시기를 자동 계산합니다.<br>③ 데이터는 이 기기 브라우저에만 저장됩니다. 설정 탭에서 주기적으로 백업하세요.</p></section>`:''}`;
@@ -534,7 +602,7 @@ function view_home(){
 
 /* ---------- 설정 ---------- */
 function view_settings(){
-  const cnt=`가계부 ${S.tx.length} · 정비 ${S.maint.length} · 주유 ${S.fuel.length} · 고정지출 ${S.recur.length} · 기한 ${S.sched.length} · 경조사 ${S.gift.length} · 건강 ${S.health.length}`;
+  const cnt=`가계부 ${S.tx.length} · 정비 ${S.maint.length} · 주유 ${S.fuel.length} · 고정지출 ${S.recur.length} · 기한 ${S.sched.length} · 경조사 ${S.gift.length} · 건강 ${S.health.length} · 등산 ${S.hike.length}`;
   let lastBk='';try{lastBk=localStorage.getItem(KEY+'.lastBackup')||'';}catch(e){}
   return `
   <section class="card"><h2>백업 · 복원</h2><p class="hint">${cloud.db?'claude.ai 계정에 저장되어 휴대폰·PC 어디서 열어도 같은 기록이 보입니다. 다른 사람은 이 기록을 볼 수 없습니다. 만일을 위해 가끔 백업 파일도 받아 두세요.':'지금은 이 기기의 이 브라우저에만 저장됩니다. 브라우저 데이터 삭제·기기 변경 시 사라지므로 백업 파일을 보관하세요.'}<br>현재: ${cnt}<br>마지막 백업: ${lastBk||'없음'}</p>
@@ -546,7 +614,7 @@ function view_settings(){
 }
 
 /* ---------- 렌더 & 동작 ---------- */
-const TABS=[['home','홈'],['ledger','가계부'],['car','자동차'],['recur','고정지출'],['sched','기한관리'],['gift','경조사'],['health','건강'],['settings','설정']];
+const TABS=[['home','홈'],['ledger','가계부'],['car','자동차'],['recur','고정지출'],['sched','기한관리'],['gift','경조사'],['hike','등산'],['health','건강'],['settings','설정']];
 let tab='home';try{tab=localStorage.getItem(KEY+'.tab')||'home';}catch(e){}
 function render(){
   $('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${l}</button>`).join('');
@@ -618,6 +686,11 @@ const ACT={
     if(_ledger&&r.amount>0)addTx(r.dir==='give'?{type:'out',date:r.date,amount:r.amount,cat:'경조사',memo:`[${r.kind}] ${r.person}`}:{type:'in',date:r.date,amount:r.amount,cat:'경조금',memo:`[${r.kind}] ${r.person}`});
   }),
   editGift:d=>crud('gift','경조사 기록',giftFields,find('gift',d.id)),
+  addHike:()=>openForm('산행 기록 추가',[...hikeFields(),{k:'_ledger',label:'경비를 가계부에도 기록',type:'checkbox',def:true}],null,v=>{
+    const {_ledger,...r}=v;S.hike.push({id:uid(),...r});
+    if(_ledger&&r.cost>0)addTx({type:'out',date:r.date,amount:r.cost,cat:'문화·여가',memo:`[등산] ${r.mountain}`});
+  }),
+  editHike:d=>crud('hike','산행 기록',hikeFields(),find('hike',d.id)),
   addHealth:()=>crud('health','측정 기록',healthFields,null),
   editHealth:d=>crud('health','측정 기록',healthFields,find('health',d.id)),
   backup:()=>{const t=today();download(`생활기록장_백업_${t}.json`,JSON.stringify({app:'lifebook',version:1,exported:new Date().toISOString(),data:S},null,1),'application/json');try{localStorage.setItem(KEY+'.lastBackup',t);}catch(e){}setTimeout(render,300);},
@@ -633,13 +706,14 @@ const ACT={
 $('#view').addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const f=ACT[el.dataset.act];if(f)f(el.dataset);});
 $('#view').addEventListener('input',e=>{
   const id=e.target.id;
-  if(id==='ledgerQ'||id==='giftQ'){
-    if(id==='ledgerQ')ledgerQ=e.target.value;else giftQ=e.target.value;
+  if(id==='ledgerQ'||id==='giftQ'||id==='hikeQ'){
+    if(id==='ledgerQ')ledgerQ=e.target.value;else if(id==='giftQ')giftQ=e.target.value;else hikeQ=e.target.value;
     const pos=e.target.selectionStart;render();const el=$('#'+id);el.focus();try{el.setSelectionRange(pos,pos);}catch(_){}
   }
 });
 $('#view').addEventListener('change',e=>{
   if(e.target.id==='schedCat'){schedCat=e.target.value;render();}
+  if(e.target.id==='hikeYear'){hikeYear=e.target.value;render();}
   if(e.target.id==='restoreFile'){
     const file=e.target.files[0];if(!file)return;
     e.target.value='';
