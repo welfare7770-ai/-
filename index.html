@@ -176,6 +176,9 @@ dialog::backdrop{background:rgba(10,20,15,.5)}
 #dlgForm h2::before{content:"";width:4px;height:16px;border-radius:2px;background:var(--acc)}
 .dlgx{margin-left:auto;flex:0 0 auto;width:38px;height:38px;border-radius:50%;border:0;background:var(--card2);color:var(--text);font-size:24px;line-height:1;display:grid;place-items:center;padding:0}
 .dlgx:hover{background:var(--line)}
+.fld input::placeholder,.rule input::placeholder{color:var(--muted);opacity:.55;font-style:italic}
+.bad{outline:2px solid var(--over)!important;outline-offset:1px}
+.errmsg{color:var(--over);font-size:12.5px;font-weight:600;margin-top:4px}
 .mh{display:block;font-size:12px;color:var(--acc);margin-top:3px;font-weight:600;min-height:16px}
 .preview{background:var(--card2);border-radius:12px;padding:10px 12px;font-size:13px;margin:8px 0}
 .fld{margin-bottom:10px}
@@ -691,8 +694,8 @@ function missingRecur(o){
    계좌마다 '확인한 잔액 + 확인일'을 적어 두고, 그 뒤에 가계부(그 통장 지정)·계좌 간 이동 기록으로 움직인 돈을 더하고 뺀다.
    통장 앱을 볼 때마다 '잔액 업데이트'를 하면 확인일이 새로 잡혀 오차가 0이 된다.
    증권 계좌 = 예수금 + 종목(수량×현재가). 대출은 빚으로 따로 빼서 순자산 = 자산 − 빚. 부모님 자금은 내 재산에 넣지 않는다. */
-const ACCT_TYPES=[['bank','입출금 통장'],['saving','적금·자유적금'],['deposit','예금'],['stock','증권 계좌'],['cash','현금'],['etc','기타 자산'],['loan','대출·빚']];
-const ACCT_COLOR={bank:'var(--c-assets)',saving:'var(--c-hike)',deposit:'var(--c-car)',stock:'var(--c-gym)',cash:'var(--c-sched)',etc:'var(--c-recur)',loan:'var(--c-health)'};
+const ACCT_TYPES=[['bank','입출금 통장'],['saving','적금·자유적금'],['deposit','예금'],['stock','증권 계좌'],['cash','현금'],['realty','부동산'],['etc','기타 자산 (보증금·해약환급금·자동차 등)'],['loan','대출·빚']];
+const ACCT_COLOR={bank:'var(--c-assets)',saving:'var(--c-hike)',deposit:'var(--c-car)',stock:'var(--c-gym)',cash:'var(--c-sched)',realty:'var(--c-care)',etc:'var(--c-recur)',loan:'var(--c-health)'};
 const typeName=k=>(ACCT_TYPES.find(x=>x[0]===k)||['','기타'])[1];
 const acctById=id=>S.accounts.find(a=>a.id===id);
 const acctOpts=()=>[['','선택 안 함'],...S.accounts.filter(a=>a.type!=='loan').map(a=>[a.id,a.name])];
@@ -761,7 +764,7 @@ function acctRow(a){
 function view_assets(){
   if(!S.accounts.length)return `<section class="hero"><div class="hero-date">내 재산</div><div class="hero-num" style="font-size:22px;margin-top:6px">통장·적금·증권을 한곳에</div>
    <div class="hero-sub" style="margin-top:6px">계좌마다 지금 잔액을 한 번 적어 두면, 가계부 기록으로 늘고 준 돈을 반영해 전체 재산과 매달 변화를 보여 줍니다.</div></section>
-   <section class="card"><h2>어떤 계좌부터 넣을까요?</h2><div class="quick" style="grid-template-columns:repeat(3,1fr);margin:0">${[['stock','증권 계좌'],['bank','입출금 통장'],['saving','적금·자유적금'],['deposit','예금'],['cash','현금'],['loan','대출·빚']].map(([k,l])=>`<button data-act="addAcct" data-type="${k}" style="--acc:${ACCT_COLOR[k]}">${ICON.assets}<span>${l}</span></button>`).join('')}</div>
+   <section class="card"><h2>어떤 계좌부터 넣을까요?</h2><div class="quick" style="grid-template-columns:repeat(3,1fr);margin:0">${[['stock','증권 계좌'],['bank','입출금 통장'],['saving','적금·자유적금'],['deposit','예금'],['cash','현금'],['realty','부동산'],['etc','기타 자산'],['loan','대출·빚'],['insurance','보험 해약환급금']].filter(x=>x[0]!=='insurance').map(([k,l])=>`<button data-act="addAcct" data-type="${k}" style="--acc:${ACCT_COLOR[k]}">${ICON.assets}<span>${l}</span></button>`).join('')}</div>
    <p class="hint" style="margin:12px 0 0">계좌번호는 끝 4자리만 적는 것을 권합니다. 주식 현재가는 자동으로 바뀌지 않으니 증권 앱을 볼 때 ‘현재가 업데이트’로 고쳐 주세요.</p></section>`;
   const t=assetTotals(),cm=today().slice(0,7),prev=S.assetHist[shiftYM(cm,-1)],diff=prev?t.net-prev.t:null;
   const months=Array.from({length:12},(_,i)=>shiftYM(cm,i-11)).filter(m=>S.assetHist[m]||m===cm);
@@ -834,7 +837,7 @@ function acctDialog(a,mode){
   const hrow=h=>`<div class="rule" style="grid-template-columns:1fr 50px 84px 84px 24px"><input class="hn" value="${esc(h.name||'')}" placeholder="종목명" aria-label="종목명"><input class="hq" type="number" inputmode="decimal" min="0" step="any" value="${esc(h.qty??'')}" placeholder="수량" aria-label="수량"><input class="ha" type="number" inputmode="numeric" min="0" value="${esc(h.avg??'')}" placeholder="매입가" aria-label="매입가(평단)"><input class="hp" type="number" inputmode="numeric" min="0" value="${esc(h.price??'')}" placeholder="현재가" aria-label="현재가"><button type="button" class="x" aria-label="삭제">✕</button></div>`;
   dlgForm.innerHTML=`<h2>${upd?esc(a.name)+' 업데이트':isNew?'계좌 추가':'계좌 수정'}</h2>
    <div class="fld" ${upd?'hidden':''}><label for="at">종류</label><select id="at">${optHTML(ACCT_TYPES,a.type)}</select></div>
-   <div class="fld2" ${upd?'hidden':''}><div class="fld"><label for="an">이름 *</label><input id="an" value="${esc(a.name)}" placeholder="예: 키움 위탁종합"></div>
+   <div class="fld2" ${upd?'hidden':''}><div class="fld"><label for="an">이름</label><input id="an" value="${esc(a.name)}" placeholder="예: 키움 위탁종합"></div>
    <div class="fld"><label for="ai">기관</label><input id="ai" value="${esc(a.inst||'')}" placeholder="예: 농협, 키움증권"></div></div>
    <div class="fld2"><div class="fld"><label for="ab" id="abl">잔액(원)</label><input id="ab" type="number" inputmode="numeric" step="1" value="${esc(upd?(acctValue(a)-(a.type==='stock'?stockVal(a):0)):a.balance)}"></div>
    <div class="fld"><label for="ad">잔액 확인일</label><input id="ad" type="date" value="${esc(upd?today():a.asOf||today())}"></div></div>
@@ -845,7 +848,7 @@ function acctDialog(a,mode){
    <p class="hint" id="ahint"></p>
    <div class="actions">${!isNew&&!upd?'<button type="button" class="danger" data-x="del">삭제</button>':''}<span class="sp"></span><button type="button" data-x="cancel">취소</button><button type="submit" class="primary">저장</button></div>`;
   const $d=q=>dlgForm.querySelector(q),hrows=$d('#hrows');
-  const PH={bank:['예: 농협 자립예탁금','예: 농협, 국민은행'],saving:['예: 농협 자유적금','예: 농협'],deposit:['예: 신협 정기예금','예: 신협'],stock:['예: 키움 위탁종합','예: 키움증권'],cash:['예: 지갑 현금, 비상금','예: 집 금고'],etc:['예: 전세보증금, 보험 해약환급금',''],loan:['예: 주택담보대출','예: 농협']};
+  const PH={bank:['예: 농협 자립예탁금','예: 농협, 국민은행'],saving:['예: 농협 자유적금','예: 농협'],deposit:['예: 신협 정기예금','예: 신협'],stock:['예: 키움 위탁종합','예: 키움증권'],cash:['예: 지갑 현금, 비상금','예: 집 금고'],realty:['예: 아파트, 토지','시세 출처: 예) KB시세'],etc:['예: 전세보증금, 보험 해약환급금',''],loan:['예: 주택담보대출','예: 농협']};
   const sync=()=>{const ty=$d('#at').value;$d('#hbox').hidden=ty!=='stock';$d('#an').placeholder=PH[ty][0];$d('#ai').placeholder=PH[ty][1];
     $d('#abl').textContent=ty==='stock'?'예수금 — 현금(원)':ty==='loan'?'남은 빚(원)':'잔액(원)';
     $d('#ahint').innerHTML=upd?(ty==='stock'?'증권 앱 ‘예수금’ 화면의 <b>인출 가능금(D+2 예수금)</b>을 넣고, 종목은 ‘잔고’ 화면의 보유수량·현재가로 맞추세요. 평소 사고팔 때는 ‘매수/매도’ 버튼을 쓰면 이 화면을 열 필요가 없습니다.':'통장 앱에 지금 찍힌 금액을 넣으세요. 확인일부터 다시 계산합니다.'):ty==='stock'?'예수금은 증권 앱 ‘예수금’ 화면의 금액, 주식은 수량과 현재가로 계산합니다. 대용금은 넣지 마세요.':ty==='loan'?'대출은 순자산에서 빠집니다. 상환하면 ‘계좌 간 이동’으로 대출 계좌로 보내세요.':'';};
@@ -856,8 +859,12 @@ function acctDialog(a,mode){
   const del=$d('[data-x=del]');
   if(del)del.onclick=async()=>{if(await askConfirm(`‘${a.name}’ 계좌를 삭제할까요? 가계부 기록은 남고 통장 연결만 풀립니다.`,'삭제')){S.accounts=S.accounts.filter(x=>x.id!==a.id);S.tx.forEach(t=>{if(t.acct===a.id)t.acct='';});S.moves=S.moves.filter(m=>m.from!==a.id&&m.to!==a.id);save();dlg.close();render();toast('삭제했습니다');}};
   dlgForm.onsubmit=e=>{e.preventDefault();
-    const name=$d('#an').value.trim();if(!name){toast('이름을 입력하세요');return;}
-    const ty=$d('#at').value,holdings=ty==='stock'?[...hrows.querySelectorAll('.rule')].map(r=>({name:r.querySelector('.hn').value.trim(),qty:+r.querySelector('.hq').value||0,avg:+r.querySelector('.ha').value||0,price:+r.querySelector('.hp').value||0})).filter(h=>h.name):[];
+    const ty=$d('#at').value;
+    dlgForm.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));dlgForm.querySelectorAll('.errmsg').forEach(x=>x.remove());
+    const name=$d('#an').value.trim()||$d('#ai').value.trim()||typeName(ty).split(' (')[0];
+    const hasHold=ty==='stock'&&[...hrows.querySelectorAll('.hn')].some(i=>i.value.trim());
+    if($d('#ab').value===''&&!hasHold){const el=$d('#ab');el.classList.add('bad');el.closest('.fld').insertAdjacentHTML('beforeend','<div class="errmsg">금액을 숫자로 넣어 주세요 (예: 1257805)</div>');el.focus();return;}
+    const holdings=ty==='stock'?[...hrows.querySelectorAll('.rule')].map(r=>({name:r.querySelector('.hn').value.trim(),qty:+r.querySelector('.hq').value||0,avg:+r.querySelector('.ha').value||0,price:+r.querySelector('.hp').value||0})).filter(h=>h.name):[];
     Object.assign(a,{type:ty,name,inst:$d('#ai').value.trim(),balance:+$d('#ab').value||0,asOf:$d('#ad').value||today(),holdings,checkedAt:Date.now(),memo:$d('#am').value.trim(),inTotal:$d('#atot').checked,main:ty!=='loan'&&$d('#amain').checked});
     if(a.main)S.accounts.forEach(x=>{if(x!==a)x.main=false;});
     if(isNew)S.accounts.push(a);
