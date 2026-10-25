@@ -1261,7 +1261,7 @@ function view_gym(){
    아버지 돈 → 부모님 자금 잔액에서 빠지고, 보관 통장(내 재산) 잔액도 함께 움직인다.
    내 돈 → 내 가계부에도 '부모님·가족' 지출로 들어간다.
    */
-const CARE_OUT=['병원비(월 정산)','집 관리비·공과금','보험료·세금','통신비','간병비','약제비','외래·검사','기저귀·소모품','식대·간식','이송·교통','용돈·기타','잔액 조정'];
+const CARE_OUT=['병원비(월 정산)','장기요양(주간보호·방문요양)','집 관리비·공과금','보험료·세금','통신비','간병비','약제비','외래·검사','기저귀·소모품','식대·간식','이송·교통','용돈·기타','잔액 조정'];
 const CARE_IN=['기초연금','국민연금','연금·기초연금','본인부담상한제 환급','보험금(실손 등)','예금 이자','기타 수입','잔액 조정'];
 const POOL='__pool',SELF='__self',ME='__me';
 const careName=()=>S.careCfg.name||'부모님';
@@ -1565,7 +1565,7 @@ const ACT={
     openForm('가계부 추가',f,null,v=>{
       const {owner,...r}=v;
       if(owner==='parent'){
-        S.care.push({id:uid(),ts:Date.now(),type:r.type,date:r.date,amount:r.amount,cat:r.cat,who:SELF,memo:r.memo,tax:r.type==='out'&&['병원비(월 정산)','약제비','외래·검사'].includes(r.cat)});
+        S.care.push({id:uid(),ts:Date.now(),type:r.type,date:r.date,amount:r.amount,cat:r.cat,who:SELF,memo:r.memo,tax:r.type==='out'&&['병원비(월 정산)','장기요양(주간보호·방문요양)','약제비','외래·검사'].includes(r.cat)});
         setTimeout(()=>toast(`${careName()} 장부에 기록했습니다 · ${careName()} 돈 잔액에 반영`),0);
       }else S.tx.push({id:uid(),ts:Date.now(),...r});
     });
@@ -1683,7 +1683,7 @@ const ACT={
       if(_ledger&&r.who!==SELF&&r.amount>0&&r.type==='out')addTx({type:'out',date:r.date,amount:r.amount,cat:'부모님·가족',acct:mainAcct(),memo:`[${careName()} ${r.cat}] ${r.memo||''}`.trim()});
     });
     // 공제대상 기본값: 병원·약국에 낸 돈만 체크 (간병인 직접 지급·소모품 등은 해제)
-    const el=n=>dlgForm.elements.namedItem(n),upd=()=>{el('tax').checked=el('type').value==='out'&&['병원비(월 정산)','약제비','외래·검사'].includes(el('cat').value);};
+    const el=n=>dlgForm.elements.namedItem(n),upd=()=>{el('tax').checked=el('type').value==='out'&&['병원비(월 정산)','장기요양(주간보호·방문요양)','약제비','외래·검사'].includes(el('cat').value);};
     el('cat').addEventListener('change',upd);el('type').addEventListener('change',upd);upd();},
   editCare:d=>{const rec=find('care',d.id);
     openForm('기록 수정',careFields(),rec,v=>{Object.assign(rec,v);delete rec.check;},()=>{S.care=S.care.filter(x=>x.id!==rec.id);if(rec.auto){const f=fundCfg();f.skip=[...(f.skip||[]),rec.id];S.careCfg.fund=f;}});},
