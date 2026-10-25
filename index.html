@@ -1269,7 +1269,7 @@ function view_hike(){
     const hmn=hikeMinutes(h),m=hmn.m||null,spd=m&&!hmn.est&&h.distance?(h.distance/(m/60)).toFixed(1):null;
     const chips=[h.distance?`🥾 <b>${h.distance}</b>km`:'',h.steps?`👣 <b>${num(h.steps)}</b>보`:'',m?`⏱ <b>${hmn.est?'약 ':''}${hm(m)}</b>`:'',spd?`평균 ${spd}km/h`:'',h.ascent?`⬆ ${num(h.ascent)}m`:'',h.kcal?`🔥 ${num(h.kcal)}kcal`:'',h.cost?`💰 ${num(h.cost)}원`:''].filter(Boolean);
     return `<div class="hike" data-act="editHike" data-id="${h.id}">
-      <h3>⛰ ${esc(h.mountain)}${h.peak?` <small>${esc(h.peak)}</small>`:''}${h.height?` <small>${num(h.height)}m</small>`:''}<span class="sp" style="flex:1"></span><small>${'★'.repeat(+h.stars||0)}</small></h3>
+      <h3>⛰ ${esc(h.mountain)}${h.peak?` <small>${esc(h.peak)}</small>`:''}${h.height?` <small>${num(h.height)}m</small>`:''}<span class="sp" style="flex:1"></span><small>${'★'.repeat(+h.stars||0)}</small><button class="btn sm" data-act="editHike" data-id="${h.id}" style="margin-left:6px">수정</button></h3>
       <div class="meta">${h.date.slice(0,4)}년 ${dLabel(h.date)} ${h.weather?' · '+esc(h.weather):''}${h.temp?' '+esc(h.temp)+'℃':''}${sidoOf(h)||h.region?' · '+esc([sidoOf(h),h.region].filter(Boolean).join(' ')):''}${h.start?` · ${esc(h.start)}~${esc(h.end||'')}`:''}</div>
       <div class="chips">${h.top100?'<span class="pill ok">100대 명산</span>':''}${h.summit===false?'<span class="pill none">정상 미등정</span>':''}${h.level?`<span class="pill info">${esc(h.level)}</span>`:''}${chips.map(c=>`<span class="chip">${c}</span>`).join('')}</div>
       ${h.course?`<p>🗺 ${esc(h.course)}</p>`:''}${h.with||h.transport?`<p class="meta" style="margin:4px 0 0">${[h.with?'동행: '+esc(h.with):'',h.transport?'교통: '+esc(h.transport):''].filter(Boolean).join(' · ')}</p>`:''}${h.memo?`<p>${esc(h.memo)}</p>`:''}
@@ -1289,7 +1289,7 @@ function view_hike(){
    ${Object.keys(bySido).length>1?`<div class="chips" style="margin-top:10px">${Object.entries(bySido).sort((a,b)=>b[1]-a[1]).map(([k,c])=>`<span class="chip">${esc(k)} <b>${c}</b>회</span>`).join('')}</div>`:''}
    </section>
   ${mineArr.length?`<section class="card"><h2>나의 산 목록<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${mineArr.length}곳</small></h2><div class="tblwrap"><table class="tbl"><tr><th>산</th><th class="r">다녀옴</th><th class="r hide-sm">해발</th><th class="r">처음</th><th class="r">최근</th></tr>${mineArr.map(m=>`<tr data-act="hikeFind" data-m="${esc(m.name)}"><td><b>${esc(m.name)}</b>${m.sido?` <small>${esc(m.sido)}</small>`:''}</td><td class="r">${m.n}회${m.sum<m.n?`<br><small>정상 ${m.sum}회</small>`:''}</td><td class="r hide-sm">${m.height?num(m.height)+'m':'-'}</td><td class="r">${m.first.slice(2).replace(/-/g,'.')}</td><td class="r">${m.last.slice(2).replace(/-/g,'.')}</td></tr>`).join('')}</table></div><p class="hint" style="margin:6px 0 0">산 이름을 누르면 그 산의 산행 기록만 모아 봅니다.</p></section>`:''}
-  <section class="card"><h2>산행 일지</h2>${list.length?list.map(card).join(''):'<p class="empty">다녀온 산행을 기록하세요. 날씨·거리·걸음수·코스·느낀 점까지 남길 수 있습니다.</p>'}</section>`;
+  <section class="card"><h2>산행 일지<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">카드를 누르면 수정</small></h2>${list.length?list.map(card).join(''):'<p class="empty">다녀온 산행을 기록하세요. 날씨·거리·걸음수·코스·느낀 점까지 남길 수 있습니다.</p>'}</section>`;
 }
 
 /* ---------- 헬스 ---------- */
@@ -1339,7 +1339,7 @@ function gymRow(g){
     parts=[g.minutes?g.minutes+'분':'',g.distance?g.distance+'km':'',g.speed?g.speed+'km/h':'',g.incline?'경사 '+g.incline+'%':''];
   }
   const vol=g.kind==='근력'&&g.weight&&g.sets&&g.reps?g.weight*g.sets*g.reps:0;
-  return `<li class="row" data-act="editGym" data-id="${g.id}"><span class="pill ${g.kind==='근력'?'soon':g.kind==='스트레칭'?'none':'info'}">${esc(g.kind)}</span><div class="grow"><b>${esc(title)}</b><small>${parts.filter(Boolean).join(' · ')||'-'}${vol?` · 볼륨 ${num(vol)}kg`:''}${g.memo?' · '+esc(g.memo):''}</small></div><span class="amt">${g.kcal?num(g.kcal)+' kcal':''}</span></li>`;
+  return `<li class="row" data-act="editGym" data-id="${g.id}" title="눌러서 수정"><span class="pill ${g.kind==='근력'?'soon':g.kind==='스트레칭'?'none':'info'}">${esc(g.kind)}</span><div class="grow"><b>${esc(title)}</b><small>${parts.filter(Boolean).join(' · ')||'-'}${vol?` · 볼륨 ${num(vol)}kg`:''}${g.memo?' · '+esc(g.memo):''}</small></div><span class="amt">${g.kcal?num(g.kcal)+' kcal':''}</span></li>`;
 }
 let gymYM=today().slice(0,7);
 function view_gym(){
@@ -1369,7 +1369,7 @@ function view_gym(){
    <p class="hint" style="margin:10px 0 0">보건복지부 「한국인을 위한 신체활동 지침」 성인 권장량: 숨이 약간 차는 중강도 유산소 주 150분 이상(고강도는 75분), 근력운동 주 2일 이상. 등산 탭에 기록한 산행은 헬스를 하지 않아도 유산소 시간으로 자동 합산됩니다. 산행시간을 안 적으면 거리로 추정합니다(시속 2km 기준).</p></section>
   <section class="card"><h2>최근 8주 운동시간(분)</h2>${barChart(weeks.map((ws,i)=>({label:i===7?'이번주':Number(ws.slice(5,7))+'/'+Number(ws.slice(8)),value:weekStats(ws).total,hi:i===7})),num)}</section>
   ${bestArr.length?`<section class="card"><h2>근력 운동별 기록</h2><div class="tblwrap"><table class="tbl"><tr><th>운동</th><th class="r">최고 무게</th><th class="r">최근</th></tr>${bestArr.map(b=>{const l=last[b.name];return `<tr><td>${esc(b.name)}</td><td class="r">${b.weight?b.weight+'kg':'맨몸'} × ${b.reps||'-'}회</td><td class="r">${l.weight?l.weight+'kg':'맨몸'} × ${l.reps||'-'}회<br><small>${l.date.slice(5).replace('-','/')}</small></td></tr>`;}).join('')}</table></div><p class="hint" style="margin:6px 0 0">같은 무게로 정해진 횟수를 2회 연속 채우면 무게를 2~5% 올리는 것이 일반적인 점진적 과부하 방법입니다.</p></section>`:''}
-  <section class="card"><h2>운동 기록<span class="sp"></span><span class="monthnav" style="font-size:14px"><button class="btn sm" data-act="gymYM" data-n="-1" aria-label="이전 달">◀</button>${ymLabel(gymYM)}<button class="btn sm" data-act="gymYM" data-n="1" aria-label="다음 달">▶</button></span></h2>
+  <section class="card"><h2>운동 기록 <small style="font-weight:400;color:var(--muted);font-size:12px">(줄을 누르면 수정)</small><span class="sp"></span><span class="monthnav" style="font-size:14px"><button class="btn sm" data-act="gymYM" data-n="-1" aria-label="이전 달">◀</button>${ymLabel(gymYM)}<button class="btn sm" data-act="gymYM" data-n="1" aria-label="다음 달">▶</button></span></h2>
    <p class="hint" style="margin:0 0 4px">이 달 ${mDays}일 · ${num(mMin)}분 · ${num(mK)}kcal</p>${html||'<p class="empty">근력은 세트·횟수, 런닝머신은 시간·칼로리만 입력해도 됩니다.</p>'}</section>`;
 }
 
@@ -1572,7 +1572,7 @@ function hikeNudge(){
   while(past.some(h=>weekStart(h.date)===w)){streak++;w=shiftWeek(w,-1);}
   const last=past[0],since=last?-dday(last.date):null;
   const st=streak>1?`<span class="streak">${streak}주 연속</span>`:'';
-  if(thisWk.length)return {cls:'done',title:`이번 주 산행 완료 ✔ ${esc(thisWk[0].mountain)}${thisWk[0].peak?' '+esc(thisWk[0].peak):''}`+st,sub:hikeLine(thisWk[0])+(thisWk.length>1?` · 이번 주 ${thisWk.length}회`:''),sub2:hikeTotals(),btn:'＋ 기록'};
+  if(thisWk.length)return {editId:thisWk[0].id,cls:'done',title:`이번 주 산행 완료 ✔ ${esc(thisWk[0].mountain)}${thisWk[0].peak?' '+esc(thisWk[0].peak):''}`+st,sub:hikeLine(thisWk[0])+(thisWk.length>1?` · 이번 주 ${thisWk.length}회`:''),sub2:hikeTotals(),btn:'＋ 기록'};
   const lastTxt=last?`마지막 산행 ${esc(last.mountain)} · ${since}일 전`:'아직 산행 기록이 없어요';
   const keep=streak?` ${streak}주 연속 기록이 끊기기 직전이에요.`:'';
   if(left===0)return {cls:'warn urgent',title:'오늘이 이번 주 마지막 날! 아직 산에 못 갔어요',sub:`가까운 산 한 바퀴라도 다녀오세요.${keep} ${lastTxt}`,btn:'＋ 기록'};
@@ -1593,7 +1593,7 @@ function gymNudge(){
 }
 function nudgeBox(which=['hike','gym']){
   const map={hike:[hikeNudgeFull,'addHike'],gym:[gymNudge,'addGym']};
-  return `<section class="nudge">${which.map(k=>{const n=map[k][0]();if(!n.sub2&&k==='gym'&&S.gym.length)n.sub2=gymTotals();return `<div class="nrow ${n.cls}" style="--acc:var(--c-${k});cursor:pointer" data-act="go" data-tab="${k}">${ICON[k]}<div class="grow"><b>${n.title}</b><small>${n.sub}</small>${n.sub2?`<small style="color:var(--acc);font-weight:600">${n.sub2}</small>`:''}</div><button class="btn sm${n.cls.includes('warn')?' primary':''}" data-act="${map[k][1]}">${n.btn}</button></div>`;}).join('')}</section>`;
+  return `<section class="nudge">${which.map(k=>{const n=map[k][0]();if(!n.sub2&&k==='gym'&&S.gym.length)n.sub2=gymTotals();return `<div class="nrow ${n.cls}" style="--acc:var(--c-${k});cursor:pointer" ${n.editId?`data-act="edit${k==='hike'?'Hike':'Gym'}" data-id="${n.editId}"`:`data-act="go" data-tab="${k}"`}>${ICON[k]}<div class="grow"><b>${n.title}</b><small>${n.sub}</small>${n.sub2?`<small style="color:var(--acc);font-weight:600">${n.sub2}</small>`:''}</div><button class="btn sm${n.cls.includes('warn')?' primary':''}" data-act="${map[k][1]}">${n.btn}</button></div>`;}).join('')}</section>`;
 }
 
 /* ---------- 홈 ---------- */
