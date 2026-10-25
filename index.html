@@ -430,7 +430,11 @@ function openForm(title,fields,rec,onSave,onDelete){
   if(del)del.onclick=async()=>{if(await askConfirm('이 기록을 삭제할까요?','삭제')){onDelete();save();dlg.close();render();toast('삭제했습니다');}};
   dlgForm.onsubmit=async e=>{
     e.preventDefault();
-    if(!dlgForm.checkValidity()){more=false;dlgForm.reportValidity();return;}
+    dlgForm.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));dlgForm.querySelectorAll('.errmsg').forEach(x=>x.remove());
+    if(!dlgForm.checkValidity()){more=false;
+      const bad=dlgForm.querySelector(':invalid:not(fieldset)');
+      if(bad){bad.classList.add('bad');(bad.closest('.fld')||bad.parentNode).insertAdjacentHTML('beforeend',`<div class="errmsg">${bad.value===''?'이 칸을 채워 주세요':'숫자를 다시 확인해 주세요'}</div>`);bad.scrollIntoView({block:'center',behavior:'smooth'});setTimeout(()=>bad.focus({preventScroll:true}),300);}
+      toast('빨갛게 표시된 칸을 확인해 주세요');return;}
     const v={};
     for(const fd of fields){
       const el=dlgForm.elements.namedItem(fd.k);
@@ -1686,8 +1690,8 @@ const ACT={
   careIncome:()=>{
     const f=fundCfg(),inc=f.incomes||[];
     if(!inc.length)return ACT.careFund();
-    openForm(`${new Date().getFullYear()}년 연금 금액`,inc.map((r,i)=>({k:'a'+i,label:`${r.who} ${r.kind} — 월 금액(원)`,type:'number',req:1})),Object.fromEntries(inc.map((r,i)=>['a'+i,r.amount||''])),v=>{
-      inc.forEach((r,i)=>{r.amount=+v['a'+i]||0;});S.careCfg.fund={...f,incomes:inc,year:today().slice(0,4)};
+    openForm(`${new Date().getFullYear()}년 연금 금액`,inc.map((r,i)=>({k:'a'+i,label:`${r.who||'(이름 없음)'} ${r.kind} — 월 금액(원)`,type:'number',dec:1})),Object.fromEntries(inc.map((r,i)=>['a'+i,r.amount||''])),v=>{
+      inc.forEach((r,i)=>{r.amount=Math.round(+v['a'+i]||0);});S.careCfg.fund={...f,incomes:inc,year:today().slice(0,4)};
       setTimeout(()=>toast('다음 지급일부터 새 금액으로 들어옵니다'),0);
     });
     dlgForm.querySelector('.actions').insertAdjacentHTML('beforebegin','<p class="hint">통장에 찍힌 금액 그대로 넣으세요. 이미 들어온 달의 기록은 그대로 두고, 다음 지급일부터 새 금액이 적용됩니다.</p>');
