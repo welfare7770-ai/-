@@ -581,7 +581,7 @@ function view_recur(){
   const me=grp('me'),pa=grp('parent');
   const section=(o,g,title,where)=>`<section class="card"${o==='parent'?' style="--acc:var(--c-care)"':''}><h2>${title}<span class="sp"></span><b style="font-size:15px">${won(g.total)}</b></h2>
     ${(()=>{const m=missingRecur(o);return m.length?`<div class="xfer" style="margin:0 0 8px;background:var(--over-bg)"><span style="color:var(--over)">납부일이 지났는데 기록 안 된 고정비 <b>${m.length}건</b> (${[...new Set(m.map(x=>Number(x.ym.slice(5))+'월'))].join('·')})</span><span class="amt" style="display:flex;gap:6px"><button class="btn sm" data-act="skipMissing" data-owner="${o}">기록 안 함</button><button class="btn sm primary" data-act="postMissing" data-owner="${o}">기록하기</button></span></div>`:'';})()}
-    ${o==='me'&&g.all.some(looksParent)?`<div class="xfer" style="margin:0 0 8px;background:color-mix(in srgb,var(--c-care) 12%,var(--card))"><span>${esc(pn)} 집 관련으로 보이는 항목 <b>${g.all.filter(looksParent).length}건</b>이 내 고정비에 있어요</span><button class="btn sm primary amt" style="--acc:var(--c-care)" data-act="moveRecur">옮기기</button></div>`:''}
+    ${o==='me'&&g.all.some(looksParent)?`<div class="xfer" style="margin:0 0 8px;background:color-mix(in srgb,var(--c-care) 12%,var(--card))"><span>${esc(pn)} 집 관련으로 보이는 항목: <b>${g.all.filter(looksParent).map(r=>esc(r.name)).join(', ')}</b></span><span class="amt" style="display:flex;gap:6px"><button class="btn sm" data-act="keepMine">내 것 맞아요</button><button class="btn sm primary" style="--acc:var(--c-care)" data-act="moveRecur">옮기기</button></span></div>`:''}
     <div class="toolbar" style="margin:0 0 4px"><button class="btn sm primary" data-act="addRecur" data-owner="${o}">＋ 추가</button>${g.all.length?(o==='me'?`<button class="btn sm" data-act="moveRecur">${esc(pn)} 고정비로 옮기기</button>`:`<button class="btn sm" data-act="moveRecur" data-dir="toMe">내 고정비로 옮기기</button>`):''}<button class="btn sm" data-act="postRecur" data-owner="${o}"${g.pending.length?'':' disabled'}>이번 달 남은 것 미리 기록${g.pending.length?` (${g.pending.length}건)`:''}</button></div>
     ${g.all.length?`<ul class="list">${[...g.all].sort((a,b)=>(b.active-a.active)||(a.day-b.day)).map(recurRow).join('')}</ul>`:`<p class="empty">${o==='me'?'통신비·보험료·구독료 등 내가 매달 내는 돈을 등록하세요.':pn+' 집 관리비·공과금·재산세처럼 부모님 쪽에서 매달 나가는 돈을 등록하세요.'}</p>`}</section>`;
   return `
@@ -1356,6 +1356,7 @@ const ACT={
     const vr=dlgForm.elements.namedItem('variable');nm.addEventListener('change',()=>{vr.checked=/전기|가스|수도|관리비/.test(nm.value);});
     nm.addEventListener('change',()=>{if(/ChatGPT|Claude|넷플릭스|유튜브|쿠팡|네이버플러스|Google|디즈니|티빙|구독/i.test(nm.value)){cat.value='구독·서비스';pay.value='카드';}});},
   editRecur:d=>crud('recur','고정지출',recurFields(),find('recur',d.id)),
+  keepMine:()=>{S.recur.filter(r=>ownerOf(r)==='me'&&looksParent(r)).forEach(r=>{r.keepMine=true;});save();render();toast('내 고정비로 두었습니다. 다시 묻지 않습니다');},
   moveRecur:d=>{
     if(d.dir==='toMe')return moveToMe();
     const mine=S.recur.filter(r=>ownerOf(r)==='me'),pn=careName();
