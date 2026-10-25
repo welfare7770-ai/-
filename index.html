@@ -1364,6 +1364,7 @@ function view_gym(){
   ${nudgeBox(['gym'])}
   <div class="toolbar"><button class="btn primary" data-act="addGym" data-kind="근력">＋ 근력</button><button class="btn primary" data-act="addGym" data-kind="런닝머신">＋ 런닝머신</button><button class="btn" data-act="addGym" data-kind="실내자전거">＋ 기타</button></div>
   <section class="card"><h2>이번 주 목표<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${w.ws.slice(5).replace('-','/')} ~</small></h2>${goalBars(w)}
+   <p class="hint" style="margin:8px 0 0;color:var(--acc);font-weight:600">${S.gym.length?gymTotals():''}</p>
    <div class="stats" style="margin-top:12px"><div class="stat"><small>운동한 날</small><b>${w.days}일</b></div><div class="stat"><small>총 운동시간</small><b>${w.total}분</b></div><div class="stat"><small>소모 칼로리</small><b>${num(w.kcal)}kcal</b></div></div>
    <p class="hint" style="margin:10px 0 0">보건복지부 「한국인을 위한 신체활동 지침」 성인 권장량: 숨이 약간 차는 중강도 유산소 주 150분 이상(고강도는 75분), 근력운동 주 2일 이상. 등산 탭에 기록한 산행은 헬스를 하지 않아도 유산소 시간으로 자동 합산됩니다. 산행시간을 안 적으면 거리로 추정합니다(시속 2km 기준).</p></section>
   <section class="card"><h2>최근 8주 운동시간(분)</h2>${barChart(weeks.map((ws,i)=>({label:i===7?'이번주':Number(ws.slice(5,7))+'/'+Number(ws.slice(8)),value:weekStats(ws).total,hi:i===7})),num)}</section>
@@ -1543,6 +1544,26 @@ function view_care(){
 /* ---------- 운동 독려 ----------
    등산: 매주(월~일) 1회 이상이 목표. 헬스: 마지막 운동 후 3일째부터 독려. */
 function shiftWeek(ws,n){const d=parseD(ws);d.setDate(d.getDate()+n*7);return fmtD(d);}
+// 산행 한 건 요약: 날짜 · 거리 · 시간 · 걸음
+function hikeLine(h){const m=hikeMinutes(h);return [`${Number(h.date.slice(5,7))}/${Number(h.date.slice(8))}`,h.distance?h.distance+'km':'',m.m?(m.est?'약 ':'')+hm(m.m):'',h.steps?num(h.steps)+'보':''].filter(Boolean).join(' · ');}
+// 누적: 올해 / 전체
+function hikeTotals(){
+  const y=today().slice(0,4),yr=S.hike.filter(h=>h.date.startsWith(y));
+  const km=a=>Math.round(a.reduce((x,h)=>x+(+h.distance||0),0)*10)/10,mins=a=>a.reduce((x,h)=>x+hikeMinutes(h).m,0);
+  return `올해 ${yr.length}회 · ${km(yr)}km · ${Math.round(mins(yr)/60)}시간 · 누적 ${S.hike.length}회 ${km(S.hike)}km · 오른 산 ${new Set(S.hike.filter(h=>h.summit!==false).map(h=>h.mountain)).size}곳`;
+}
+function gymLine(list){
+  const str=list.filter(g=>g.kind==='근력'),car=list.filter(g=>g.kind!=='근력');
+  const parts=[];
+  if(str.length)parts.push(`${esc(str[0].name||'근력')}${str[0].weight?' '+str[0].weight+'kg':''}${str[0].sets&&str[0].reps?` ${str[0].sets}×${str[0].reps}`:''}${str.length>1?` 외 ${str.length-1}개`:''}`);
+  if(car.length)parts.push(`${esc(car[0].kind)} ${car.reduce((x,g)=>x+(+g.minutes||0),0)}분`);
+  const kc=list.reduce((x,g)=>x+(+g.kcal||0),0);if(kc)parts.push(num(kc)+'kcal');
+  return parts.join(' · ');
+}
+function gymTotals(){
+  const t=today(),y=t.slice(0,4),ym=t.slice(0,7),days=a=>new Set(a.map(g=>g.date)).size,yr=S.gym.filter(g=>g.date.startsWith(y));
+  return `이번 달 ${days(S.gym.filter(g=>g.date.startsWith(ym)))}일 · 올해 ${days(yr)}일 ${Math.round(yr.reduce((x,g)=>x+(+g.minutes||0),0)/60)}시간 · 누적 ${days(S.gym)}일`;
+}
 function hikeNudge(){
   const t=today(),ws=weekStart(t),dow=(parseD(t).getDay()+6)%7,left=6-dow;
   const past=S.hike.filter(h=>h.date<=t).sort((a,b)=>b.date.localeCompare(a.date));
@@ -1551,26 +1572,28 @@ function hikeNudge(){
   while(past.some(h=>weekStart(h.date)===w)){streak++;w=shiftWeek(w,-1);}
   const last=past[0],since=last?-dday(last.date):null;
   const st=streak>1?`<span class="streak">${streak}주 연속</span>`:'';
-  if(thisWk.length)return {cls:'done',title:`이번 주 산행 완료 ✔ ${esc(thisWk[0].mountain)}`+st,sub:streak>1?`${streak}주째 매주 산에 가고 있어요. 다음 주도 이어가세요!`:'다음 주에도 한 번! 매주 1회 산행을 이어가세요.',btn:'기록'};
+  if(thisWk.length)return {cls:'done',title:`이번 주 산행 완료 ✔ ${esc(thisWk[0].mountain)}${thisWk[0].peak?' '+esc(thisWk[0].peak):''}`+st,sub:hikeLine(thisWk[0])+(thisWk.length>1?` · 이번 주 ${thisWk.length}회`:''),sub2:hikeTotals(),btn:'＋ 기록'};
   const lastTxt=last?`마지막 산행 ${esc(last.mountain)} · ${since}일 전`:'아직 산행 기록이 없어요';
   const keep=streak?` ${streak}주 연속 기록이 끊기기 직전이에요.`:'';
   if(left===0)return {cls:'warn urgent',title:'오늘이 이번 주 마지막 날! 아직 산에 못 갔어요',sub:`가까운 산 한 바퀴라도 다녀오세요.${keep} ${lastTxt}`,btn:'＋ 기록'};
   if(left<=2)return {cls:'warn urgent',title:`이번 주가 ${left+1}일 남았어요. 등산 가세요!`,sub:`이번 주 산행 0회.${keep} ${lastTxt}`,btn:'＋ 기록'};
   return {cls:'warn',title:'이번 주 등산 아직이에요. 산행 계획을 세워볼까요?',sub:`매주 1회 산행이 목표예요. ${lastTxt}`,btn:'＋ 기록'};
 }
+function hikeNudgeFull(){const n=hikeNudge();if(!n.sub2&&S.hike.length)n.sub2=hikeTotals();return n;}
 function gymNudge(){
   const t=today(),past=S.gym.filter(g=>g.date<=t).sort((a,b)=>b.date.localeCompare(a.date)),last=past[0];
   const wkDays=new Set(past.filter(g=>g.date>=weekStart(t)).map(g=>g.date)).size;
   if(!last)return {cls:'warn',title:'헬스 기록이 아직 없어요. 오늘 30분부터 시작해요!',sub:'근력은 세트·횟수, 런닝머신은 시간·칼로리만 적으면 돼요.',btn:'＋ 기록'};
   const d=-dday(last.date);
-  if(d===0)return {cls:'done',title:'오늘 운동 완료 ✔ 잘하셨어요!',sub:`이번 주 ${wkDays}일 운동했어요.`,btn:'추가'};
-  if(d<3)return {cls:'',title:`마지막 운동 ${d}일 전 · ${3-d}일 안에 다시 운동하세요`,sub:`이번 주 ${wkDays}일 운동 · 3일 넘게 쉬지 않는 게 목표예요.`,btn:'＋ 기록'};
+  const lastDay=past.filter(g=>g.date===last.date);
+  if(d===0)return {cls:'done',title:'오늘 운동 완료 ✔ 잘하셨어요!',sub:`${gymLine(lastDay)} · 이번 주 ${wkDays}일`,sub2:gymTotals(),btn:'＋ 추가'};
+  if(d<3)return {cls:'',title:`마지막 운동 ${d}일 전 · ${3-d}일 안에 다시 운동하세요`,sub:`${Number(last.date.slice(5,7))}/${Number(last.date.slice(8))} ${gymLine(lastDay)} · 이번 주 ${wkDays}일`,sub2:gymTotals(),btn:'＋ 기록'};
   if(d<7)return {cls:'warn urgent',title:`헬스 ${d}일째 쉬는 중이에요. 오늘은 꼭 운동하세요!`,sub:'런닝머신 20분만 걸어도 다시 시작이에요. 미루면 습관이 끊겨요.',btn:'＋ 기록'};
   return {cls:'warn urgent',title:`벌써 ${d}일째 운동을 안 했어요!`,sub:'오래 쉬었다면 평소 무게의 절반, 가벼운 유산소부터 다시 시작하세요.',btn:'＋ 기록'};
 }
 function nudgeBox(which=['hike','gym']){
-  const map={hike:[hikeNudge,'addHike'],gym:[gymNudge,'addGym']};
-  return `<section class="nudge">${which.map(k=>{const n=map[k][0]();return `<div class="nrow ${n.cls}" style="--acc:var(--c-${k})">${ICON[k]}<div class="grow"><b>${n.title}</b><small>${n.sub}</small></div><button class="btn sm${n.cls.includes('warn')?' primary':''}" data-act="${map[k][1]}">${n.btn}</button></div>`;}).join('')}</section>`;
+  const map={hike:[hikeNudgeFull,'addHike'],gym:[gymNudge,'addGym']};
+  return `<section class="nudge">${which.map(k=>{const n=map[k][0]();if(!n.sub2&&k==='gym'&&S.gym.length)n.sub2=gymTotals();return `<div class="nrow ${n.cls}" style="--acc:var(--c-${k});cursor:pointer" data-act="go" data-tab="${k}">${ICON[k]}<div class="grow"><b>${n.title}</b><small>${n.sub}</small>${n.sub2?`<small style="color:var(--acc);font-weight:600">${n.sub2}</small>`:''}</div><button class="btn sm${n.cls.includes('warn')?' primary':''}" data-act="${map[k][1]}">${n.btn}</button></div>`;}).join('')}</section>`;
 }
 
 /* ---------- 홈 ---------- */
