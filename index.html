@@ -115,25 +115,6 @@ textarea.report{font-size:12.5px;min-height:180px;font-family:var(--font);margin
 .hold{display:grid;grid-template-columns:1fr auto auto;gap:4px 10px;font-size:12.5px;color:var(--muted);margin:8px 0 0;padding:8px 10px;background:var(--card2);border-radius:10px}
 .hold b{color:var(--text);font-weight:600}
 .hold .r{text-align:right}
-#bnav{display:none}
-#qbtn{padding:6px 12px;font-size:13px}
-@media (max-width:760px){
-  nav#tabs{display:none!important}
-  #qbtn{display:none}
-  #bnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
-  main{padding-bottom:110px}
-  #toast{bottom:calc(86px + env(safe-area-inset-bottom,0px))}
-}
-#bnav button{border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font:inherit;font-size:11.5px;font-weight:600;padding:4px 0;min-width:0}
-#bnav button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-#bnav button .ic{width:23px;height:23px}
-#bnav button.on{color:var(--acc)}
-#bnav .plus .ic{width:48px;height:48px;padding:12px;border-radius:50%;background:var(--acc);color:var(--on-acc);margin-top:-20px;box-shadow:0 4px 14px rgba(0,0,0,.22)}
-.sheet{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-bottom:16px}
-.sheet h3{grid-column:1/-1;font-size:12.5px;color:var(--muted);margin:10px 0 0;font-weight:600}
-.sheet button{display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:14px;padding:12px 4px;font:inherit;font-size:12.5px;font-weight:600}
-.sheet button .ic{width:36px;height:36px;padding:8px;border-radius:11px;background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
-.sheet button.hot{border-color:var(--soon);background:var(--soon-bg)}
 .hero{border-radius:22px;padding:18px;margin-bottom:12px;background:linear-gradient(140deg,color-mix(in srgb,var(--acc) 20%,var(--card)),color-mix(in srgb,var(--acc) 6%,var(--card)));border:1px solid color-mix(in srgb,var(--acc) 25%,var(--line));position:relative;overflow:hidden}
 .hero::after{content:"";position:absolute;right:-30px;bottom:-40px;width:180px;height:120px;background:var(--acc);opacity:.08;clip-path:polygon(0 100%,35% 30%,55% 60%,75% 15%,100% 100%)}
 .hero-date{font-size:13px;color:var(--muted);font-weight:500}
@@ -238,10 +219,9 @@ details.ref .tbl{margin-top:8px;font-size:12.5px}
 </style>
 </head>
 <body>
-<header class="top"><span class="logo" id="logo"></span><h1>생활기록장</h1><button id="qbtn" class="btn primary" hidden>＋ 입력</button><span id="sync"></span><button id="lockBtn" hidden aria-label="지금 잠그기" title="지금 잠그기"></button></header>
+<header class="top"><span class="logo" id="logo"></span><h1>생활기록장</h1><span id="sync"></span><button id="lockBtn" hidden aria-label="지금 잠그기" title="지금 잠그기"></button></header>
 <nav id="tabs"></nav>
 <main id="view"></main>
-<nav id="bnav" aria-label="주요 메뉴"></nav>
 <dialog id="dlg"><form id="dlgForm" novalidate></form></dialog>
 <dialog id="cfm"><form id="cfmForm" style="padding:16px"><p id="cfmMsg" style="white-space:pre-line;margin:0 0 4px"></p><div class="actions"><span class="sp"></span><button type="button" id="cfmNo">취소</button><button type="submit" class="primary" id="cfmYes">확인</button></div></form></dialog>
 <div id="toast"></div>
@@ -1524,6 +1504,7 @@ function view_home(){
    <div class="hero-sub" style="margin-top:6px">남은 돈 <b>${won(inc-out)}</b>${(()=>{const sv=S.tx.filter(x=>x.type==='out'&&x.cat==='저축·투자'&&x.date.startsWith(ym)).reduce((s,x)=>s+(+x.amount||0),0);return sv?` · 저축 ${won(sv)}`:'';})()}</div>${budgetBar(out-(S.tx.filter(x=>x.type==='out'&&x.cat==='저축·투자'&&x.date.startsWith(ym)).reduce((s,x)=>s+(+x.amount||0),0)))}</section>
   ${netWorthCard()}
   ${fatherCard()}
+  <div class="quick">${[['addTx','ledger','가계부'],['addFuel','car','주유'],['addMaint','car','정비'],['addHealth','health','혈압·혈당'],['addGym','gym','운동'],['addHike','hike','등산']].map(([a,k,l])=>`<button data-act="${a}" style="--acc:var(--c-${k})">${ICON[k]}<span>${l}</span></button>`).join('')}</div>
   <section class="card"><h2>알림 · 다가오는 일</h2>${al.length?`<ul class="list">${al.map(x=>`<li class="row" data-act="${x.act||'go'}" data-tab="${x.tab}"${x.id?` data-id="${x.id}" data-ym="${x.ym}"`:''}><span class="pill ${x.level}">${esc(x.badge)}</span><div class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)}</small></div></li>`).join('')}</ul>`:'<p class="empty">임박한 일이 없습니다.</p>'}</section>
   <section class="card" style="--acc:var(--c-gym)"><h2>이번 주 운동<span class="sp"></span><button class="btn sm" data-act="go" data-tab="gym">헬스</button></h2>${goalBars(w)}</section>
   <section class="card"><h2>최근 가계부<span class="sp"></span><button class="btn sm" data-act="go" data-tab="ledger">전체</button></h2>${recent.length?`<ul class="list">${recent.map(txRow).join('')}</ul>`:'<p class="empty">아직 기록이 없습니다.</p>'}</section>
@@ -1545,7 +1526,7 @@ function view_settings(){
 }
 
 /* ---------- 렌더 & 동작 ---------- */
-const TABS=[['home','홈'],['ledger','가계부'],['assets','내 재산'],['care','아버지 장부'],['recur','고정지출'],['sched','기한관리'],['gift','경조사'],['car','자동차'],['health','건강'],['gym','헬스'],['hike','등산'],['settings','설정']];
+const TABS=[['home','홈'],['ledger','가계부'],['assets','내 재산'],['car','자동차'],['recur','고정지출'],['sched','기한관리'],['gift','경조사'],['care','아버지 장부'],['hike','등산'],['gym','헬스'],['health','건강'],['settings','설정']];
 let tab='home';try{tab=localStorage.getItem(KEY+'.tab')||'home';}catch(e){}
 /* ---------- 앱 잠금 ----------
    숫자 비밀번호(4~6자리)는 원문을 저장하지 않고 무작위 값과 섞은 해시만 저장(계정 동기화로 모든 기기에 적용).
@@ -1621,40 +1602,16 @@ document.addEventListener('keydown',e=>{if(!needLock()||dlg.open||$('#cfm').open
 function render(){
   const lb=$('#lockBtn');lb.hidden=!lockOn()||needLock();lb.innerHTML=LOCK_ICON;
   if(needLock()){
-    document.body.dataset.tab='home';$('#logo').innerHTML=LOCK_ICON;$('#tabs').hidden=true;$('#bnav').hidden=true;$('#qbtn').hidden=true;
+    document.body.dataset.tab='home';$('#logo').innerHTML=LOCK_ICON;$('#tabs').hidden=true;
     $('#view').innerHTML=lockHTML();return;
   }
-  $('#tabs').hidden=false;$('#bnav').hidden=false;$('#qbtn').hidden=false;
+  $('#tabs').hidden=false;
   if(autoPost())save();
-  const pn=careName(),rc=receiptDue().length;
-  $('#bnav').innerHTML=[['home','홈'],['ledger','가계부'],['__plus','입력'],['care',pn],['__menu','전체']].map(([k,l])=>k==='__plus'?`<button class="plus" data-b="plus" style="--acc:var(--c-${tab==='home'?'home':tab})" aria-label="빠른 입력">${ICON.plus}<span>${l}</span></button>`:k==='__menu'?`<button data-b="menu">${ICON.menu}<span>${l}</span></button>`:`<button data-tab="${k}" class="${k===tab?'on':''}" style="--acc:var(--c-${k})">${ICON[k]}<span>${esc(l)}${k==='care'&&rc?` ●`:''}</span></button>`).join('');
   document.body.dataset.tab=tab;$('#logo').innerHTML=ICON[tab]||ICON.home;
   $('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${ICON[k]}<span>${k==='care'?esc(careName())+' 장부':l}</span></button>`).join('');
   $('#view').innerHTML=(window['view_'+tab]||view_home)();
 }
 function go(t){tab=t;try{localStorage.setItem(KEY+'.tab',t);}catch(e){}render();window.scrollTo(0,0);}
-$('#bnav').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.tab)go(b.dataset.tab);else if(b.dataset.b==='plus')openQuick();else if(b.dataset.b==='menu')openMenu();});
-$('#qbtn').addEventListener('click',()=>openQuick());
-// 전체 메뉴(묶음별)
-function openMenu(){
-  const G=[['돈 관리',['ledger','assets','care','recur']],['생활',['sched','gift','car']],['건강·운동',['health','gym','hike']],['기타',['home','settings']]];
-  const nm=k=>k==='care'?careName()+' 장부':(TABS.find(t=>t[0]===k)||['',''])[1];
-  dlgForm.innerHTML=`<h2>전체 메뉴</h2><div class="sheet">${G.map(([g,ks])=>`<h3>${g}</h3>`+ks.map(k=>`<button type="button" data-go="${k}" style="--acc:var(--c-${k})">${ICON[k]}<span>${esc(nm(k))}</span></button>`).join('')).join('')}</div>`;
-  dlgForm.onsubmit=e=>e.preventDefault();
-  dlgForm.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{dlg.close();go(b.dataset.go);});
-  showDlg();
-}
-// 빠른 입력: 어느 화면에서든 한 번에
-function openQuick(){
-  const pn=careName(),due=receiptDue();
-  const items=[...due.map(d=>['receipt',{id:d.r.id,ym:d.ym},ownerOf(d.r)==='parent'?'care':'ledger',`${d.r.name} ${Number(d.ym.slice(5))}월 영수증`,true]),
-    ['addTx',{},'ledger','내 지출·수입'],['addCare',{type:'out'},'care',`${pn} 돈 지출`],['addHealth',{},'health','혈압·혈당'],
-    ['addGym',{},'gym','운동'],['addHike',{},'hike','등산'],['addFuel',{},'car','주유'],['addMaint',{},'car','정비'],['addSched',{},'sched','기한·일정'],['addGift',{},'gift','경조사']];
-  dlgForm.innerHTML=`<h2>무엇을 기록할까요?</h2><div class="sheet">${items.map(([a,d,k,l,hot],i)=>`<button type="button" data-i="${i}" class="${hot?'hot':''}" style="--acc:var(--c-${k})">${ICON[k]}<span>${esc(l)}</span></button>`).join('')}</div>`;
-  dlgForm.onsubmit=e=>e.preventDefault();
-  dlgForm.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const [a,d]=items[+b.dataset.i];dlg.close();ACT[a](d);});
-  showDlg();
-}
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(b){go(b.dataset.tab);b.scrollIntoView({inline:'center',block:'nearest'});}});
 
 async function download(name,text,type){
