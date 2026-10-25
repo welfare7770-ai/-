@@ -109,6 +109,15 @@ textarea.report{font-size:12.5px;min-height:180px;font-family:var(--font);margin
 .legend b{color:var(--text);font-weight:600}
 .nw{cursor:pointer}
 .nw .big{font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--c-assets)}
+.hold-edit{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;background:var(--card2)}
+.he-top{display:flex;gap:8px;align-items:center}
+.he-top input{font-size:16px;font-weight:600;background:var(--card)}
+.he-top .x{border:0;background:none;color:var(--over);font-size:18px;width:36px;height:36px;flex:0 0 auto}
+.he-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.he-grid label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-weight:500;min-width:0}
+.he-grid input{font-size:16px;background:var(--card);padding:10px}
+.he-sum{display:block;margin-top:6px;font-size:12.5px;color:var(--acc);font-weight:600;min-height:16px}
+@media (max-width:420px){.he-grid{grid-template-columns:1fr 1fr}.he-grid label:first-child{grid-column:1/-1}}
 .acct{border-top:1px solid var(--line);padding:12px 2px}.acct:first-of-type{border-top:0}
 .acct-top{display:flex;align-items:center;gap:10px;cursor:pointer}
 .acct-top b{display:block;font-weight:600}.acct-top small{display:block;color:var(--muted);font-size:12.5px}
@@ -897,14 +906,17 @@ function undoTrade(a){
 function acctDialog(a,mode){
   const isNew=!a;a=a||{id:uid(),type:mode||'bank',name:'',inst:'',balance:'',asOf:today(),holdings:[],inTotal:true,main:false};
   const upd=mode==='update';
-  const hrow=h=>`<div class="rule" style="grid-template-columns:1fr 50px 84px 84px 24px"><input class="hn" value="${esc(h.name||'')}" placeholder="종목명" aria-label="종목명"><input class="hq" type="number" inputmode="decimal" min="0" step="any" value="${esc(h.qty??'')}" placeholder="수량" aria-label="수량"><input class="ha" type="number" inputmode="numeric" min="0" value="${esc(h.avg??'')}" placeholder="매입가" aria-label="매입가(평단)"><input class="hp" type="number" inputmode="numeric" min="0" value="${esc(h.price??'')}" placeholder="현재가" aria-label="현재가"><button type="button" class="x" aria-label="삭제">✕</button></div>`;
+  // 종목 하나 = 카드 한 장 (휴대폰에서도 크게)
+  const hrow=h=>`<div class="hold-edit"><div class="he-top"><input class="hn" value="${esc(h.name||'')}" placeholder="종목명 (예: SK하이닉스)" aria-label="종목명"><button type="button" class="x" aria-label="종목 삭제">✕</button></div>
+    <div class="he-grid"><label>수량(주)<input class="hq" type="number" inputmode="decimal" min="0" step="any" value="${esc(h.qty??'')}"></label><label>매입가(평단·원)<input class="ha" type="number" inputmode="numeric" min="0" value="${esc(h.avg??'')}"></label><label>현재가(원)<input class="hp" type="number" inputmode="numeric" min="0" value="${esc(h.price??'')}"></label></div>
+    <small class="he-sum"></small></div>`;
   dlgForm.innerHTML=`<h2>${upd?esc(a.name)+' 업데이트':isNew?'재산 추가':'재산 수정'}</h2>
    <div class="fld" ${upd?'hidden':''}><label for="at">종류</label><select id="at">${optHTML(ACCT_TYPES,a.type)}</select></div>
    <div class="fld2" ${upd?'hidden':''}><div class="fld"><label for="an">이름</label><input id="an" value="${esc(a.name)}" placeholder="예: 키움 위탁종합"></div>
    <div class="fld"><label for="ai">기관</label><input id="ai" value="${esc(a.inst||'')}" placeholder="예: 농협, 키움증권"></div></div>
    <div class="fld2"><div class="fld"><label for="ab" id="abl">잔액(원)</label><input id="ab" type="number" inputmode="numeric" step="1" value="${esc(upd?(acctValue(a)-(a.type==='stock'?stockVal(a):0)):a.balance)}"></div>
    <div class="fld"><label for="ad">잔액 확인일</label><input id="ad" type="date" value="${esc(upd?today():a.asOf||today())}"></div></div>
-   <div id="hbox" ${a.type==='stock'?'':'hidden'}><p class="hint" style="margin:0 0 6px">보유 종목 — 종목명 / 수량 / 매입가(평단) / <b>현재가</b></p><div id="hrows">${(a.holdings||[]).map(hrow).join('')}</div><button type="button" class="btn sm" id="addH">＋ 종목 추가</button></div>
+   <div id="hbox" ${a.type==='stock'?'':'hidden'}><p class="hint" style="margin:4px 0 8px;font-weight:600;color:var(--text)">보유 종목</p><div id="hrows">${(a.holdings||[]).map(hrow).join('')}</div><button type="button" class="btn sm" id="addH">＋ 종목 추가</button></div>
    <div ${upd?'hidden':''}><div class="fld" style="margin-top:10px"><label for="am">메모</label><input id="am" value="${esc(a.memo||'')}" placeholder="예: 끝자리 7637, 월급통장"></div>
    <label class="fld chk" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="amain"${a.main?' checked':''}> 가계부 기본 통장 (새 기록의 ‘어느 통장’ 기본값)</label>
    <label class="fld chk" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="atot"${a.inTotal!==false?' checked':''}> 내 재산 합계에 포함</label></div>
@@ -916,8 +928,12 @@ function acctDialog(a,mode){
     $d('#abl').textContent=ty==='stock'?'예수금 — 현금(원)':ty==='loan'?'남은 빚(원)':'잔액(원)';
     $d('#ahint').innerHTML=upd?(ty==='stock'?'증권 앱 ‘예수금’ 화면의 <b>인출 가능금(D+2 예수금)</b>을 넣고, 종목은 ‘잔고’ 화면의 보유수량·현재가로 맞추세요. 평소 사고팔 때는 ‘매수/매도’ 버튼을 쓰면 이 화면을 열 필요가 없습니다.':'통장 앱에 지금 찍힌 금액을 넣으세요. 확인일부터 다시 계산합니다.'):ty==='stock'?'예수금은 증권 앱 ‘예수금’ 화면의 금액, 주식은 수량과 현재가로 계산합니다. 대용금은 넣지 마세요.':ty==='loan'?'대출은 순자산에서 빠집니다. 상환하면 ‘계좌 간 이동’으로 대출 계좌로 보내세요.':'';};
   $d('#at').addEventListener('change',sync);sync();
-  hrows.onclick=e=>{if(e.target.closest('.x'))e.target.closest('.rule').remove();};
-  $d('#addH').onclick=()=>hrows.insertAdjacentHTML('beforeend',hrow({}));
+  hrows.onclick=e=>{if(e.target.closest('.x'))e.target.closest('.hold-edit').remove();};
+  // 종목마다 평가금액·손익을 바로 보여 줌
+  const hsum=()=>hrows.querySelectorAll('.hold-edit').forEach(c=>{const q=+c.querySelector('.hq').value||0,a=+c.querySelector('.ha').value||0,pr=+c.querySelector('.hp').value||0,el=c.querySelector('.he-sum');
+    el.textContent=q&&pr?`평가 ${num(Math.round(q*pr))}원${a?` · 손익 ${q*(pr-a)>=0?'+':''}${num(Math.round(q*(pr-a)))}원 (${((pr/a-1)*100).toFixed(1)}%)`:''}`:'';});
+  hrows.addEventListener('input',hsum);setTimeout(hsum);
+  $d('#addH').onclick=()=>{hrows.insertAdjacentHTML('beforeend',hrow({}));hrows.lastElementChild.querySelector('.hn').focus();};
   $d('[data-x=cancel]').onclick=()=>dlg.close();
   let more=false;const mb=$d('[data-more]');if(mb)mb.onclick=()=>{more=true;dlgForm.requestSubmit();};
   const del=$d('[data-x=del]');
@@ -928,7 +944,7 @@ function acctDialog(a,mode){
     const name=$d('#an').value.trim()||$d('#ai').value.trim()||typeName(ty).split(' (')[0];
     const hasHold=ty==='stock'&&[...hrows.querySelectorAll('.hn')].some(i=>i.value.trim());
     if($d('#ab').value===''&&!hasHold){more=false;const el=$d('#ab');el.classList.add('bad');el.closest('.fld').insertAdjacentHTML('beforeend','<div class="errmsg">금액을 숫자로 넣어 주세요 (예: 1257805)</div>');el.focus();return;}
-    const holdings=ty==='stock'?[...hrows.querySelectorAll('.rule')].map(r=>({name:r.querySelector('.hn').value.trim(),qty:+r.querySelector('.hq').value||0,avg:+r.querySelector('.ha').value||0,price:+r.querySelector('.hp').value||0})).filter(h=>h.name):[];
+    const holdings=ty==='stock'?[...hrows.querySelectorAll('.hold-edit')].map(r=>({name:r.querySelector('.hn').value.trim(),qty:+r.querySelector('.hq').value||0,avg:+r.querySelector('.ha').value||0,price:+r.querySelector('.hp').value||0})).filter(h=>h.name):[];
     Object.assign(a,{type:ty,name,inst:$d('#ai').value.trim(),balance:+$d('#ab').value||0,asOf:$d('#ad').value||today(),holdings,checkedAt:Date.now(),memo:$d('#am').value.trim(),inTotal:$d('#atot').checked,main:ty!=='loan'&&$d('#amain').checked});
     // 가계부 기본 통장이 아직 없으면 첫 입출금 통장을 기본으로
     if(isNew&&ty==='bank'&&!S.accounts.some(x=>x.main))a.main=true;
