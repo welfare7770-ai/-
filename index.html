@@ -377,7 +377,7 @@ function fieldHTML(fd,val){
   const id='f_'+fd.k,req=fd.req?' required':'';
   if(fd.type==='checkbox')return `<div class="fld chk" data-k="${fd.k}"><label><input type="checkbox" name="${fd.k}"${val?' checked':''}> ${esc(fd.label)}</label></div>`;
   let input;
-  if(fd.type==='select')input=`<select id="${id}" name="${fd.k}"${req}>${fd.dep?'':optHTML(typeof fd.options==='function'?fd.options():fd.options,val)}</select>`;
+  if(fd.type==='select')input=`<select id="${id}" name="${fd.k}"${req}>${fd.dep||fd.deps?'':optHTML(typeof fd.options==='function'?fd.options():fd.options,val)}</select>`;
   else if(fd.type==='textarea')input=`<textarea id="${id}" name="${fd.k}">${esc(val)}</textarea>`;
   else{
     const extra=fd.type==='number'?` inputmode="${fd.dec?'decimal':'numeric'}" step="${fd.dec?'any':'1'}" min="0"`:'';
@@ -414,6 +414,11 @@ function openForm(title,fields,rec,onSave,onDelete){
   [...new Set(shown.map(fd=>fd.showBy||'kind'))].forEach(by=>{const ctl=dlgForm.elements.namedItem(by);if(!ctl)return;
     const upd=()=>shown.filter(fd=>(fd.showBy||'kind')===by).forEach(fd=>{dlgForm.querySelector(`.fld[data-k="${fd.k}"]`).hidden=!fd.show.includes(ctl.value);});
     ctl.addEventListener('change',upd);upd();});
+  fields.filter(fd=>fd.deps).forEach(fd=>{
+    const el=dlgForm.elements.namedItem(fd.k),vals=()=>Object.fromEntries(fd.deps.map(k=>[k,dlgForm.elements.namedItem(k).value]));
+    const fill=keep=>{const cur=keep??el.value;el.innerHTML=optHTML(fd.opts(vals()),cur);};
+    fd.deps.forEach(k=>dlgForm.elements.namedItem(k).addEventListener('change',()=>fill()));fill(rec&&rec[fd.k]!=null?rec[fd.k]:undefined);
+  });
   fields.filter(fd=>fd.dep).forEach(fd=>{
     const el=dlgForm.elements.namedItem(fd.k),dep=dlgForm.elements.namedItem(fd.dep);
     const fill=keep=>{const cur=keep??el.value;el.innerHTML=optHTML(fd.map[dep.value]||[],cur);};
@@ -437,7 +442,7 @@ function openForm(title,fields,rec,onSave,onDelete){
     save();dlg.close();render();
     if(more){
       // 같은 날짜·분류로 다음 기록을 바로 입력
-      const keep={};['type','date','kind','cat','who','pay','sido','dir'].forEach(k=>{if(k in v)keep[k]=v[k];});
+      const keep={};['owner','type','date','kind','cat','who','pay','acct','sido','dir'].forEach(k=>{if(k in v)keep[k]=v[k];});
       openForm(title,fields,keep,onSave,null);toast('저장했습니다 · 다음 기록을 입력하세요');
     }else toast('저장했습니다');
   };
@@ -498,6 +503,7 @@ function view_ledger(){
   <div class="insights"><span>전월 대비 지출 <b class="${diff>0?'neg':'pos'}">${diff>0?'+':''}${num(diff)}원</b>${prev.out?` (${diff>0?'+':''}${Math.round(diff/prev.out*100)}%)`:''}</span><span>실제 소비 <b>${won(out-saving)}</b></span><span>저축률 <b>${inc?Math.round(saving/inc*100):0}%</b></span></div>
   <p class="hint" style="margin:6px 0 0">‘저축·투자’로 분류한 금액은 돈이 사라진 게 아니라 자산으로 옮긴 것이므로 실제 소비와 예산 계산에서 뺍니다.</p>
   <div style="margin-top:10px"><button class="btn sm" data-act="setBudget">월 예산 설정</button></div></section>
+  ${fundStats()?(()=>{const st=careStats(S.care.filter(c=>c.date.startsWith(ledgerYM)));return `<section class="card" style="--acc:var(--c-care);cursor:pointer" data-act="go" data-tab="care"><div class="row" style="border:0;padding:0"><span class="pill none">${esc(careName())} 돈</span><div class="grow"><small>이 달 들어온 돈 +${num(st.inc)} · 쓴 돈 −${num(st.self)} · 잔액 ${num(fundStats().bal)} (내 지출에 포함 안 됨)</small></div><span class="amt" style="color:var(--muted)">›</span></div></section>`;})():''}
   <section class="card"><h2>최근 6개월 지출</h2>${barChart(months.map(m=>({label:Number(m.slice(5))+'월',value:monthSum(m).out,hi:m===ledgerYM})))}</section>
   ${catArr.length?`<section class="card"><h2>분류별 지출</h2>${catArr.map(([c,v])=>`<div class="catrow"><span>${esc(c)}</span><div class="bar"><span style="width:${v/max*100}%"></span></div><span class="amt">${num(v)}<small style="color:var(--muted);font-weight:400"> ${out?Math.round(v/out*100):0}%</small></span></div>`).join('')}</section>`:''}
   <section class="card"><h2>내역</h2><input type="search" id="ledgerQ" placeholder="내용·분류 검색" value="${esc(ledgerQ)}">${html||'<p class="empty">이 달의 기록이 없습니다.</p>'}</section>
@@ -585,7 +591,7 @@ const recurFields=()=>{const f=[
   {k:'cat',label:'분류',type:'select',dep:'owner',map:{me:CAT_OUT,parent:null},def:'공과금'},
   {k:'pay',label:'결제수단',type:'select',options:PAY,def:'자동이체',show:['me'],showBy:'owner'},
   {k:'acct',label:'어느 통장에서 나가나 (카드는 비워 두기)',type:'select',options:()=>acctOpts(),def:()=>mainAcct(),show:['me'],showBy:'owner'},
-  {k:'from',label:'어디서 나가나',type:'select',options:[[SELF,'부모님 자금(통장 자동이체)'],...members().map(m=>[m.name,m.name+'이(가) 냄']),[POOL,'공동통장']],def:SELF,show:['parent'],showBy:'owner'},
+  {k:'from',label:'누구 돈으로',type:'select',options:[[SELF,careName()+' 돈 (자동이체)'],[ME,'내 돈 (내가 대신 냄)']],def:SELF,show:['parent'],showBy:'owner'},
   {k:'variable',label:'매달 금액이 달라짐 (자동 기록 뒤 실제 금액으로 고치도록 표시)',type:'checkbox'},
   {k:'active',label:'사용 중',type:'checkbox',def:true},
   {k:'memo',label:'메모',type:'text',ph:'예: ○○카드 / 달러 결제(환율 따라 변동)'}
@@ -620,7 +626,7 @@ const myCatOf=(c,n)=>c==='통신비'||/휴대폰|핸드폰|인터넷|TV|티비/i
 const careCatOf=n=>/휴대폰|핸드폰|인터넷|TV|티비|통신/i.test(n)?'통신비':/보험|세/.test(n)?'보험료·세금':'집 관리비·공과금';
 // 아버지 고정비 → 내 고정비 (반대 방향)
 function moveToMe(){
-  const theirs=S.recur.filter(r=>ownerOf(r)==='parent'),pn=careName(),me=members()[0]?.name;
+  const theirs=S.recur.filter(r=>ownerOf(r)==='parent'),pn=careName();
   dlgForm.innerHTML=`<h2>내 고정비로 옮기기</h2>
    <p class="hint">${esc(pn)} 고정비 중 내가 내는 것으로 바꿀 항목을 고르세요. 옮기면 ${esc(pn)} 고정비에서는 빠집니다.</p>
    <ul class="list" id="mvList">${theirs.map(r=>`<li class="row" style="cursor:default"><label style="display:flex;gap:10px;align-items:center;flex:1;min-width:0"><input type="checkbox" value="${r.id}"><span class="grow"><b>${esc(r.name)}</b><small>${esc(r.cat)} · ${esc(whoLabel(r.from||SELF))} · 매월 ${r.day}일</small></span><span class="amt">${num(r.amount)}</span></label></li>`).join('')}</ul>
@@ -642,7 +648,7 @@ function moveToMe(){
       if(moveTx){
         S.care.filter(c=>c.type==='out'&&c.memo===`[고정] ${r.name}`&&+c.amount===+r.amount&&!used.has(c)).forEach(c=>{used.add(c);
           // 내가 대신 내서 내 가계부에 '부모님·가족'으로 이미 있던 기록은 원래 분류로 되돌리고, 없으면 새로 만듦
-          const mirror=me&&c.who===me&&S.tx.find(t=>t.memo===`[${pn} 고정] ${r.name}`&&t.date===c.date&&+t.amount===+c.amount&&!used.has(t));
+          const mirror=c.who!==SELF&&S.tx.find(t=>t.memo===`[${pn} 고정] ${r.name}`&&t.date===c.date&&+t.amount===+c.amount&&!used.has(t));
           if(mirror){used.add(mirror);Object.assign(mirror,{cat,pay,memo:`[고정] ${r.name}`});}
           else addTx({type:'out',date:c.date,amount:c.amount,cat,pay,memo:`[고정] ${r.name}`});
           S.care=S.care.filter(x=>x!==c);txMoved++;
@@ -665,10 +671,10 @@ function recurPostOne(r,ym){
   const date=payday(r,ym),id=`rc-${ym}-${r.id}`,chk=r.variable?{check:true}:{};
   if(ownerOf(r)==='me'){if(!S.tx.some(t=>t.id===id))S.tx.push({id,ts:Date.now(),type:'out',date,amount:r.amount,cat:r.cat,pay:r.pay||'',acct:r.acct||'',memo:`[고정] ${r.name}`,...chk});}
   else{
-    const who=r.from||SELF,me=members()[0]?.name;
-    if(!S.care.some(c=>c.id===id))S.care.push({id,type:'out',date,amount:r.amount,cat:CARE_OUT.includes(r.cat)?r.cat:'집 관리비·공과금',who,memo:`[고정] ${r.name}`,tax:false,...chk});
+    const who=(r.from||SELF)===SELF?SELF:ME;
+    if(!S.care.some(c=>c.id===id))S.care.push({id,ts:Date.now(),type:'out',date,amount:r.amount,cat:CARE_OUT.includes(r.cat)?r.cat:'집 관리비·공과금',who,memo:`[고정] ${r.name}`,tax:false,...chk});
     // 내가 대신 낸 부모님 고정비는 내 가계부에도 '부모님·가족' 지출로
-    if(me&&who===me&&!S.tx.some(t=>t.id===id+'-m'))S.tx.push({id:id+'-m',ts:Date.now(),type:'out',date,amount:r.amount,cat:'부모님·가족',pay:'',memo:`[${careName()} 고정] ${r.name}`,...chk});
+    if(who===ME&&!S.tx.some(t=>t.id===id+'-m'))S.tx.push({id:id+'-m',ts:Date.now(),type:'out',date,amount:r.amount,cat:'부모님·가족',pay:'',acct:mainAcct(),memo:`[${careName()} 고정] ${r.name}`,...chk});
   }
   r.posted=[...(r.posted||[]),ym].slice(-36);return true;
 }
@@ -705,6 +711,8 @@ function acctFlow(a){
   let f=0;const af=a.asOf||'',ck=a.checkedAt||0,after=r=>r.date>af||(r.date===af&&(r.ts||0)>ck);
   S.tx.forEach(t=>{if(t.acct===a.id&&after(t))f+=t.type==='in'?+t.amount||0:-(+t.amount||0);});
   S.moves.forEach(m=>{if(after(m)){if(m.to===a.id)f+=+m.amount||0;if(m.from===a.id)f-=+m.amount||0;}});
+  // 아버지 돈을 보관한 통장: 아버지 돈으로 들어오고 나간 것도 이 통장 잔액에 반영
+  if(fundCfg().acct===a.id)S.care.forEach(c=>{if(c.who===SELF&&c.cat!=='잔액 조정'&&after(c))f+=c.type==='in'?+c.amount||0:-(+c.amount||0);});
   return f;
 }
 const stockVal=a=>(a.holdings||[]).reduce((s,h)=>s+(+h.qty||0)*(+h.price||0),0);
@@ -717,7 +725,9 @@ function assetTotals(){
   const by={};let assets=0,debt=0;
   for(const a of S.accounts){if(a.inTotal===false)continue;const v=acctValue(a);
     if(a.type==='loan')debt+=v;else{assets+=v;by[a.type]=(by[a.type]||0)+v;}}
-  return {assets,debt,net:assets-debt,by};
+  // 내 통장에 보관 중인 아버지 돈은 내 재산이 아니므로 순자산에서 뺀다
+  const fa=fundCfg().acct&&acctById(fundCfg().acct),fs=fa&&fa.inTotal!==false?fundStats():null,held=fs?Math.max(0,fs.bal):0;
+  return {assets,debt,held,net:assets-debt-held,by};
 }
 // 달마다 순자산을 남겨 추이를 그린다(바뀔 때만 기록)
 function snapAssets(){
@@ -734,13 +744,20 @@ function stackBar(by,total){
   return `<div class="stack">${parts.map(([k])=>`<span style="width:${by[k]/total*100}%;background:${ACCT_COLOR[k]}" title="${typeName(k)}"></span>`).join('')}</div>
    <div class="legend">${parts.map(([k,l])=>`<span><i style="background:${ACCT_COLOR[k]}"></i>${l} <b>${short(by[k])}</b> ${Math.round(by[k]/total*100)}%</span>`).join('')}</div>`;
 }
+function fatherCard(){
+  const fs=fundStats();if(!fs)return '';
+  const ym=today().slice(0,7),st=careStats(S.care.filter(c=>c.date.startsWith(ym))),pn=careName();
+  return `<section class="card nw" style="--acc:var(--c-care)" data-act="go" data-tab="care"><h2>${esc(pn)} 돈<span class="sp"></span><button class="btn sm primary" data-act="addCare" data-type="out">＋ 지출</button></h2>
+   <div class="big" style="color:var(--c-care)">${won(fs.bal)}</div>
+   <div class="hint" style="margin:2px 0 0">${Number(ym.slice(5))}월 들어온 돈 <b class="pos">+${num(st.inc)}</b> · 쓴 돈 <b class="neg">−${num(st.self)}</b>${st.mine?` · 내 돈으로 낸 것 ${num(st.mine)}`:''}${fs.runway!=null?` · 약 ${fs.runway}개월분`:''}</div></section>`;
+}
 function netWorthCard(){
   if(!S.accounts.length)return `<section class="card nw" style="--acc:var(--c-assets)" data-act="go" data-tab="assets"><h2>내 재산<span class="sp"></span><button class="btn sm primary" data-act="addAcct">＋ 재산 추가</button></h2><p class="hint" style="margin:0">통장·적금·증권·부동산을 등록하면 여기에서 전체 재산을 한눈에 봅니다.</p></section>`;
   const t=assetTotals(),prev=S.assetHist[shiftYM(today().slice(0,7),-1)],stale=S.accounts.filter(a=>staleDays(a)>30).length;
   const diff=prev?t.net-prev.t:null;
   return `<section class="card nw" style="--acc:var(--c-assets)" data-act="go" data-tab="assets"><h2>내 재산<span class="sp"></span><button class="btn sm primary" data-act="addAcct">＋ 재산 추가</button></h2>
    <div class="big">${won(t.net)}</div>
-   <div class="hint" style="margin:2px 0 0">자산 ${won(t.assets)}${t.debt?` · 빚 ${won(t.debt)}`:''}${diff!=null?` · 지난달보다 <b class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${num(diff)}원</b>`:''}</div>
+   <div class="hint" style="margin:2px 0 0">통장 등 합계 ${won(t.assets)}${t.held?` − ${esc(careName())} 돈 ${won(t.held)}`:''}${t.debt?` − 빚 ${won(t.debt)}`:''}${diff!=null?` · 지난달보다 <b class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${num(diff)}원</b>`:''}</div>
    ${stackBar(t.by,t.assets)}
    ${stale?`<p class="hint" style="margin:8px 0 0;color:var(--soon)">잔액을 확인한 지 30일이 넘은 계좌 ${stale}개 — 통장 앱을 보고 업데이트해 주세요</p>`:''}</section>`;
 }
@@ -757,6 +774,7 @@ function acctRow(a){
      ${(a.trades||[]).length?`<details style="margin-top:6px"><summary class="hint" style="margin:0;cursor:pointer">매매 기록 ${a.trades.length}건</summary><ul class="list">${a.trades.slice().reverse().slice(0,10).map((t,i)=>`<li class="row" style="cursor:default"><span class="pill ${t.side==='buy'?'over':'info'}">${t.side==='buy'?'매수':'매도'}</span><div class="grow"><b>${esc(t.name)} ${num(t.qty)}주 × ${num(t.price)}</b><small>${t.date}${t.fee?' · 수수료·세금 '+num(t.fee):''}${t.side==='sell'?` · 실현 ${t.realized>=0?'+':''}${num(t.realized)}`:''}</small></div>${i===0?`<button class="btn sm" data-act="undoTrade" data-id="${a.id}">취소</button>`:''}</li>`).join('')}</ul></details>`:''}`;
   }
   return `<div class="acct"><div class="acct-top" data-act="editAcct" data-id="${a.id}"><div class="grow"><b>${esc(a.name)}${a.main?' <span class="pill info">가계부 기본</span>':''}${a.inTotal===false?' <span class="pill none">합계 제외</span>':''}</b><small>${esc([a.inst,a.memo].filter(Boolean).join(' · '))}</small>
+     ${fundCfg().acct===a.id&&fundStats()?`<small style="color:var(--c-care);font-weight:600">이 중 ${esc(careName())} 돈 ${num(fundStats().bal)} · 내 돈 ${num(v-fundStats().bal)}</small>`:''}
      <small>${a.asOf?`확인 ${a.asOf.replace(/-/g,'.')} (${sd===0?'오늘':sd+'일 전'})`:'확인일 없음'}${fl?` · 이후 기록 ${fl>=0?'+':''}${num(a.type==='loan'?-fl:fl)}`:''}</small></div>
      <span class="amt ${a.type==='loan'?'neg':''}">${a.type==='loan'?'-':''}${num(v)}</span></div>${hold}
      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">${sd>30?'<span class="pill soon">잔액 확인 필요</span>':''}<span class="sp" style="flex:1"></span>${a.type==='stock'?`<button class="btn sm" data-act="trade" data-side="buy" data-id="${a.id}">매수</button><button class="btn sm" data-act="trade" data-side="sell" data-id="${a.id}">매도</button>`:''}<button class="btn sm" data-act="updAcct" data-id="${a.id}">${a.type==='stock'?'예수금·현재가 맞추기':'잔액 업데이트'}</button></div></div>`;
@@ -770,8 +788,8 @@ function view_assets(){
   const months=Array.from({length:12},(_,i)=>shiftYM(cm,i-11)).filter(m=>S.assetHist[m]||m===cm);
   const fs=fundStats();
   return `
-  <section class="hero"><div class="hero-date">${today().replace(/-/g,'.')} 기준 순자산</div><div class="hero-num">${won(t.net)}</div>
-   <div class="hero-sub">자산 ${won(t.assets)}${t.debt?` · 빚 ${won(t.debt)}`:''}${diff!=null?` · 지난달보다 <b class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${num(diff)}원</b>`:''}</div>
+  <section class="hero"><div class="hero-date">${today().replace(/-/g,'.')} 기준 내 순자산</div><div class="hero-num">${won(t.net)}</div>
+   <div class="hero-sub">통장 등 합계 ${won(t.assets)}${t.held?` − 보관 중인 ${esc(careName())} 돈 ${won(t.held)}`:''}${t.debt?` − 빚 ${won(t.debt)}`:''}${diff!=null?` · 지난달보다 <b class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${num(diff)}원</b>`:''}</div>
    ${stackBar(t.by,t.assets)}</section>
   <div class="toolbar"><button class="btn primary" data-act="addAcct" style="flex:1;padding:12px;font-size:15px">＋ 재산 추가</button><button class="btn" data-act="addMove" style="padding:12px">계좌 간 이동</button></div>
   ${months.length>1?`<section class="card"><h2>순자산 추이</h2>${barChart(months.map(m=>({label:Number(m.slice(5))+'월',value:Math.max(0,(S.assetHist[m]||{t:t.net}).t),hi:m===cm})))}</section>`:''}
@@ -779,7 +797,7 @@ function view_assets(){
     return `<section class="card" style="--acc:${ACCT_COLOR[k]}"><h2>${l}<span class="sp"></span><b style="font-size:15px" class="${k==='loan'?'neg':''}">${k==='loan'?'-':''}${won(sum)}</b></h2>${list.map(acctRow).join('')}</section>`;}).join('')}
   <button class="btn" data-act="addAcct" style="width:100%;padding:12px;margin-bottom:12px;border-style:dashed">＋ 다른 재산 추가</button>
   ${S.moves.length?`<section class="card"><h2>최근 계좌 간 이동</h2><ul class="list">${S.moves.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8).map(m=>`<li class="row" data-act="editMove" data-id="${m.id}"><div class="grow"><b>${esc(acctById(m.from)?.name||'?')} → ${esc(acctById(m.to)?.name||'?')}</b><small>${m.date}${m.memo?' · '+esc(m.memo):''}</small></div><span class="amt">${num(m.amount)}</span></li>`).join('')}</ul></section>`:''}
-  ${fs?`<section class="card" style="--acc:var(--c-care)"><h2>관리 중인 돈 (내 재산 아님)</h2><div class="row" data-act="go" data-tab="care" style="border:0"><div class="grow"><b>${esc(careName())} 부모님 자금</b><small>${esc(fundCfg().note||'')} · 아버지 장부에서 관리</small></div><span class="amt">${num(fs.bal)}</span></div></section>`:''}
+  ${fs?`<section class="card" style="--acc:var(--c-care)"><h2>관리 중인 돈 (내 재산 아님)</h2><div class="row" data-act="go" data-tab="care" style="border:0"><div class="grow"><b>${esc(careName())} 돈</b><small>${fundCfg().acct&&acctById(fundCfg().acct)?`${esc(acctById(fundCfg().acct).name)} 안에 보관 · 내 순자산에서 뺐습니다`:esc(fundCfg().note||'')+' · 내 재산 합계에 넣지 않음'}</small></div><span class="amt">${num(fs.bal)}</span></div></section>`:''}
   <section class="card"><details class="ref"><summary>정확하게 맞추는 요령</summary><ul class="hint" style="padding-left:18px;margin:8px 0 0">
    <li><b>잔액 업데이트가 기준</b>입니다. 은행·증권 앱을 열었을 때 찍힌 금액을 넣으면 그날부터 다시 계산해 오차가 사라집니다. 한 달에 한 번이면 충분합니다.</li>
    <li>가계부에 기록할 때 <b>‘어느 통장’</b>을 고르면 그 통장 잔액이 바로 늘고 줄어듭니다. 카드로 쓴 돈은 통장에서 바로 빠지지 않으니 비워 두고, 카드대금이 빠진 뒤 잔액 업데이트를 하세요.</li>
@@ -895,7 +913,7 @@ const autoPost=()=>{const a=postPensions(),b=postRecurAuto(),c=snapAssets();retu
 /* 빠진 고정비 정리: 항목마다 '기록' 또는 '기록 안 함'을 고른다.
    기본값은 현금(통장)과 맞추는 쪽으로 미리 골라 둔다.
    - 아버지 것 중 부모님 자금에서 나간 것: 잔액 확인일 전이면 이미 통장 잔액에 반영됨 → 기록 안 함
-   - 가족이 대신 낸 것: 가족 정산에 필요 → 기록
+   - 내 돈으로 대신 낸 것: 내 가계부에도 들어가야 함 → 기록
    - 내 것: 같은 달·같은 금액의 기록이 이미 가계부에 있으면 직접 넣은 것으로 보고 기록 안 함, 없으면 기록 */
 function reviewMissing(owner){
   const miss=missingRecur(owner),fs=fundCfg();
@@ -906,7 +924,7 @@ function reviewMissing(owner){
       const who=r.from||SELF;
       if(who===SELF&&fs.startDate&&d<fs.startDate)return [false,'통장 잔액에 이미 반영됨'];
       if(who===SELF)return [true,'부모님 자금에서 차감'];
-      return [true,`낸 사람: ${whoLabel(who)} · 가족 정산용`];
+      return [true,'내 돈으로 낸 것 · 내 가계부에도 기록'];
     }
     const dupe=S.tx.find(t=>t.type==='out'&&t.date.startsWith(m.ym)&&+t.amount===+r.amount);
     return dupe?[false,`비슷한 기록 있음: ${t2(dupe)}`]:[true,'내 가계부 지출로 기록'];
@@ -1236,15 +1254,17 @@ function view_gym(){
 }
 
 /* ---------- 부모님 병원비 (가족 공동 정산) ----------
-   지출: 누가 냈는지(가족 각자 / 공동통장 / 부모님 본인 돈)를 함께 기록
-   입금: 가족 분담금(공동통장으로 보낸 돈) / 부모님 연금·환급·보험금(가족 부담을 줄여줌)
-   정산: (가족이 부담한 지출 − 부모님 쪽 수입) × 각자 비율 = 각자 몫, 실제 낸 돈과의 차액을 송금 */
+   아버지 돈은 내 통장에 보관한다. 지출마다 '아버지 돈 / 내 돈'만 구분한다.
+   아버지 돈 → 부모님 자금 잔액에서 빠지고, 보관 통장(내 재산) 잔액도 함께 움직인다.
+   내 돈 → 내 가계부에도 '부모님·가족' 지출로 들어간다.
+   */
 const CARE_OUT=['병원비(월 정산)','집 관리비·공과금','보험료·세금','통신비','간병비','약제비','외래·검사','기저귀·소모품','식대·간식','이송·교통','용돈·기타','잔액 조정'];
-const CARE_IN=['가족 분담금','부모님 자금 이체','기초연금','국민연금','연금·기초연금','본인부담상한제 환급','보험금(실손 등)','예금 이자','기타 수입','잔액 조정'];
-const POOL='__pool',SELF='__self';
+const CARE_IN=['기초연금','국민연금','연금·기초연금','본인부담상한제 환급','보험금(실손 등)','예금 이자','기타 수입','잔액 조정'];
+const POOL='__pool',SELF='__self',ME='__me';
 const careName=()=>S.careCfg.name||'부모님';
-const members=()=>S.careCfg.members||[];
-function whoLabel(w){return w===POOL?'공동통장':w===SELF?'부모님 자금':w||'-';}
+
+// 아버지 장부의 돈 주인: SELF = 아버지 돈(내 통장에 보관), 그 밖(ME·예전 가족 이름) = 내 돈으로 대신 낸 것
+function whoLabel(w){return w===SELF?careName()+' 돈':'내 돈';}
 /* ---------- 부모님 자금: 보유금 + 매월 연금 입금 − 부모님 돈으로 낸 지출 ----------
    연금은 설정한 지급일이 지나면 자동으로 입금 기록(같은 달·같은 항목은 한 번만, 기기 여러 대여도 중복 없음) */
 const fundCfg=()=>S.careCfg.fund||{start:0,startDate:'',incomes:[],skip:[],year:''};
@@ -1257,7 +1277,7 @@ function postPensions(){
       const last=new Date(+ym.slice(0,4),+ym.slice(5),0).getDate(),d=`${ym}-${String(Math.min(+r.day||25,last)).padStart(2,'0')}`;
       const id=`pen-${ym}-${r.id}`;
       if(d<f.startDate||d>t||(f.skip||[]).includes(id)||S.care.some(c=>c.id===id))continue;
-      S.care.push({id,auto:true,type:'in',date:d,amount:+r.amount,cat:r.kind,who:SELF,memo:`${r.who} ${r.kind}`,tax:false});changed=true;
+      S.care.push({id,ts:Date.now(),auto:true,type:'in',date:d,amount:+r.amount,cat:r.kind,who:SELF,memo:`${r.who} ${r.kind}`,tax:false});changed=true;
     }
     ym=shiftYM(ym,1);
   }
@@ -1288,13 +1308,13 @@ function fundCard(){
   const ym=today().slice(0,7);
   const end=st.runway!=null?(()=>{const m=shiftYM(ym,st.runway);return `${m.slice(0,4)}년 ${Number(m.slice(5))}월`;})():'';
   const janWarn=today().slice(5,7)<='02'&&f.year!==today().slice(0,4);
-  return `<section class="card"><h2>부모님 자금<span class="sp"></span><button class="btn sm" data-act="careTrue">통장 잔액 맞추기</button><button class="btn sm" data-act="careFund">보유금·연금</button></h2>
-   <div class="stats"><div class="stat" style="grid-column:span 3"><small>현재 잔액 (${f.startDate.replace(/-/g,'.')} 보유금 ${won(f.start)}에서 시작${f.note?' · '+esc(f.note):''})</small><b style="font-size:22px;color:var(--acc)">${won(st.bal)}</b></div>
+  return `<section class="card"><h2>${esc(careName())} 돈 잔액<span class="sp"></span><button class="btn sm" data-act="careTrue">통장 잔액 맞추기</button><button class="btn sm" data-act="careFund">보유금·연금</button></h2>
+   <div class="stats"><div class="stat" style="grid-column:span 3"><small>${f.acct&&acctById(f.acct)?`보관: <b>${esc(acctById(f.acct).name)}</b> (내 통장) · `:''}${f.startDate.replace(/-/g,'.')} ${won(f.start)}에서 시작${f.note?' · '+esc(f.note):''}</small><b style="font-size:22px;color:var(--acc)">${won(st.bal)}</b></div>
    <div class="stat"><small>매월 연금</small><b class="pos">${short(st.monthlyIn)}원</b></div><div class="stat"><small>월평균 지출</small><b class="neg">${short(st.avgOut)}원</b></div><div class="stat"><small>월 증감</small><b class="${st.net<0?'neg':'pos'}">${st.net>=0?'+':'-'}${short(Math.abs(st.net))}원</b></div></div>
    ${st.based?`<p class="hint" style="margin:6px 0 0">월평균 지출은 지난 ${st.based}개월 기준 (이번 달 제외)</p>`:''}
-   <p class="hint" style="margin:10px 0 0">${st.net>=0?(st.avgOut?'연금으로 병원비를 충당하고 있어 잔액이 줄지 않습니다.':'아직 부모님 자금으로 낸 지출이 없습니다. 병원비를 ‘부모님 자금’으로 기록하면 계산됩니다.'):`지금 속도면 <b style="color:var(--over)">약 ${num(st.runway)}개월 뒤(${end}경)</b> 잔액이 바닥납니다. 그 뒤로는 가족 분담이 필요합니다.`}</p>
+   <p class="hint" style="margin:10px 0 0">${st.net>=0?(st.avgOut?'연금으로 병원비를 충당하고 있어 잔액이 줄지 않습니다.':`아직 ${esc(careName())} 돈으로 낸 지출이 없습니다.`):`지금 속도면 <b style="color:var(--over)">약 ${num(st.runway)}개월 뒤(${end}경)</b> 잔액이 바닥납니다. 그 뒤로는 내 돈으로 내야 합니다.`}</p>
    ${barChart(st.series)}
-   ${(()=>{const pf=S.recur.filter(r=>r.active&&ownerOf(r)==='parent'&&(r.from||SELF)===SELF).reduce((s,r)=>s+(+r.amount||0),0);return pf?`<p class="hint" style="margin:8px 0 0">부모님 통장에서 매달 자동으로 나가는 고정비 <b>${won(pf)}</b> (고정지출 탭)</p>`:'';})()}
+   ${(()=>{const pf=S.recur.filter(r=>r.active&&ownerOf(r)==='parent'&&(r.from||SELF)===SELF).reduce((s,r)=>s+(+r.amount||0),0);return pf?`<p class="hint" style="margin:8px 0 0">${esc(careName())} 돈에서 매달 자동으로 나가는 고정비 <b>${won(pf)}</b> (고정지출 탭)</p>`:'';})()}
    <dl class="kv" style="margin-top:8px">${(f.incomes||[]).map(r=>`<dt>${esc(r.who)} ${esc(r.kind)}</dt><dd>${+r.amount?won(r.amount):'<span style="color:var(--muted);font-weight:400">금액 미입력</span>'} <small style="color:var(--muted);font-weight:400">매월 ${r.day||25}일</small></dd>`).join('')}</dl>
    ${janWarn?`<p class="hint" style="margin:8px 0 0;color:var(--soon)">기초연금·국민연금은 매년 1월 물가 반영으로 금액이 바뀝니다. 통장 입금액을 확인해 ‘보유금·연금’에서 금액을 고쳐 주세요.</p>`:''}</section>`;
 }
@@ -1303,8 +1323,8 @@ const careFields=()=>[
   {k:'date',label:'날짜',type:'date',def:today,req:1},
   {k:'amount',label:'금액(원)',type:'number',req:1},
   {k:'cat',label:'항목',type:'select',dep:'type',map:{out:CARE_OUT,in:CARE_IN}},
-  {k:'who',label:'누가 냈나 / 어디로 들어왔나',type:'select',options:[...members().map(m=>[m.name,m.name]),[POOL,'공동통장'],[SELF,'부모님 자금(보유금·연금 통장)']],def:members()[0]?.name||POOL},
-  {k:'memo',label:'내용',type:'text',ph:'예: 10월분 입원비, ○○간병인 10/1~10/31'},
+  {k:'who',label:'누구 돈으로',type:'select',options:[[SELF,careName()+' 돈 (내 통장에 보관 중)'],[ME,'내 돈 (내가 대신 냄)']],def:SELF},
+  {k:'memo',label:'내용',type:'text',ph:'예: 10월분 입원비, 간병인 10/1~10/31'},
   {k:'tax',label:'의료비 세액공제 대상 (병원·약국 영수증 있음)',type:'checkbox',def:true},
   {k:'receipt',label:'영수증 보관함',type:'checkbox'}
 ];
@@ -1314,86 +1334,45 @@ function careRange(){
   if(careMode==='year')return [careY+'-01-01',careY+'-12-31',careY+'년'];
   return ['0000-01-01','9999-12-31','전체 기간'];
 }
-function careSettle(list){
-  const ms=members(),W=ms.reduce((s,m)=>s+(+m.share||0),0)||1;
-  const exp=list.filter(c=>c.type==='out'),inc=list.filter(c=>c.type==='in');
-  const sum=a=>a.reduce((s,c)=>s+(+c.amount||0),0);
-  const totalOut=sum(exp),selfPaid=sum(exp.filter(c=>c.who===SELF));
-  // 부모님 쪽 수입(연금·환급·보험금): 공동통장이나 가족 계좌로 들어온 것만 가족 부담을 줄임. '본인 돈'으로 받은 건 참고용
-  const other=inc.filter(c=>c.cat!=='가족 분담금'),parentIn=sum(other.filter(c=>c.who!==SELF));
-  const deposits=sum(inc.filter(c=>c.cat==='가족 분담금'));
-  const familyOut=totalOut-selfPaid;            // 가족(개인·공동통장)이 낸 지출
-  const burden=Math.max(familyOut-parentIn,0);   // 가족이 나눠 낼 금액
-  const pool=deposits+sum(other.filter(c=>c.who===POOL))-sum(exp.filter(c=>c.who===POOL));
-  const rows=ms.map(m=>{
-    const paid=sum(exp.filter(c=>c.who===m.name))+sum(inc.filter(c=>c.cat==='가족 분담금'&&c.who===m.name))-sum(other.filter(c=>c.who===m.name));
-    const share=Math.round(burden*(+m.share||0)/W);
-    return {name:m.name,ratio:(+m.share||0)/W,share,paid,bal:paid-share};
-  });
-  // 공동통장에 남은 돈은 가족이 미리 더 낸 돈이므로, 차액 합계 = 공동통장 잔액
-  const debt=rows.filter(r=>r.bal<0).map(r=>({n:r.name,v:-r.bal})),cred=rows.filter(r=>r.bal>0).map(r=>({n:r.name,v:r.bal}));
-  const xfers=[];
-  for(const d of debt)for(const c of cred){if(d.v<=0)break;const v=Math.min(d.v,c.v);if(v>0){xfers.push({from:d.n,to:c.n,v});d.v-=v;c.v-=v;}}
-  return {totalOut,selfPaid,familyOut,parentIn,deposits,burden,pool,rows,xfers};
-}
-function careReport(list,st,label){
-  const cats={};list.filter(c=>c.type==='out').forEach(c=>cats[c.cat]=(cats[c.cat]||0)+(+c.amount||0));
-  const L=[`[${careName()} 병원비 정산] ${label}`+(S.careCfg.hospital?` · ${S.careCfg.hospital}`:''),'',
-    `■ 총 지출 ${won(st.totalOut)}`,...Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  - ${k} ${won(v)}`)];
-  if(st.selfPaid)L.push(`■ 부모님 자금으로 낸 지출 ${won(st.selfPaid)} (정산 제외)`);
-  if(st.parentIn)L.push(`■ 부모님 자금 이체·환급·보험금 -${won(st.parentIn)}`);
-  L.push(`■ 가족이 나눌 금액 ${won(st.burden)}`,'');
-  st.rows.forEach(r=>L.push(`· ${r.name} (${Math.round(r.ratio*100)}%): 부담 ${won(r.share)} / 낸 돈 ${won(r.paid)} → ${r.bal>0?'받을 돈 '+won(r.bal):r.bal<0?'보낼 돈 '+won(-r.bal):'정산 완료'}`));
-  if(st.xfers.length){L.push('','■ 송금 안내');st.xfers.forEach(x=>L.push(`  ${x.from} → ${x.to}  ${won(x.v)}`));}
-  if(st.pool)L.push('',`※ 공동통장 잔액 ${won(st.pool)} (다음 달로 이월)`);
-  const fs=fundStats();if(fs)L.push(`※ 부모님 자금 잔액 ${won(fs.bal)} (매월 연금 ${won(fs.monthlyIn)} · 월평균 지출 ${won(fs.avgOut)}${fs.runway!=null?` · 약 ${fs.runway}개월분`:''})`);
-  return L.join('\n');
+function careStats(list){
+  const sum=a=>a.reduce((x,c)=>x+(+c.amount||0),0),real=list.filter(c=>c.cat!=='잔액 조정'),out=real.filter(c=>c.type==='out');
+  return {total:sum(out),self:sum(out.filter(c=>c.who===SELF)),mine:sum(out.filter(c=>c.who!==SELF)),inc:sum(real.filter(c=>c.type==='in'&&c.who===SELF))};
 }
 function view_care(){
-  const cfg=S.careCfg,ms=members();
-  if(!ms.length)return `<section class="card"><h2>${esc(careName())} 병원비 관리</h2><p class="hint" style="margin:0 0 12px">요양병원비를 내 가계부와 따로 기록하고, 가족이 분담 비율대로 얼마씩 내야 하는지 자동으로 정산합니다. 먼저 함께 부담하는 가족과 비율을 정해 주세요.</p><button class="btn primary" data-act="careCfg">가족·분담 비율 설정</button></section>`;
+  const cfg=S.careCfg,pn=careName();
   const [a,b,label]=careRange();
-  const list=S.care.filter(c=>c.date>=a&&c.date<=b).sort((x,y)=>y.date.localeCompare(x.date));
   if(autoPost())save();
-  const real=list.filter(c=>c.cat!=='잔액 조정'); // 잔액 맞추기 기록은 정산·통계에서 제외
-  const st=careSettle(real);
-  const cats={};real.filter(c=>c.type==='out').forEach(c=>cats[c.cat]=(cats[c.cat]||0)+(+c.amount||0));
+  const list=S.care.filter(c=>c.date>=a&&c.date<=b).sort((x,y)=>y.date.localeCompare(x.date));
+  const st=careStats(list);
+  const cats={};list.filter(c=>c.type==='out'&&c.cat!=='잔액 조정').forEach(c=>cats[c.cat]=(cats[c.cat]||0)+(+c.amount||0));
   const catArr=Object.entries(cats).sort((x,y)=>y[1]-x[1]),mx=catArr[0]?.[1]||1;
   const years=[...new Set([today().slice(0,4),...S.care.map(c=>c.date.slice(0,4))])].sort().reverse();
   const admitDays=cfg.admit?dday(cfg.admit)*-1+1:null;
   let html='',cur='';
   for(const c of list){
     if(c.date!==cur){if(cur)html+='</ul>';cur=c.date;html+=`<div class="daygrp"><span>${dLabel(cur)}</span></div><ul class="list">`;}
-    html+=`<li class="row" data-act="editCare" data-id="${c.id}">${c.check?'<span class="pill soon">금액 확인</span>':''}<span class="pill ${c.who===POOL?'info':c.who===SELF?'none':'soon'}">${esc(whoLabel(c.who))}</span><div class="grow"><b>${esc(c.memo||c.cat)}</b><small>${esc(c.cat)}${c.type==='out'&&c.tax?' · 공제대상':''}${c.receipt?' · 영수증✔':''}</small></div><span class="amt ${c.type==='in'?'pos':'neg'}">${c.type==='in'?'+':'-'}${num(c.amount)}</span></li>`;
+    html+=`<li class="row" data-act="editCare" data-id="${c.id}">${c.check?'<span class="pill soon">금액 확인</span>':''}<span class="pill ${c.who===SELF?'none':'soon'}">${esc(whoLabel(c.who))}</span><div class="grow"><b>${esc(c.memo||c.cat)}</b><small>${esc(c.cat)}${c.type==='out'&&c.tax?' · 공제대상':''}${c.receipt?' · 영수증✔':''}</small></div><span class="amt ${c.type==='in'?'pos':'neg'}">${c.type==='in'?'+':'-'}${num(c.amount)}</span></li>`;
   }
   if(cur)html+='</ul>';
-  const taxRows=careMode==='year'?ms.map(m=>({n:m.name,v:S.care.filter(c=>c.type==='out'&&c.tax&&c.who===m.name&&c.date.startsWith(careY)).reduce((s,c)=>s+(+c.amount||0),0)})):[];
   const nav=careMode==='month'?`<span class="monthnav" style="font-size:15px"><button class="btn sm" data-act="careNav" data-n="-1" aria-label="이전 달">◀</button>${ymLabel(careYM)}<button class="btn sm" data-act="careNav" data-n="1" aria-label="다음 달">▶</button></span>`:careMode==='year'?`<select id="careY" style="width:auto">${optHTML(years.map(y=>[y,y+'년']),careY)}</select>`:'';
+  const taxOf=w=>S.care.filter(c=>c.type==='out'&&c.tax&&(w===SELF?c.who===SELF:c.who!==SELF)&&c.date.startsWith(careY)).reduce((x,c)=>x+(+c.amount||0),0);
   return `
-  <section class="hero" style="padding:16px"><div class="hero-date">${esc(careName())}${cfg.hospital?' · '+esc(cfg.hospital):''}${admitDays>0?` · 입원 ${num(admitDays)}일째`:''}</div>
-   <div class="hero-label">${label} 가족 부담액</div><div class="hero-num">${won(st.burden)}</div>
-   <div class="hero-sub">총 지출 ${won(st.totalOut)}${st.parentIn?` · ${esc(careName())} 연금·환급 ${won(st.parentIn)}`:''}${st.pool?` · 공동통장 잔액 <b>${won(st.pool)}</b>`:''}</div></section>
+  <section class="hero" style="padding:16px"><div class="hero-date">${esc(pn)}${cfg.hospital?' · '+esc(cfg.hospital):''}${admitDays>0?` · 입원 ${num(admitDays)}일째`:''}</div>
+   <div class="hero-two"><div><div class="hero-label">${label} 들어온 돈</div><div class="hero-num in">${won(st.inc)}</div></div><div><div class="hero-label">${label} 쓴 돈</div><div class="hero-num out">${won(st.total)}</div></div></div>
+   <div class="hero-sub" style="margin-top:6px">${esc(pn)} 돈으로 ${won(st.self)}${st.mine?` · 내 돈으로 ${won(st.mine)}`:''}</div></section>
   ${fundCard()}
-  <div class="toolbar"><button class="btn primary" data-act="addCare" data-type="out">＋ 지출</button><button class="btn primary" data-act="addCare" data-type="in">＋ 입금</button><span class="grow"></span><button class="btn" data-act="careCfg">가족·비율</button></div>
+  <div class="toolbar"><button class="btn primary" data-act="addCare" data-type="out">＋ 지출</button><button class="btn primary" data-act="addCare" data-type="in">＋ 입금</button><span class="grow"></span><button class="btn" data-act="careCfg">${esc(pn)} 정보</button></div>
   <div class="toolbar"><select id="careMode" style="width:auto">${optHTML([['month','월별'],['year','연도별'],['all','전체 기간']],careMode)}</select>${nav}</div>
-  <section class="card settle"><h2>가족 정산</h2>
-   <div class="tblwrap"><table class="tbl"><tr><th>이름</th><th class="r">비율</th><th class="r">부담할 몫</th><th class="r">낸 돈</th><th class="r">차액</th></tr>
-   ${st.rows.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="r">${Math.round(r.ratio*100)}%</td><td class="r">${num(r.share)}</td><td class="r">${num(r.paid)}</td><td class="r">${r.bal>0?`<span class="take">+${num(r.bal)}</span><br><small>받을 돈</small>`:r.bal<0?`<span class="give">${num(r.bal)}</span><br><small>보낼 돈</small>`:'✔'}</td></tr>`).join('')}</table></div>
-   ${st.xfers.length?`<p class="hint" style="margin:12px 0 0">이렇게 보내면 정산이 끝납니다</p>${st.xfers.map(x=>`<div class="xfer"><b>${esc(x.from)}</b> → <b>${esc(x.to)}</b><span class="amt">${won(x.v)}</span></div>`).join('')}`:list.length?'<p class="hint" style="margin:10px 0 0">모두 몫만큼 냈습니다. 보낼 돈이 없습니다.</p>':''}
-   ${st.pool>0?`<p class="hint" style="margin:8px 0 0">공동통장 잔액 ${won(st.pool)}은 가족이 미리 넣어 둔 돈이라 ‘받을 돈’ 합계에 포함돼 있습니다. 다음 달 지출에 쓰면 자연히 맞춰집니다.</p>`:''}
-   <div class="toolbar" style="margin:12px 0 0"><button class="btn primary" data-act="careCopy">정산서 복사 (카톡 붙여넣기)</button><button class="btn" data-act="careCsv">내역 엑셀 저장</button></div>
-   <textarea class="report" id="careReport" readonly hidden>${esc(careReport(real,st,label))}</textarea></section>
   ${catArr.length?`<section class="card"><h2>항목별 지출</h2>${catArr.map(([c,v])=>`<div class="catrow"><span>${esc(c)}</span><div class="bar"><span style="width:${v/mx*100}%"></span></div><span class="amt">${num(v)}</span></div>`).join('')}</section>`:''}
-  ${taxRows.length?`<section class="card"><h2>${careY}년 연말정산 의료비 (낸 사람 기준)</h2><dl class="kv">${taxRows.map(t=>`<dt>${esc(t.n)}</dt><dd>${won(t.v)}</dd>`).join('')}</dl><p class="hint" style="margin:8px 0 0">‘공제대상’으로 체크하고 본인 이름으로 낸 지출만 합산했습니다. 공동통장에서 나간 돈은 누구 몫인지 따로 정해야 합니다.</p></section>`:''}
-  <section class="card"><h2>내역</h2>${html||'<p class="empty">이 기간의 기록이 없습니다.</p>'}</section>
-  <section class="card"><details class="ref"><summary>요양병원비 관리 참고</summary><ul class="hint" style="padding-left:18px;margin:8px 0 0">
-   <li><b>본인부담상한제</b>: 1년간 낸 건강보험 본인부담금이 소득수준별 상한액을 넘으면 넘은 금액을 건강보험공단이 돌려줍니다(보통 다음 해 여름 안내). 요양병원에 오래 입원하면 다른 상한액이 적용될 수 있으니 공단에 확인하세요. 환급금은 ‘본인부담상한제 환급’으로 입금 기록하면 가족 부담에서 빠집니다.</li>
+  ${st.mine?`<section class="card"><h2>내 돈으로 낸 ${esc(pn)} 비용</h2><p class="hint" style="margin:0">${label} <b>${won(st.mine)}</b> — 내 가계부에도 ‘부모님·가족’ 지출로 들어가 있어 내 지출과 내 재산에 함께 반영됩니다.</p></section>`:''}
+  ${careMode==='year'?`<section class="card"><h2>${careY}년 의료비 (연말정산 참고)</h2><dl class="kv"><dt>내 돈으로 낸 공제대상</dt><dd>${won(taxOf(ME))}</dd><dt>${esc(pn)} 돈으로 낸 공제대상</dt><dd>${won(taxOf(SELF))}</dd></dl><p class="hint" style="margin:8px 0 0">의료비 공제는 부양가족으로 올린 사람이 실제 낸 의료비를 기준으로 합니다. ${esc(pn)} 돈으로 낸 부분을 내 공제로 넣을 수 있는지는 국세청 기준으로 확인하세요.</p></section>`:''}
+  <section class="card"><h2>내역<span class="sp"></span><button class="btn sm" data-act="careCsv">엑셀 저장</button></h2>${html||'<p class="empty">이 기간의 기록이 없습니다.</p>'}</section>
+  <section class="card"><details class="ref"><summary>요양병원비·${esc(pn)} 돈 관리 참고</summary><ul class="hint" style="padding-left:18px;margin:8px 0 0">
+   <li><b>${esc(pn)} 돈</b>으로 낸 것은 ${esc(pn)} 돈 잔액에서 빠지고, 그 돈을 보관한 내 통장 잔액도 함께 줄어듭니다. <b>내 돈</b>으로 낸 것은 내 가계부 지출로도 기록됩니다. 가계부에서 ‘누구 돈: ${esc(pn)}’로 입력해도 여기로 들어옵니다.</li>
+   <li><b>기초연금·국민연금</b>은 지급일이 지나면 자동으로 들어옵니다. 매년 1월 물가 반영으로 금액이 바뀌니 1월에 고쳐 주세요.</li>
+   <li><b>본인부담상한제</b>: 1년간 낸 건강보험 본인부담금이 소득수준별 상한액을 넘으면 넘은 금액을 건강보험공단이 돌려줍니다(보통 다음 해 여름 안내). 요양병원 장기입원은 다른 상한액이 적용될 수 있으니 공단에 확인하세요.</li>
    <li><b>비급여</b>(간병비, 상급병실료 차액 등)는 상한제 계산에 들어가지 않습니다.</li>
-   <li><b>의료비 세액공제</b>: 부모님 의료비는 나이·소득과 관계없이 부양가족으로 올린 자녀가 공제받는 것이 원칙이고, 형제가 중복으로 공제받을 수 없습니다. 간병인에게 직접 준 간병비는 일반적으로 공제 대상이 아닙니다. 세부 요건은 국세청에서 확인하세요.</li>
-   <li><b>부모님 돈으로 낸 병원비</b>는 지출의 ‘부모님 자금’으로 기록하세요. 잔액에서 빠지고 가족 정산에는 들어가지 않습니다. 부모님 돈을 공동통장으로 옮겼다면 입금의 ‘부모님 자금 이체’(들어온 곳: 공동통장)로 기록합니다.</li>
-   <li><b>기초연금·국민연금</b>은 설정한 지급일(보통 매월 25일)이 지나면 자동으로 입금 기록됩니다. 매년 1월 물가 반영으로 금액이 바뀌니 1월에 금액을 고쳐 주세요.</li>
-   <li>입금 기록에서 ‘들어온 곳’을 <b>공동통장</b>이나 가족 이름으로 하면 가족 부담이 줄어듭니다.</li>
-   <li>매달 병원에서 <b>진료비 영수증과 세부내역서</b>를 받아 두고, 간병비는 계좌이체로 내야 근거가 남습니다.</li>
+   <li>매달 병원에서 <b>진료비 영수증과 세부내역서</b>를 받아 두고, 간병비는 계좌이체로 내야 근거가 남습니다. ${esc(pn)} 돈을 내 통장에 보관하는 경우 입출금 근거(이 장부·영수증)를 남겨 두면 나중에 설명하기 쉽습니다.</li>
   </ul></details></section>`;
 }
 
@@ -1455,6 +1434,7 @@ function view_home(){
    <div class="hero-two"><div><div class="hero-label">${d.getMonth()+1}월 수입</div><div class="hero-num in">${won(inc)}</div></div><div><div class="hero-label">${d.getMonth()+1}월 지출</div><div class="hero-num out">${won(out)}</div></div></div>
    <div class="hero-sub" style="margin-top:6px">남은 돈 <b>${won(inc-out)}</b>${(()=>{const sv=S.tx.filter(x=>x.type==='out'&&x.cat==='저축·투자'&&x.date.startsWith(ym)).reduce((s,x)=>s+(+x.amount||0),0);return sv?` · 저축 ${won(sv)}`:'';})()}</div>${budgetBar(out-(S.tx.filter(x=>x.type==='out'&&x.cat==='저축·투자'&&x.date.startsWith(ym)).reduce((s,x)=>s+(+x.amount||0),0)))}</section>
   ${netWorthCard()}
+  ${fatherCard()}
   <div class="quick">${Q.map(([a,k,l])=>`<button data-act="${a}" style="--acc:var(--c-${k})">${ICON[k]}<span>${l}</span></button>`).join('')}</div>
   <section class="card"><h2>알림 · 다가오는 일</h2>${al.length?`<ul class="list">${al.map(x=>`<li class="row" data-act="go" data-tab="${x.tab}"><span class="pill ${x.level}">${esc(x.badge)}</span><div class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)}</small></div></li>`).join('')}</ul>`:'<p class="empty">임박한 일이 없습니다.</p>'}</section>
   <section class="card" style="--acc:var(--c-gym)"><h2>이번 주 운동<span class="sp"></span><button class="btn sm" data-act="go" data-tab="gym">헬스</button></h2>${goalBars(w)}</section>
@@ -1573,7 +1553,19 @@ const ACT={
   go:d=>go(d.tab),
   ym:d=>{ledgerYM=shiftYM(ledgerYM,+d.n);render();},
   goYM:d=>{ledgerYM=d.ym;render();window.scrollTo(0,0);},
-  addTx:()=>crud('tx','가계부',txFields,null),
+  addTx:()=>{
+    // 한 곳에서 입력: '내 돈'은 내 가계부, '아버지 돈'은 아버지 장부로 바로 들어간다
+    const f=[{k:'owner',label:'누구 돈',type:'select',options:()=>[['me','내 돈'],['parent',careName()+' 돈 (아버지 장부로)']],def:'me'},
+      ...txFields.map(x=>x.k==='cat'?{k:'cat',label:'분류',type:'select',deps:['type','owner'],opts:v=>v.owner==='parent'?(v.type==='in'?CARE_IN:CARE_OUT):(v.type==='in'?CAT_IN:CAT_OUT)}
+        :(x.k==='pay'||x.k==='acct')?{...x,show:['me'],showBy:'owner'}:x)];
+    openForm('가계부 추가',f,null,v=>{
+      const {owner,...r}=v;
+      if(owner==='parent'){
+        S.care.push({id:uid(),ts:Date.now(),type:r.type,date:r.date,amount:r.amount,cat:r.cat,who:SELF,memo:r.memo,tax:r.type==='out'&&['병원비(월 정산)','약제비','외래·검사'].includes(r.cat)});
+        setTimeout(()=>toast(`${careName()} 장부에 기록했습니다 · ${careName()} 돈 잔액에 반영`),0);
+      }else S.tx.push({id:uid(),ts:Date.now(),...r});
+    });
+  },
   editTx:d=>crud('tx','가계부',txFields,find('tx',d.id)),
   setBudget:()=>openForm('월 예산 설정',[{k:'budget',label:'한 달 지출 예산(원, 0이면 사용 안 함)',type:'number'}],{budget:S.budget||''},v=>{S.budget=v.budget||0;}),
   editCar:()=>openForm('차량 정보',[
@@ -1630,7 +1622,7 @@ const ACT={
     dlgForm.innerHTML=`<h2>${esc(pn)} 고정비로 옮기기</h2>
      <p class="hint">옮길 항목을 고르세요. 아버지 집 관련으로 보이는 항목은 미리 체크해 두었습니다. 옮기면 내 고정비에서는 빠집니다(삭제할 필요 없음).</p>
      <ul class="list" id="mvList">${mine.map(r=>`<li class="row" style="cursor:default"><label style="display:flex;gap:10px;align-items:center;flex:1;min-width:0"><input type="checkbox" value="${r.id}"${looksParent(r)?' checked':''}><span class="grow"><b>${esc(r.name)}</b><small>${esc(r.cat)} · 매월 ${r.day}일</small></span><span class="amt">${num(r.amount)}</span></label></li>`).join('')}</ul>
-     <div class="fld" style="margin-top:12px"><label for="mvFrom">이 항목들은 어디서 나가나요?</label><select id="mvFrom">${optHTML([[SELF,'부모님 자금 (아버지 통장 자동이체)'],...members().map(m=>[m.name,m.name+'이(가) 냄']),[POOL,'공동통장']],SELF)}</select></div>
+     <div class="fld" style="margin-top:12px"><label for="mvFrom">이 항목들은 어디서 나가나요?</label><select id="mvFrom">${optHTML([[SELF,careName()+' 돈 (자동이체)'],[ME,'내 돈 (내가 대신 냄)']],SELF)}</select></div>
      <label class="fld chk" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mvTx" checked> 이미 내 가계부에 기록된 같은 고정비도 ${esc(pn)} 장부로 옮기기</label>
      <div class="actions"><span class="sp"></span><button type="button" data-x="cancel">취소</button><button type="submit" class="primary">옮기기</button></div>`;
     dlgForm.querySelector('[data-x=cancel]').onclick=()=>dlg.close();
@@ -1639,7 +1631,7 @@ const ACT={
       if(!ids.length){toast('옮길 항목을 고르세요');return;}
       // 체크를 해제하고 남긴 항목은 '내 것'으로 기억해 다시 권하지 않음
       [...dlgForm.querySelectorAll('#mvList input:not(:checked)')].forEach(i=>{const r=find('recur',i.value);if(r)r.keepMine=true;});
-      const from=dlgForm.querySelector('#mvFrom').value,moveTx=dlgForm.querySelector('#mvTx').checked,me=members()[0]?.name;
+      const from=dlgForm.querySelector('#mvFrom').value,moveTx=dlgForm.querySelector('#mvTx').checked;
       let moved=0,txMoved=0,dup=0;const used=new Set();
       for(const id of ids){
         const r=find('recur',id);if(!r)continue;
@@ -1652,8 +1644,8 @@ const ACT={
           // 내 가계부에 '[고정] 이름'으로 들어간 기록 → 아버지 장부로
           // 이름과 금액이 모두 같은 기록만, 한 기록은 한 번만 옮김(같은 이름 항목이 여러 개여도 섞이지 않게)
           S.tx.filter(t=>t.type==='out'&&t.memo===`[고정] ${r.name}`&&+t.amount===+r.amount&&!used.has(t)).forEach(t=>{used.add(t);
-            S.care.push({id:uid(),type:'out',date:t.date,amount:t.amount,cat,who:from,memo:`[고정] ${r.name}`,tax:false});
-            if(me&&from===me){t.cat='부모님·가족';t.memo=`[${careName()} 고정] ${r.name}`;}
+            S.care.push({id:uid(),ts:t.ts||0,type:'out',date:t.date,amount:t.amount,cat,who:from,memo:`[고정] ${r.name}`,tax:false});
+            if(from!==SELF){t.cat='부모님·가족';t.memo=`[${careName()} 고정] ${r.name}`;}
             else S.tx=S.tx.filter(x=>x!==t);
             txMoved++;
           });
@@ -1681,11 +1673,10 @@ const ACT={
     if(_ledger&&r.amount>0)addTx(r.dir==='give'?{type:'out',date:r.date,amount:r.amount,cat:'경조사',memo:`[${r.kind}] ${r.person}`}:{type:'in',date:r.date,amount:r.amount,cat:'경조금',memo:`[${r.kind}] ${r.person}`});
   }),
   editGift:d=>crud('gift','경조사 기록',giftFields,find('gift',d.id)),
-  addCare:d=>{const f=careFields();f.push({k:'_ledger',label:'내가 낸 돈이면 내 가계부에도 지출로 기록',type:'checkbox',def:true});
-    openForm(d.type==='in'?'입금·수입 추가':'지출 추가',f,{type:d.type||'out',who:d.type==='in'?(members()[0]?.name||POOL):undefined,date:undefined},v=>{
-      const {_ledger,...r}=v;S.care.push({id:uid(),...r});
-      const me=members()[0]?.name;
-      if(_ledger&&me&&r.who===me&&r.amount>0&&(r.type==='out'||r.cat==='가족 분담금'))addTx({type:'out',date:r.date,amount:r.amount,cat:'부모님·가족',memo:`[${careName()} ${r.type==='out'?r.cat:'분담금'}] ${r.memo||''}`.trim()});
+  addCare:d=>{const f=careFields();f.push({k:'_ledger',label:'내 돈이면 내 가계부에도 지출로 기록',type:'checkbox',def:true});
+    openForm(d.type==='in'?'입금·수입 추가':'지출 추가',f,{type:d.type||'out',who:SELF},v=>{
+      const {_ledger,...r}=v;S.care.push({id:uid(),ts:Date.now(),...r});
+      if(_ledger&&r.who!==SELF&&r.amount>0&&r.type==='out')addTx({type:'out',date:r.date,amount:r.amount,cat:'부모님·가족',acct:mainAcct(),memo:`[${careName()} ${r.cat}] ${r.memo||''}`.trim()});
     });
     // 공제대상 기본값: 병원·약국에 낸 돈만 체크 (간병인 직접 지급·소모품 등은 해제)
     const el=n=>dlgForm.elements.namedItem(n),upd=()=>{el('tax').checked=el('type').value==='out'&&['병원비(월 정산)','약제비','외래·검사'].includes(el('cat').value);};
@@ -1698,6 +1689,8 @@ const ACT={
     dlgForm.innerHTML=`<h2>부모님 보유금·연금</h2>
      <div class="fld2"><div class="fld"><label for="fs">보유금 — 확인일 현재 통장 잔액(원)</label><input id="fs" type="number" inputmode="numeric" min="0" value="${esc(f.start||39000000)}"></div>
      <div class="fld"><label for="fsd">잔액 확인일</label><input id="fsd" type="date" value="${esc(f.startDate||today())}"></div></div>
+     <div class="fld"><label for="facct">이 돈이 들어 있는 통장</label><select id="facct">${optHTML([['',careName()+' 명의 통장 (내 재산과 별개)'],...S.accounts.filter(a=>a.type!=='loan').map(a=>[a.id,a.name+' — 내 통장'])],f.acct||'')}</select></div>
+     <p class="hint" style="margin-top:-4px">내 통장을 고르면 그 통장 잔액에 ${esc(careName())} 돈이 들어 있는 것으로 보고, <b>내 순자산에서는 빼고</b> 보여줍니다. ${esc(careName())} 돈으로 낸 지출은 그 통장 잔액에서도 빠집니다.</p>
      <div class="fld"><label for="fn">어느 돈인지 (통장·출처 메모)</label><input id="fn" value="${esc(f.note||'')}" placeholder="예: 아버지 ○○은행 자유적립식 통장 (적금 해약금)"></div>
      <p class="hint"><b>통장에 찍힌 잔액과 그 잔액을 확인한 날짜</b>를 넣으세요(보통 오늘). 확인일 <b>이후</b>에 들어오는 연금·이자와 나가는 병원비만 더하고 뺍니다. 확인일을 예전 날짜(예: 적금 해약일)로 넣으면 그 뒤 매달 연금이 잔액에 다시 더해져 실제보다 많게 나옵니다. 이미 가지고 있던 돈을 입금으로 또 기록하지 마세요.</p>
      <div class="preview" id="fprev"></div>
@@ -1725,7 +1718,7 @@ const ACT={
       const start=+dlgForm.querySelector('#fs').value||0,startDate=dlgForm.querySelector('#fsd').value;
       if(!startDate){toast('기준일을 입력하세요');return;}
       const incomes=[...box.querySelectorAll('.rule')].map(r=>({id:r.dataset.id,who:r.querySelector('.fw').value.trim(),kind:r.querySelector('.fk').value,amount:+r.querySelector('.fa').value||0,day:Math.min(31,Math.max(1,+r.querySelector('.fd').value||25))})).filter(r=>r.who);
-      S.careCfg.fund={start,startDate,note:dlgForm.querySelector('#fn').value.trim(),incomes,skip:f.skip||[],year:today().slice(0,4)};
+      S.careCfg.fund={start,startDate,acct:dlgForm.querySelector('#facct').value,note:dlgForm.querySelector('#fn').value.trim(),incomes,skip:f.skip||[],year:today().slice(0,4)};
       // 확인일 이전에 자동으로 들어갔던 연금 기록은 잔액에 이미 반영된 것이므로 정리
       S.care=S.care.filter(c=>!(c.auto&&c.date<startDate));
       postPensions();save();dlg.close();render();toast('저장했습니다');};
@@ -1740,35 +1733,13 @@ const ACT={
     });
     const h=dlgForm.querySelector('.actions');h.insertAdjacentHTML('beforebegin',`<p class="hint">앱이 계산한 잔액은 <b>${won(fs.bal)}</b>입니다. 통장 잔액을 넣으면 차액을 ‘잔액 조정’으로 기록해 맞춥니다. 차이가 크면 빠진 병원비·이자 기록이 없는지 먼저 확인하세요.</p>`);},
   careNav:d=>{careYM=shiftYM(careYM,+d.n);render();},
-  careCopy:async()=>{const t=$('#careReport');try{await navigator.clipboard.writeText(t.value);toast('정산서를 복사했습니다. 가족 단톡방에 붙여넣으세요');}catch(e){t.hidden=false;t.focus();t.select();toast('아래 글을 길게 눌러 복사하세요');}},
   careCsv:()=>{const [a,b,label]=careRange();const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
     const rows=[['날짜','구분','항목','금액','낸 사람·출처','내용','공제대상','영수증'],...S.care.filter(c=>c.date>=a&&c.date<=b).sort((x,y)=>x.date.localeCompare(y.date)).map(c=>[c.date,c.type==='in'?'입금':'지출',c.cat,c.amount,whoLabel(c.who),c.memo,c.tax?'O':'',c.receipt?'O':''])];
     download(`${careName()}_병원비_${label}.csv`,'\ufeff'+rows.map(r=>r.map(q).join(',')).join('\r\n'),'text/csv');},
-  careCfg:()=>{
-    const c=S.careCfg,row=m=>`<div class="rule" style="grid-template-columns:1fr 70px 34px 30px"><input class="mn" value="${esc(m.name)}" placeholder="이름 (예: 큰형)" aria-label="이름"><input class="ms" type="number" inputmode="decimal" min="0" step="any" value="${m.share??1}" aria-label="비율"><span>몫</span><button type="button" class="x" aria-label="삭제">✕</button></div>`;
-    const ms=c.members.length?c.members:[{name:'나',share:1},{name:'',share:1}];
-    dlgForm.innerHTML=`<h2>가족·분담 비율</h2>
-     <div class="fld"><label for="cn">대상</label><input id="cn" value="${esc(c.name)}" placeholder="예: 아버지"></div>
-     <div class="fld"><label for="ch">병원</label><input id="ch" value="${esc(c.hospital)}" placeholder="예: ○○요양병원"></div>
-     <div class="fld"><label for="ca">입원일</label><input id="ca" type="date" value="${esc(c.admit)}"></div>
-     <p class="hint">함께 부담하는 가족과 몫을 적으세요. 똑같이 나누면 모두 1, 큰형이 두 배면 큰형 2. <b>첫 줄은 본인(나)</b>으로 두세요 — 내가 낸 돈을 내 가계부에 함께 기록할 때 씁니다.</p>
-     <div id="mrows">${ms.map(row).join('')}</div><button type="button" class="btn sm" id="addM">＋ 가족 추가</button>
-     <div class="actions"><span class="sp"></span><button type="button" data-x="cancel">취소</button><button type="submit" class="primary">저장</button></div>`;
-    const box=dlgForm.querySelector('#mrows');
-    box.onclick=e=>{if(e.target.closest('.x'))e.target.closest('.rule').remove();};
-    dlgForm.querySelector('#addM').onclick=()=>box.insertAdjacentHTML('beforeend',row({name:'',share:1}));
-    dlgForm.querySelector('[data-x=cancel]').onclick=()=>dlg.close();
-    dlgForm.onsubmit=e=>{e.preventDefault();
-      const list=[...box.querySelectorAll('.rule')].map(r=>({name:r.querySelector('.mn').value.trim(),share:+r.querySelector('.ms').value||0})).filter(m=>m.name);
-      if(!list.length){toast('가족을 한 명 이상 입력하세요');return;}
-      if(new Set(list.map(m=>m.name)).size!==list.length){toast('이름이 겹치지 않게 입력하세요');return;}
-      const old=c.members.map(m=>m.name);
-      // 이름을 바꾼 경우 기존 기록의 '낸 사람'도 같은 순서로 따라 바꿈
-      old.forEach((n,i)=>{const nn=list[i]?.name;if(nn&&nn!==n)S.care.forEach(r=>{if(r.who===n)r.who=nn;});});
-      S.careCfg={name:dlgForm.querySelector('#cn').value.trim()||'부모님',hospital:dlgForm.querySelector('#ch').value.trim(),admit:dlgForm.querySelector('#ca').value,members:list};
-      save();dlg.close();render();toast('저장했습니다');};
-    showDlg();
-  },
+  careCfg:()=>openForm(`${careName()} 정보`,[
+    {k:'name',label:'호칭',type:'text',ph:'예: 아버지'},
+    {k:'hospital',label:'병원',type:'text',ph:'예: ○○요양병원'},
+    {k:'admit',label:'입원일',type:'date'}],{name:S.careCfg.name,hospital:S.careCfg.hospital,admit:S.careCfg.admit},v=>{Object.assign(S.careCfg,{name:v.name||'부모님',hospital:v.hospital,admit:v.admit});}),
   lockSet:()=>lockSetup(false),
   lockChange:()=>lockSetup(true),
   lockNowAct:()=>lockNow(),
