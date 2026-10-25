@@ -556,9 +556,21 @@ function yearCard(){
 }
 
 /* ---------- 자동차 ---------- */
-function currentOdo(){return Math.max(+S.car.odo||0,...S.fuel.map(f=>+f.odo||0),...S.maint.map(m=>+m.km||0));}
+function odoRecords(){return [...S.fuel.map(f=>({km:+f.odo||0,date:f.date,ts:f.ts||0,what:'주유',id:f.id,k:'fuel'})),...S.maint.map(m=>({km:+m.km||0,date:m.date,ts:m.ts||0,what:'정비 '+m.item,id:m.id,k:'maint'}))].filter(r=>r.km>0);}
+function currentOdo(){
+  const since=S.car.odoDate||'',at=S.car.odoAt||0;
+  const later=odoRecords().filter(r=>!since||r.date>since||(r.date===since&&r.ts>at));
+  return Math.max(+S.car.odo||0,...later.map(r=>r.km));
+}
+// 주행거리를 직접 고칠 때: 더 큰 값이 적힌 기록이 있으면 알려 주고(오타 찾기), 그래도 이 값으로 저장
+async function setOdoValue(v){
+  const big=odoRecords().filter(r=>r.km>v).sort((a,b)=>b.km-a.km)[0];
+  if(big&&!await askConfirm(`기록 중에 더 큰 주행거리가 있습니다.\n${big.date} ${big.what}: ${num(big.km)}km\n\n오타라면 자동차 화면의 정비·주유 이력에서 그 기록을 눌러 고쳐 주세요.\n지금 입력한 ${num(v)}km로 저장할까요?`,'이 값으로 저장'))return false;
+  S.car.odo=v;S.car.odoDate=today();S.car.odoAt=Date.now();return true;
+}
 function maintStatus(rule){
-  const recs=S.maint.filter(m=>m.item===rule.item).sort((a,b)=>b.date.localeCompare(a.date)||(b.km||0)-(a.km||0));
+  const nm=x=>String(x||'').replace(/\s/g,'');
+  const recs=S.maint.filter(m=>nm(m.item)===nm(rule.item)||nm(m.item).includes(nm(rule.item))).sort((a,b)=>b.date.localeCompare(a.date)||(b.km||0)-(a.km||0));
   const last=recs[0];
   if(!last)return {rule,level:'none',label:'기록없음'};
   const odo=currentOdo();
@@ -583,7 +595,7 @@ function fuelStats(){
 const maintFields=()=>[
   {k:'item',label:'정비 항목',type:'text',req:1,list:()=>S.rules.map(r=>r.item),ph:'예: 엔진오일'},
   {k:'date',label:'정비일',type:'date',def:today,req:1},
-  {k:'km',label:'정비 시 주행거리(km)',type:'number',def:()=>currentOdo()||''},
+  {k:'km',label:'정비할 때 계기판 주행거리(km) — 예전 정비라 모르면 비워 두기',type:'number',def:()=>currentOdo()||''},
   {k:'cost',label:'비용(원)',type:'number'},
   {k:'shop',label:'정비소',type:'text'},
   {k:'memo',label:'메모',type:'text',ph:'예: 합성유 5W-30, 4L'}
@@ -1676,19 +1688,22 @@ const ACT={
   editCar:()=>openForm('차량 정보',[
     {k:'name',label:'차종',type:'text',ph:'예: 쏘렌토'},{k:'plate',label:'차량번호',type:'text',ph:'예: 12가 3456'},
     {k:'year',label:'연식',type:'text',ph:'예: 2021년식'},{k:'fuelType',label:'연료',type:'select',options:['휘발유','경유','LPG','하이브리드','전기']},
-    {k:'odo',label:'현재 주행거리(km)',type:'number'}],{...S.car,odo:currentOdo()||''},v=>{Object.assign(S.car,v);}),
-  setOdo:()=>openForm('현재 주행거리',[{k:'odo',label:'계기판 누적 주행거리(km)',type:'number',req:1}],{odo:currentOdo()||''},v=>{
-    if(v.odo<currentOdo()){toast('기존 주유·정비 기록('+num(currentOdo())+'km)보다 작은 값은 입력할 수 없습니다');return false;}S.car.odo=v.odo;}),
+    {k:'odo',label:'현재 주행거리(km)',type:'number'}],{...S.car,odo:currentOdo()||''},async v=>{
+      const {odo,...rest}=v;
+      if(odo!=null&&odo!==currentOdo()&&await setOdoValue(odo)===false)return false;
+      Object.assign(S.car,rest);}),
+  setOdo:()=>openForm('현재 주행거리',[{k:'odo',label:'계기판 누적 주행거리(km)',type:'number',req:1}],{odo:currentOdo()||''},async v=>{
+    if(await setOdoValue(v.odo)===false)return false;}),
   addMaint:d=>{
     const f=[...maintFields(),ledgerChk];
     openForm('정비기록 추가',f,{item:d.item||''},v=>{
-      const {_ledger,...r}=v;S.maint.push({id:uid(),...r});
+      const {_ledger,...r}=v;S.maint.push({id:uid(),ts:Date.now(),...r});
       if(_ledger&&r.cost>0)addTx({type:'out',date:r.date,amount:r.cost,cat:'교통·차량',memo:`[정비] ${r.item}${r.shop?' - '+r.shop:''}`});
     });
   },
   editMaint:d=>crud('maint','정비기록',maintFields(),find('maint',d.id)),
   addFuel:()=>openForm('주유기록 추가',[...fuelFields,ledgerChk],null,v=>{
-    const {_ledger,...r}=v;S.fuel.push({id:uid(),...r});
+    const {_ledger,...r}=v;S.fuel.push({id:uid(),ts:Date.now(),...r});
     if(_ledger&&r.amount>0)addTx({type:'out',date:r.date,amount:r.amount,cat:'교통·차량',memo:`[주유] ${r.station||''} ${r.liters?r.liters+'L':''}`.trim()});
   }),
   editFuel:d=>crud('fuel','주유기록',fuelFields,find('fuel',d.id)),
