@@ -366,6 +366,42 @@ function askConfirm(msg,yes){
     $('#cfmNo').onclick=()=>{d.close();res(false);};$('#cfmForm').onsubmit=e=>{e.preventDefault();d.close();res(true);};d.oncancel=()=>res(false);d.showModal();});
 }
 function addTx(o){S.tx.push({id:uid(),ts:Date.now(),pay:'',memo:'',...o});}
+/* 원본 기록과 가계부 기록 연결: 원본을 고치면 가계부도 고쳐지고, 원본을 지우면 가계부 기록도 지워진다.
+   가계부 기록에 src='종류:원본id'를 남기고, 예전 기록(연결 표시 없음)은 날짜·금액·내용 앞부분으로 찾는다. */
+const LINK={
+  maint:r=>+r.cost>0?{type:'out',date:r.date,amount:+r.cost,cat:'교통·차량',memo:`[정비] ${r.item}${r.shop?' - '+r.shop:''}`}:null,
+  fuel:r=>+r.amount>0?{type:'out',date:r.date,amount:+r.amount,cat:'교통·차량',memo:`[주유] ${r.station||''} ${r.liters?r.liters+'L':''}`.trim()}:null,
+  gift:r=>+r.amount>0?(r.dir==='give'?{type:'out',date:r.date,amount:+r.amount,cat:'경조사',memo:`[${r.kind}] ${r.person}`}:{type:'in',date:r.date,amount:+r.amount,cat:'경조금',memo:`[${r.kind}] ${r.person}`}):null,
+  hike:r=>+r.cost>0?{type:'out',date:r.date,amount:+r.cost,cat:'문화·여가',memo:`[등산] ${r.mountain}`}:null,
+  care:r=>r.who!==SELF&&r.type==='out'&&+r.amount>0?{type:'out',date:r.date,amount:+r.amount,cat:'부모님·가족',memo:`[${careName()} ${r.cat}] ${r.memo||''}`.trim()}:null
+};
+const LINK_PREFIX={maint:()=>'[정비]',fuel:()=>'[주유]',gift:r=>`[${r.kind}] ${r.person}`,hike:()=>'[등산]',care:()=>`[${careName()}`};
+function linkedTx(coll,r){
+  const key=coll+':'+r.id;
+  let t=S.tx.find(x=>x.src===key);
+  if(!t&&coll==='care')t=S.tx.find(x=>x.id===r.id+'-m');
+  if(!t){const pre=LINK_PREFIX[coll](r),amt=coll==='maint'||coll==='hike'?+r.cost:+r.amount;
+    t=S.tx.find(x=>!x.src&&x.date===r.date&&+x.amount===amt&&String(x.memo||'').startsWith(pre));}
+  return t;
+}
+function linkNew(coll,r,on){const w=LINK[coll](r);if(on&&w)addTx({...w,src:coll+':'+r.id,...(coll==='care'?{acct:mainAcct()}:{})});}
+function removeLinked(coll,r){const t=linkedTx(coll,r);if(t){S.tx=S.tx.filter(x=>x!==t);return 1;}return 0;}
+function updateLinked(coll,old,r){
+  const t=linkedTx(coll,old);if(!t)return;
+  const w=LINK[coll](r);
+  if(!w)S.tx=S.tx.filter(x=>x!==t);else Object.assign(t,w,{src:coll+':'+r.id});
+}
+// 원본이 이미 지워졌는데 남아 있는 가계부 기록(예전 버전에서 생긴 것)
+function orphanTx(){
+  return S.tx.filter(t=>{
+    const m=String(t.memo||'');
+    if(t.src){const [c,id]=t.src.split(':');return S[c]&&!S[c].some(x=>x.id===id);}
+    if(m.startsWith('[정비]'))return !S.maint.some(x=>x.date===t.date&&+x.cost===+t.amount);
+    if(m.startsWith('[주유]'))return !S.fuel.some(x=>x.date===t.date&&+x.amount===+t.amount);
+    if(m.startsWith('[등산]'))return !S.hike.some(x=>x.date===t.date&&+x.cost===+t.amount);
+    return false;
+  });
+}
 
 /* ---------- 아이콘·차트 ---------- */
 const ic=p=>`<svg viewBox="0 0 24 24" class="ic" aria-hidden="true">${p}</svg>`;
@@ -495,8 +531,8 @@ function openForm(title,fields,rec,onSave,onDelete){
 // 컬렉션 하나에 대한 추가/수정 폼
 function crud(coll,title,fields,rec,preset,after){
   openForm(rec?title+' 수정':title+' 추가',fields,rec||preset,v=>{
-    if(rec){Object.assign(rec,v);delete rec.check;}else{const r={id:uid(),ts:Date.now(),...v};S[coll].push(r);after&&after(r);}
-  },rec?()=>{S[coll]=S[coll].filter(x=>x.id!==rec.id);}:null);
+    if(rec){const old={...rec};Object.assign(rec,v);delete rec.check;if(LINK[coll])updateLinked(coll,old,rec);}else{const r={id:uid(),ts:Date.now(),...v};S[coll].push(r);after&&after(r);}
+  },rec?()=>{S[coll]=S[coll].filter(x=>x.id!==rec.id);if(LINK[coll]&&removeLinked(coll,rec))setTimeout(()=>toast('가계부의 연결된 기록도 함께 지웠습니다'),0);}:null);
 }
 const find=(coll,id)=>S[coll].find(x=>x.id===id);
 
@@ -546,6 +582,7 @@ function view_ledger(){
   <p class="hint" style="margin:6px 0 0">‘저축·투자’로 분류한 금액은 돈이 사라진 게 아니라 자산으로 옮긴 것이므로 실제 소비와 예산 계산에서 뺍니다.</p>
   <div style="margin-top:10px"><button class="btn sm" data-act="setBudget">월 예산 설정</button></div></section>
   ${fundStats()?(()=>{const st=careStats(S.care.filter(c=>c.date.startsWith(ledgerYM)));return `<section class="card" style="--acc:var(--c-care);cursor:pointer" data-act="go" data-tab="care"><div class="row" style="border:0;padding:0"><span class="pill none">${esc(careName())} 돈</span><div class="grow"><small>이 달 들어온 돈 +${num(st.inc)} · 쓴 돈 −${num(st.self)} · 잔액 ${num(fundStats().bal)} (내 지출에 포함 안 됨)</small></div><span class="amt" style="color:var(--muted)">›</span></div></section>`;})():''}
+  ${(()=>{const o=orphanTx();return o.length?`<div class="xfer" style="margin:0 0 10px;background:var(--soon-bg)"><span>자동차·등산 등에서 <b>지운 기록</b>이 가계부에 ${o.length}건 남아 있어요</span><button class="btn sm primary amt" data-act="fixOrphan">정리하기</button></div>`:'';})()}
   <section class="card"><h2>최근 6개월 지출</h2>${barChart(months.map(m=>({label:Number(m.slice(5))+'월',value:monthSum(m).out,hi:m===ledgerYM})))}</section>
   ${catArr.length?`<section class="card"><h2>분류별 지출</h2>${catArr.map(([c,v])=>`<div class="catrow"><span>${esc(c)}</span><div class="bar"><span style="width:${v/max*100}%"></span></div><span class="amt">${num(v)}<small style="color:var(--muted);font-weight:400"> ${out?Math.round(v/out*100):0}%</small></span></div>`).join('')}</section>`:''}
   <section class="card"><h2>내역</h2><input type="search" id="ledgerQ" placeholder="내용·분류 검색" value="${esc(ledgerQ)}">${html||'<p class="empty">이 달의 기록이 없습니다.</p>'}</section>
@@ -1709,15 +1746,15 @@ const ACT={
     const f=[...maintFields(),{k:'_filter',label:'엔진오일이면 오일필터도 함께 교체한 것으로 기록',type:'checkbox',def:true},ledgerChk];
     openForm('정비기록 추가',f,{item:d.item||''},async v=>{
       if(await maintKmCheck(v.km)===false)return false;
-      const {_ledger,_filter,...r}=v;S.maint.push({id:uid(),ts:Date.now(),...r});
+      const {_ledger,_filter,...r0}=v,r={id:uid(),ts:Date.now(),...r0};S.maint.push(r);
       if(_filter&&/엔진오일/.test(r.item)&&!/필터/.test(r.item))S.maint.push({id:uid(),ts:Date.now(),date:r.date,item:'오일필터',km:r.km,cost:0,shop:r.shop||'',memo:'엔진오일과 함께 교체'});
-      if(_ledger&&r.cost>0)addTx({type:'out',date:r.date,amount:r.cost,cat:'교통·차량',memo:`[정비] ${r.item}${r.shop?' - '+r.shop:''}`});
+      linkNew('maint',r,_ledger);
     });
   },
-  editMaint:d=>{const rec=find('maint',d.id);openForm('정비기록 수정',maintFields(),rec,async v=>{if(await maintKmCheck(v.km)===false)return false;Object.assign(rec,v);},()=>{S.maint=S.maint.filter(x=>x!==rec);});},
+  editMaint:d=>{const rec=find('maint',d.id);openForm('정비기록 수정',maintFields(),rec,async v=>{if(await maintKmCheck(v.km)===false)return false;const old={...rec};Object.assign(rec,v);updateLinked('maint',old,rec);},()=>{S.maint=S.maint.filter(x=>x!==rec);if(removeLinked('maint',rec))setTimeout(()=>toast('가계부의 연결된 기록도 함께 지웠습니다'),0);});},
   addFuel:()=>openForm('주유기록 추가',[...fuelFields,ledgerChk],null,v=>{
-    const {_ledger,...r}=v;S.fuel.push({id:uid(),ts:Date.now(),...r});
-    if(_ledger&&r.amount>0)addTx({type:'out',date:r.date,amount:r.amount,cat:'교통·차량',memo:`[주유] ${r.station||''} ${r.liters?r.liters+'L':''}`.trim()});
+    const {_ledger,...r0}=v,r={id:uid(),ts:Date.now(),...r0};S.fuel.push(r);
+    linkNew('fuel',r,_ledger);
   }),
   editFuel:d=>crud('fuel','주유기록',fuelFields,find('fuel',d.id)),
   editRules:()=>{
@@ -1802,20 +1839,20 @@ const ACT={
   addSched:d=>crud('sched','기한',schedFields(),null,d.cat?{cat:d.cat}:null),
   editSched:d=>crud('sched','기한',schedFields(),find('sched',d.id)),
   addGift:()=>openForm('경조사 기록 추가',[...giftFields,{k:'_ledger',label:'가계부에도 기록 (보냄=지출, 받음=수입)',type:'checkbox',def:true}],giftQ?{person:giftQ.trim()}:null,v=>{
-    const {_ledger,...r}=v;S.gift.push({id:uid(),...r});
-    if(_ledger&&r.amount>0)addTx(r.dir==='give'?{type:'out',date:r.date,amount:r.amount,cat:'경조사',memo:`[${r.kind}] ${r.person}`}:{type:'in',date:r.date,amount:r.amount,cat:'경조금',memo:`[${r.kind}] ${r.person}`});
+    const {_ledger,...r0}=v,r={id:uid(),ts:Date.now(),...r0};S.gift.push(r);
+    linkNew('gift',r,_ledger);
   }),
   editGift:d=>crud('gift','경조사 기록',giftFields,find('gift',d.id)),
   addCare:d=>{const f=careFields();f.push({k:'_ledger',label:'내 돈이면 내 가계부에도 지출로 기록',type:'checkbox',def:true});
     openForm(d.type==='in'?'입금·수입 추가':'지출 추가',f,{type:d.type||'out',who:SELF},v=>{
-      const {_ledger,...r}=v;S.care.push({id:uid(),ts:Date.now(),...r});
-      if(_ledger&&r.who!==SELF&&r.amount>0&&r.type==='out')addTx({type:'out',date:r.date,amount:r.amount,cat:'부모님·가족',acct:mainAcct(),memo:`[${careName()} ${r.cat}] ${r.memo||''}`.trim()});
+      const {_ledger,...r0}=v,r={id:uid(),ts:Date.now(),...r0};S.care.push(r);
+      linkNew('care',r,_ledger);
     });
     // 공제대상 기본값: 병원·약국에 낸 돈만 체크 (간병인 직접 지급·소모품 등은 해제)
     const el=n=>dlgForm.elements.namedItem(n),upd=()=>{el('tax').checked=el('type').value==='out'&&['병원비(월 정산)','장기요양(주간보호·방문요양)','약제비','외래·검사'].includes(el('cat').value);};
     el('cat').addEventListener('change',upd);el('type').addEventListener('change',upd);upd();},
   editCare:d=>{const rec=find('care',d.id);
-    openForm('기록 수정',careFields(),rec,v=>{Object.assign(rec,v);delete rec.check;},()=>{S.care=S.care.filter(x=>x.id!==rec.id);if(rec.auto){const f=fundCfg();f.skip=[...(f.skip||[]),rec.id,penKey(rec.date.slice(0,7),...splitMemo(rec.memo))];S.careCfg.fund=f;}});},
+    openForm('기록 수정',careFields(),rec,v=>{const old={...rec};Object.assign(rec,v);delete rec.check;updateLinked('care',old,rec);},()=>{S.care=S.care.filter(x=>x.id!==rec.id);removeLinked('care',rec);if(rec.auto){const f=fundCfg();f.skip=[...(f.skip||[]),rec.id,penKey(rec.date.slice(0,7),...splitMemo(rec.memo))];S.careCfg.fund=f;}});},
   fixPenDup:async()=>{const d=pensionSurplus();if(!d.length)return;
     if(!await askConfirm(`중복된 연금 기록 ${d.length}건을 지울까요?\n\n${d.map(c=>`· ${c.date} ${c.memo||c.cat} ${num(c.amount)}원${c.auto?'':' (직접 입력)'}`).join('\n')}`,'지우기'))return;
     const ids=new Set(d.map(c=>c.id)),f=fundCfg();
@@ -1826,8 +1863,8 @@ const ACT={
     const done=()=>{r.posted=[...(r.posted||[]),ym].slice(-36);};
     if(ownerOf(r)==='parent'){
       openForm(`${r.name} ${mo}월분 영수증 입력`,careFields(),{type:'out',date,amount:r.amount,cat:CARE_OUT.includes(r.cat)?r.cat:'병원비(월 정산)',who:(r.from||SELF)===SELF?SELF:ME,memo:`${r.name} ${mo}월분`,tax:/병원|장기요양|약제|외래/.test(r.cat)},v=>{
-        S.care.push({id:`rc-${ym}-${r.id}`,ts:Date.now(),...v});
-        if(v.who!==SELF)addTx({type:'out',date:v.date,amount:v.amount,cat:'부모님·가족',acct:mainAcct(),memo:`[${careName()}] ${v.memo}`});
+        const rec={id:`rc-${ym}-${r.id}`,ts:Date.now(),...v};S.care.push(rec);
+        linkNew('care',rec,true);
         done();
       });
     }else{
@@ -1839,6 +1876,9 @@ const ACT={
     dlgForm.querySelector('[data-x=none]').onclick=()=>{done();save();dlg.close();render();toast(`${mo}월분은 기록하지 않고 넘겼습니다`);};
     dlgForm.querySelector('.actions').insertAdjacentHTML('beforebegin',`<p class="hint">등록한 예상 금액 ${won(r.amount)}이 들어가 있습니다. <b>영수증 금액으로 고쳐서 저장</b>하세요.</p>`);
   },
+  fixOrphan:async()=>{const o=orphanTx();if(!o.length)return;
+    if(!await askConfirm(`원본이 지워진 가계부 기록 ${o.length}건을 지울까요?\n\n${o.slice(0,12).map(t=>`· ${t.date} ${t.memo||t.cat} ${num(t.amount)}원`).join('\n')}${o.length>12?`\n…외 ${o.length-12}건`:''}`,'지우기'))return;
+    const ids=new Set(o.map(t=>t.id));S.tx=S.tx.filter(t=>!ids.has(t.id));save();render();toast(`${o.length}건을 지웠습니다`);},
   careIncome:()=>{
     const f=fundCfg(),inc=f.incomes||[];
     if(!inc.length)return ACT.careFund();
@@ -1916,8 +1956,8 @@ const ACT={
   lockOff:()=>openForm('잠금 끄기',[{k:'cur',label:'현재 비밀번호',type:'password',req:1,attrs:' inputmode="numeric" maxlength="6"'}],null,async v=>{
     if(await hashPin(v.cur,S.lock.salt)!==S.lock.hash){toast('비밀번호가 틀렸습니다');return false;}S.lock=null;}),
   addHike:()=>openForm('산행 기록 추가',[...hikeFields(),{k:'_ledger',label:'경비를 가계부에도 기록',type:'checkbox',def:true}],null,v=>{
-    const {_ledger,...r}=v;S.hike.push({id:uid(),...r});
-    if(_ledger&&r.cost>0)addTx({type:'out',date:r.date,amount:r.cost,cat:'문화·여가',memo:`[등산] ${r.mountain}`});
+    const {_ledger,...r0}=v,r={id:uid(),ts:Date.now(),...r0};S.hike.push(r);
+    linkNew('hike',r,_ledger);
     if(weekStart(r.date)===weekStart(today()))setTimeout(()=>{const w=weekStats();toast(`이번 주 유산소 ${w.cardio}분 / 150분${w.cardio>=150?' 달성!':''}`);},0);
   }),
   hikeFind:d=>{hikeQ=d.m;render();window.scrollTo(0,0);},
