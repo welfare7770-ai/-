@@ -1790,11 +1790,22 @@ function render(){
     $('#view').innerHTML=lockHTML();return;
   }
   $('#tabs').hidden=false;
-  if(autoPost())save();
+  // 자동 기록(연금·고정지출)에서 문제가 생겨도 화면은 계속 열리게 한다
+  let autoErr=null;try{if(autoPost())save();}catch(e){autoErr=e;}
   document.body.dataset.tab=tab;$('#logo').innerHTML=ICON[tab]||ICON.home;
   $('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${ICON[k]}<span>${k==='care'?esc(careName())+' 장부':l}</span></button>`).join('');
-  $('#view').innerHTML=(window['view_'+tab]||view_home)();
+  let html;try{html=(window['view_'+tab]||view_home)();}catch(e){html=errBox(e,'이 화면');}
+  $('#view').innerHTML=(autoErr?errBox(autoErr,'자동 기록'):'')+html;
 }
+// 오류가 나면 앱이 멈추지 않고, 무엇이 문제인지 화면에 보여 준다 (스크린샷으로 알려 주시면 고침)
+function errBox(e,where){
+  const msg=String(e&&e.message||e).slice(0,200),at=String(e&&e.stack||'').split('\n').slice(0,3).join(' / ').slice(0,300);
+  return `<section class="card" style="border-color:var(--bad,#c33)"><h2 style="color:var(--bad,#c33)">${esc(where)}에서 오류가 났습니다</h2><p class="hint" style="margin:0 0 6px;word-break:break-all">${esc(msg)}<br><small>${esc(at)}</small></p><p class="hint" style="margin:0">다른 메뉴는 그대로 쓸 수 있습니다. 이 화면을 캡처해서 알려 주세요.</p></section>`;
+}
+// 버튼·저장 중 생긴 오류도 화면 아래에 글로 보여 준다
+function showErr(e){const m=String(e&&(e.message||e.reason&&e.reason.message||e.reason)||e).slice(0,160);try{toast('오류: '+m);}catch(_){}}
+window.addEventListener('error',e=>showErr(e.error||e.message));
+window.addEventListener('unhandledrejection',e=>showErr(e.reason));
 function go(t){tab=t;try{localStorage.setItem(KEY+'.tab',t);}catch(e){}render();window.scrollTo(0,0);}
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(b){go(b.dataset.tab);b.scrollIntoView({inline:'center',block:'nearest'});}});
 
