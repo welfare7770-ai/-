@@ -295,9 +295,34 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .stfilter .seg{flex:0 0 auto}
 .stfilter input{flex:1 1 160px}
 a.btn{text-decoration:none}
+.lock{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(160deg,var(--hero-a),var(--hero-b))}
+.lock[hidden]{display:none}
+.lockcard{width:100%;max-width:340px;background:var(--surface);border-radius:20px;padding:28px 22px 20px;text-align:center;box-shadow:0 10px 40px rgba(60,50,110,.18)}
+.lockcard img{width:64px;height:64px;border-radius:16px}
+.lockcard h2{font:700 20px var(--gothic);margin:12px 0 4px;color:var(--hero-text)}
+.lockcard p{margin:0 0 16px;color:var(--muted);font-size:14px}
+.lockcard input{text-align:center;font:700 20px var(--gothic);letter-spacing:.3em;margin-bottom:12px}
+.lockcard .btn.primary{width:100%;justify-content:center;padding:12px}
+.lockcard .msg{min-height:1.4em;margin:10px 0 0;font:600 13px var(--gothic);color:var(--danger)}
+.lockcard.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@media (prefers-reduced-motion:reduce){.lockcard.shake{animation:none}}
+.lockset{display:grid;gap:10px;max-width:420px}
 </style>
 </head>
 <body>
+<div class="lock" id="lock" hidden>
+  <form class="lockcard" id="lockForm" autocomplete="off">
+    <img src="icons/icon-192.png" alt="">
+    <h2>신앙증진 프로젝트</h2>
+    <p>비밀번호를 입력하세요</p>
+    <input type="password" id="lockInput" autocomplete="current-password" aria-label="비밀번호">
+    <button class="btn primary" id="lockGo">열기</button>
+    <div class="msg" id="lockMsg" role="alert"></div>
+    <button type="button" class="btn ghost sm" id="lockHintBtn">비밀번호 힌트 보기</button>
+  </form>
+</div>
+<script>try { if (localStorage.getItem('sermon-notes-v1-lock')) document.getElementById('lock').hidden = false; } catch(e) {}</script>
 <div class="wrap">
   <header class="top">
     <div>
@@ -577,6 +602,11 @@ a.btn{text-decoration:none}
       <p class="hint">연도·월·주차·요일·예배·인도자·성경분류·권·장·절·제목·주제·대지1~4·요약·적용이 열로 나뉩니다.</p>
     </div>
     <div class="card">
+      <h2>잠금 비밀번호</h2>
+      <p class="hint" id="lockStatus" style="margin:-6px 0 12px"></p>
+      <div class="lockset" id="lockSet"></div>
+    </div>
+    <div class="card">
       <h2>기타</h2>
       <div class="row">
         <button class="btn" id="loadSample">예시 기록 넣어보기</button>
@@ -679,6 +709,7 @@ function showView(v, fromPop){
   if (v === 'daily') renderDaily();
   if (v === 'books') renderBooks();
   if (v === 'study') renderStudy();
+  if (v === 'backup') renderLockSet();
   window.scrollTo({top:0});
 }
 
@@ -1380,6 +1411,63 @@ $('#studyList').addEventListener('click', e => {
     return toast('해석 노트를 삭제했습니다', () => { db.studies.splice(i, 0, gone); save(); renderStudy(); toast('되돌렸습니다'); }); }
   const ed = e.target.closest('[data-stedit]');
   if (ed) { resetStudy(db.studies.find(x => x.id === ed.dataset.stedit)); $('#studyForm').scrollIntoView({behavior:'smooth'}); }
+});
+
+// ───────── 잠금 비밀번호 ─────────
+// 휴대폰을 다른 사람이 열었을 때 기록이 보이지 않게 하는 잠금 화면입니다. 비밀번호는 그대로 저장하지 않고 암호화된 값만 저장합니다.
+const LOCK = KEY + '-lock', RELOCK_MS = 60 * 1000;
+let lockCfg = null, lockFails = 0, lockUntil = 0, hiddenAt = 0;
+try { lockCfg = JSON.parse(localStorage.getItem(LOCK) || 'null'); } catch(e) {}
+async function hashPw(pw, salt){
+  const text = salt + '|' + pw;
+  if (window.crypto?.subtle) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+  let h = 2166136261; for (const ch of text) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; } return 'f' + h.toString(16);
+}
+const newSalt = () => [...crypto.getRandomValues(new Uint8Array(12))].map(b => b.toString(16).padStart(2,'0')).join('');
+const checkPw = async pw => !!lockCfg && await hashPw(pw, lockCfg.salt) === lockCfg.hash;
+function showLock(){ if (!lockCfg) return; $('#lockInput').value = ''; $('#lockMsg').textContent = ''; $('#lock').hidden = false; }
+$('#lockForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (Date.now() < lockUntil) { $('#lockMsg').textContent = `잠시 후 다시 시도하세요 (${Math.ceil((lockUntil - Date.now()) / 1000)}초)`; return; }
+  if (await checkPw($('#lockInput').value)) { lockFails = 0; $('#lock').hidden = true; $('#lockInput').value = ''; return; }
+  lockFails++; $('#lockInput').value = '';
+  const card = $('.lockcard'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+  if (lockFails >= 5) { lockUntil = Date.now() + 30000; lockFails = 0; $('#lockMsg').textContent = '5번 틀렸습니다. 30초 뒤에 다시 시도하세요'; }
+  else $('#lockMsg').textContent = `비밀번호가 맞지 않습니다 (${lockFails}/5)`;
+});
+$('#lockHintBtn').onclick = () => { $('#lockMsg').textContent = lockCfg?.hint ? `힌트: ${lockCfg.hint}` : '등록된 힌트가 없습니다'; };
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') hiddenAt = Date.now();
+  else if (lockCfg && hiddenAt && Date.now() - hiddenAt > RELOCK_MS) showLock();
+});
+function renderLockSet(){
+  $('#lockStatus').textContent = lockCfg ? '잠금이 켜져 있습니다. 앱을 열 때와 1분 넘게 다른 앱을 쓰다 돌아올 때 비밀번호를 묻습니다.'
+    : '비밀번호를 정하면 앱을 열 때마다 비밀번호를 물어봅니다.';
+  $('#lockSet').innerHTML = (lockCfg ? `<div><label for="lkCur">지금 비밀번호</label><input type="password" id="lkCur" autocomplete="current-password"></div>` : '') + `
+    <div><label for="lkNew">${lockCfg ? '새 비밀번호 (바꿀 때만)' : '새 비밀번호 (4자 이상)'}</label><input type="password" id="lkNew" autocomplete="new-password"></div>
+    <div><label for="lkNew2">새 비밀번호 한 번 더</label><input type="password" id="lkNew2" autocomplete="new-password"></div>
+    <div><label for="lkHint">비밀번호 힌트 (선택)</label><input id="lkHint" placeholder="예: 결혼기념일" value="${esc(lockCfg?.hint || '')}"></div>
+    <div class="row">${lockCfg
+      ? '<button type="button" class="btn primary sm" id="lkSave">비밀번호 바꾸기</button><button type="button" class="btn sm" id="lkNow">지금 잠그기</button><button type="button" class="btn danger sm" id="lkOff">잠금 끄기</button>'
+      : '<button type="button" class="btn primary sm" id="lkSave">잠금 켜기</button>'}</div>
+    <p class="hint" style="margin:0">비밀번호를 잊으면 되찾을 방법이 없습니다. 힌트를 꼭 적어 두세요. 잠금은 이 휴대폰에서만 적용됩니다.</p>`;
+}
+$('#lockSet').addEventListener('click', async e => {
+  const id = e.target.id; if (!['lkSave','lkNow','lkOff'].includes(id)) return;
+  if (id === 'lkNow') return showLock();
+  if (lockCfg && !(await checkPw($('#lkCur').value))) return toast('지금 비밀번호가 맞지 않습니다');
+  if (id === 'lkOff') { lockCfg = null; try { localStorage.removeItem(LOCK); } catch(err) {} renderLockSet(); return toast('잠금을 껐습니다'); }
+  const n1 = $('#lkNew').value, n2 = $('#lkNew2').value, hint = $('#lkHint').value.trim();
+  if (lockCfg && !n1) { lockCfg.hint = hint; try { localStorage.setItem(LOCK, JSON.stringify(lockCfg)); } catch(err) {} renderLockSet(); return toast('힌트를 바꿨습니다'); }
+  if (n1.length < 4) return toast('비밀번호는 4자 이상으로 정해 주세요');
+  if (n1 !== n2) return toast('새 비밀번호 두 칸이 서로 다릅니다');
+  const salt = newSalt(), cfg = {salt, hash: await hashPw(n1, salt), hint};
+  try { localStorage.setItem(LOCK, JSON.stringify(cfg)); } catch(err) { return toast('저장하지 못했습니다'); }
+  const first = !lockCfg; lockCfg = cfg; renderLockSet();
+  toast(first ? '잠금을 켰습니다 · 다음에 열 때부터 비밀번호를 묻습니다' : '비밀번호를 바꿨습니다');
 });
 
 // ───────── 백업 · 내보내기 ─────────
