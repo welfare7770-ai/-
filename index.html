@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1f7356">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
-<title>생활기록장</title>
+<title>김현수 행정사 비밀노트</title>
 <style>
 /* 모듈마다 고유 색(--c-*)을 두고, 현재 탭의 색이 --acc로 화면 전체에 흐르는 구조 */
 :root{
@@ -49,7 +49,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 header.top{display:flex;align-items:center;gap:10px;background:var(--card);padding:10px max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
 header.top .logo{width:26px;height:26px;border-radius:9px;background:var(--acc);color:var(--on-acc);display:grid;place-items:center;transition:background .25s}
 header.top .logo svg{width:18px;height:18px}
-header.top h1{margin:0;font-size:16px;font-weight:700;letter-spacing:-.01em;flex:1}
+header.top h1{margin:0;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-weight:700;letter-spacing:-.01em;flex:1}
 #sync{font-size:11.5px;color:var(--muted);background:var(--card2);border:1px solid var(--line);padding:3px 9px;border-radius:999px;white-space:nowrap}
 nav#tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:4px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--line);padding:6px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));scrollbar-width:none}
 nav#tabs::-webkit-scrollbar{display:none}
@@ -227,7 +227,7 @@ details.ref .tbl{margin-top:8px;font-size:12.5px}
 </style>
 </head>
 <body>
-<header class="top"><span class="logo" id="logo"></span><h1>생활기록장</h1><span id="sync"></span><button id="lockBtn" hidden aria-label="지금 잠그기" title="지금 잠그기"></button></header>
+<header class="top"><span class="logo" id="logo"></span><h1>김현수 행정사 비밀노트</h1><span id="sync"></span><button id="lockBtn" hidden aria-label="지금 잠그기" title="지금 잠그기"></button></header>
 <nav id="tabs"></nav>
 <main id="view"></main>
 <dialog id="dlg"><form id="dlgForm" novalidate></form></dialog>
@@ -1695,7 +1695,7 @@ function touch(){lastActive=Date.now();try{sessionStorage.setItem(KEY+'.active',
 function lockNow(){if(!lockOn())return;unlocked=false;pinBuf='';lockMsg='';lockErr=false;try{sessionStorage.removeItem(KEY+'.active');}catch(e){}if(dlg.open)dlg.close();render();}
 function lockHTML(){
   const n=S.lock.len||4,wait=Math.ceil((waitUntil-Date.now())/1000);
-  return `<div class="lock"><div class="lock-box"><span class="logo">${LOCK_ICON}</span><h2>생활기록장</h2>
+  return `<div class="lock"><div class="lock-box"><span class="logo">${LOCK_ICON}</span><h2>김현수 행정사 비밀노트</h2>
    <p class="${lockErr?'err':''}" id="lockMsg">${wait>0?`${wait}초 뒤에 다시 입력하세요`:esc(lockMsg||'비밀번호를 입력하세요')}</p>
    <div class="dots" id="dots">${Array.from({length:n},(_,i)=>`<i class="${i<pinBuf.length?'on':''}"></i>`).join('')}</div>
    <div class="pad">${[1,2,3,4,5,6,7,8,9].map(d=>`<button data-pin="${d}">${d}</button>`).join('')}<button class="sm" data-pin="hint">힌트</button><button data-pin="0">0</button><button class="sm" data-pin="del" aria-label="한 글자 지우기">지우기</button></div>
@@ -2021,7 +2021,7 @@ const ACT={
   setProfile:()=>openForm('키·성별',[{k:'height',label:'키(cm)',type:'number',dec:1},{k:'sex',label:'성별 (허리둘레 기준에 사용)',type:'select',options:[['','선택 안 함'],['남','남'],['여','여']]}],S.profile,v=>{S.profile={height:v.height||'',sex:v.sex};}),
   addHealth:()=>crud('health','측정 기록',healthFields,null),
   editHealth:d=>crud('health','측정 기록',healthFields,find('health',d.id)),
-  backup:()=>{const t=today();download(`생활기록장_백업_${t}.json`,JSON.stringify({app:'lifebook',version:1,exported:new Date().toISOString(),data:S},null,1),'application/json');try{localStorage.setItem(KEY+'.lastBackup',t);}catch(e){}setTimeout(render,300);},
+  backup:()=>{const t=today();download(`비밀노트_백업_${t}.json`,JSON.stringify({app:'lifebook',version:1,exported:new Date().toISOString(),data:S},null,1),'application/json');try{localStorage.setItem(KEY+'.lastBackup',t);}catch(e){}setTimeout(render,300);},
   restore:()=>$('#restoreFile').click(),
   csv:()=>{
     const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
