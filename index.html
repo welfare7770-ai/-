@@ -441,7 +441,11 @@ function showDlg(){
 }
 dlgForm.addEventListener('input',()=>{dlgDirty=true;});
 dlg.addEventListener('cancel',e=>{e.preventDefault();closeDlg();});
+// '가계부에도 기록' 같은 선택 칸(이름이 _로 시작)은 마지막으로 고른 값을 기억해 다음에도 그대로
+const prefKey=(title,k)=>KEY+'.pref.'+String(title).replace(/\s*(추가|수정)$/,'').replace(/\d+월분/,'')+'.'+k;
 function openForm(title,fields,rec,onSave,onDelete){
+  const opts=fields.filter(fd=>fd.type==='checkbox'&&fd.k.startsWith('_'));
+  if(opts.length){rec=rec?{...rec}:{};opts.forEach(fd=>{if(rec[fd.k]===undefined){try{const pv=localStorage.getItem(prefKey(title,fd.k));if(pv!==null)rec[fd.k]=pv==='1';}catch(e){}}});}
   dlgForm.innerHTML=`<h2>${esc(title)}</h2>`+fields.map(fd=>fieldHTML(fd,rec?rec[fd.k]:undefined)).join('')+
     `<div class="actions">${onDelete?'<button type="button" class="danger" data-x="del">삭제</button>':''}<span class="sp"></span><button type="button" data-x="cancel">취소</button>${!onDelete&&/추가$/.test(title)?'<button type="button" data-more="1">저장 후 계속</button>':''}<button type="submit" class="primary">저장</button></div>`;
   const shown=fields.filter(fd=>fd.show);
@@ -472,7 +476,7 @@ function openForm(title,fields,rec,onSave,onDelete){
     const v={};
     for(const fd of fields){
       const el=dlgForm.elements.namedItem(fd.k);
-      if(fd.type==='checkbox')v[fd.k]=el.checked;
+      if(fd.type==='checkbox'){v[fd.k]=el.checked;if(fd.k.startsWith('_'))try{localStorage.setItem(prefKey(title,fd.k),el.checked?'1':'0');}catch(e){}}
       else if(fd.type==='number')v[fd.k]=el.value===''?null:Number(el.value);
       else v[fd.k]=el.value.trim();
     }
