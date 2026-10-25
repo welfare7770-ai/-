@@ -680,7 +680,7 @@ function recurPostOne(r,ym){
   if(ownerOf(r)==='me'){if(!S.tx.some(t=>t.id===id))S.tx.push({id,ts:Date.now(),type:'out',date,amount:r.amount,cat:r.cat,pay:r.pay||'',acct:r.acct||'',memo:`[고정] ${r.name}`,...chk});}
   else{
     const who=(r.from||SELF)===SELF?SELF:ME;
-    if(!S.care.some(c=>c.id===id))S.care.push({id,ts:Date.now(),type:'out',date,amount:r.amount,cat:CARE_OUT.includes(r.cat)?r.cat:'집 관리비·공과금',who,memo:`[고정] ${r.name}`,tax:false,...chk});
+    if(!S.care.some(c=>c.id===id))S.care.push({id,ts:Date.now(),type:'out',date,amount:r.amount,cat:CARE_OUT.includes(r.cat)?r.cat:'집 관리비·공과금',who,memo:`[고정] ${r.name}`,tax:['병원비(월 정산)','장기요양(주간보호·방문요양)','약제비','외래·검사'].includes(r.cat),...chk});
     // 내가 대신 낸 부모님 고정비는 내 가계부에도 '부모님·가족' 지출로
     if(who===ME&&!S.tx.some(t=>t.id===id+'-m'))S.tx.push({id:id+'-m',ts:Date.now(),type:'out',date,amount:r.amount,cat:'부모님·가족',pay:'',acct:mainAcct(),memo:`[${careName()} 고정] ${r.name}`,...chk});
   }
@@ -1323,13 +1323,16 @@ function fundStats(){
   const cm=t.slice(0,7),months=[1,2,3].map(n=>shiftYM(cm,-n)).filter(m=>m>=f.startDate.slice(0,7));
   const outOf=m=>S.care.filter(c=>c.date.startsWith(m)&&(c.who===SELF&&c.type==='out'||c.type==='in'&&c.cat==='부모님 자금 이체')).reduce((s,c)=>s+(+c.amount||0),0);
   const thisOut=outOf(cm);
-  const avgOut=months.length?Math.round(months.reduce((s,m)=>s+outOf(m),0)/months.length):thisOut;
+  const fixedOut=S.recur.filter(r=>r.active&&ownerOf(r)==='parent'&&(r.from||SELF)===SELF).reduce((x,r)=>x+(+r.amount||0),0);
+  const histAvg=months.length?Math.round(months.reduce((s,m)=>s+outOf(m),0)/months.length):0;
+  const basis=months.length>=3?'hist':fixedOut?'fixed':months.length?'hist':'this';
+  const avgOut=basis==='hist'?histAvg:basis==='fixed'?fixedOut:thisOut;
   const net=monthlyIn-avgOut;
   const runway=net<0?Math.floor(bal/-net):null;
   const series=[-5,-4,-3,-2,-1,0].map(n=>{const m=shiftYM(cm,n),end=m===cm?t:m+'-31';
     return {label:Number(m.slice(5))+'월',value:m<f.startDate.slice(0,7)?0:Math.max(0,(+f.start||0)+S.care.filter(c=>c.date>=f.startDate&&c.date<=end).reduce((s,c)=>s+(delta(c)||0),0)),hi:m===cm};});
   const thisIn=S.care.filter(c=>c.date.startsWith(cm)&&c.who===SELF&&c.type==='in').reduce((s,c)=>s+(+c.amount||0),0);
-  return {bal,monthlyIn,avgOut,net,runway,series,thisIn,thisOut,based:months.length};
+  return {bal,monthlyIn,avgOut,net,runway,series,thisIn,thisOut,based:months.length,basis,fixedOut};
 }
 function fundCard(){
   const f=fundCfg(),st=fundStats();
@@ -1340,7 +1343,8 @@ function fundCard(){
   return `<section class="card"><h2>${esc(careName())} 돈 잔액<span class="sp"></span><button class="btn sm" data-act="careIncome">연금 금액</button><button class="btn sm" data-act="careFund">설정</button></h2>
    <div class="stats"><div class="stat" style="grid-column:span 3"><small>원금 ${won(f.start)} (고정) + 연금 − 지출${f.note?' · '+esc(f.note):''}</small><b style="font-size:22px;color:var(--acc)">${won(st.bal)}</b></div>
    <div class="stat"><small>매월 연금</small><b class="pos">${short(st.monthlyIn)}원</b></div><div class="stat"><small>월평균 지출</small><b class="neg">${short(st.avgOut)}원</b></div><div class="stat"><small>월 증감</small><b class="${st.net<0?'neg':'pos'}">${st.net>=0?'+':'-'}${short(Math.abs(st.net))}원</b></div></div>
-   ${st.based?`<p class="hint" style="margin:6px 0 0">월평균 지출은 지난 ${st.based}개월 기준 (이번 달 제외)</p>`:''}
+   <p class="hint" style="margin:6px 0 0">월 지출 계산: ${st.basis==='hist'?`지난 ${st.based}개월 평균`:st.basis==='fixed'?'고정지출에 등록한 금액 기준 (기록이 3개월 쌓이면 실제 평균으로 바뀜)':'이번 달 기록 기준 — 요양병원비·공과금을 고정지출로 등록하면 정확해집니다'}</p>
+   ${!S.recur.some(r=>r.active&&ownerOf(r)==='parent'&&/병원|요양|장기요양|주간보호/.test(r.name+r.cat))?`<div class="xfer" style="margin-top:8px"><span>매달 나가는 <b>요양병원비</b>를 고정지출로 등록하면 매달 자동으로 빠지고 예측도 정확해져요</span><button class="btn sm primary amt" data-act="addRecur" data-owner="parent" data-preset="hospital">등록</button></div>`:''}
    <p class="hint" style="margin:10px 0 0">${st.net>=0?(st.avgOut?'연금으로 병원비를 충당하고 있어 잔액이 줄지 않습니다.':`아직 ${esc(careName())} 돈으로 낸 지출이 없습니다.`):`지금 속도면 <b style="color:var(--over)">약 ${num(st.runway)}개월 뒤(${end}경)</b> 잔액이 바닥납니다. 그 뒤로는 내 돈으로 내야 합니다.`}</p>
    ${barChart(st.series)}
    ${(()=>{const pf=S.recur.filter(r=>r.active&&ownerOf(r)==='parent'&&(r.from||SELF)===SELF).reduce((s,r)=>s+(+r.amount||0),0);return pf?`<p class="hint" style="margin:8px 0 0">${esc(careName())} 돈에서 매달 자동으로 나가는 고정비 <b>${won(pf)}</b> (고정지출 탭)</p>`:'';})()}
@@ -1633,7 +1637,7 @@ const ACT={
       save();dlg.close();render();toast('저장했습니다');};
     showDlg();
   },
-  addRecur:d=>{crud('recur','고정지출',recurFields(),null,{owner:d.owner||'me'},r=>{r.since=today();});
+  addRecur:d=>{crud('recur','고정지출',recurFields(),null,d.preset==='hospital'?{owner:'parent',name:'요양병원비',cat:'병원비(월 정산)',from:SELF,variable:true,day:10,active:true}:{owner:d.owner||'me'},r=>{r.since=today();});
     // 구독 서비스 이름을 고르면 분류를 '구독·서비스'로 자동 선택
     const nm=dlgForm.elements.namedItem('name'),cat=dlgForm.elements.namedItem('cat'),pay=dlgForm.elements.namedItem('pay');
     const vr=dlgForm.elements.namedItem('variable');nm.addEventListener('change',()=>{vr.checked=/전기|가스|수도|관리비/.test(nm.value);});
