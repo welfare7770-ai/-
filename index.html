@@ -735,10 +735,10 @@ function stackBar(by,total){
    <div class="legend">${parts.map(([k,l])=>`<span><i style="background:${ACCT_COLOR[k]}"></i>${l} <b>${short(by[k])}</b> ${Math.round(by[k]/total*100)}%</span>`).join('')}</div>`;
 }
 function netWorthCard(){
-  if(!S.accounts.length)return `<section class="card nw" style="--acc:var(--c-assets)" data-act="go" data-tab="assets"><h2>내 재산</h2><p class="hint" style="margin:0">통장·적금·증권 계좌를 등록하면 여기에서 전체 재산을 한눈에 봅니다. <b>눌러서 시작</b></p></section>`;
+  if(!S.accounts.length)return `<section class="card nw" style="--acc:var(--c-assets)" data-act="go" data-tab="assets"><h2>내 재산<span class="sp"></span><button class="btn sm primary" data-act="addAcct">＋ 재산 추가</button></h2><p class="hint" style="margin:0">통장·적금·증권·부동산을 등록하면 여기에서 전체 재산을 한눈에 봅니다.</p></section>`;
   const t=assetTotals(),prev=S.assetHist[shiftYM(today().slice(0,7),-1)],stale=S.accounts.filter(a=>staleDays(a)>30).length;
   const diff=prev?t.net-prev.t:null;
-  return `<section class="card nw" style="--acc:var(--c-assets)" data-act="go" data-tab="assets"><h2>내 재산<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${S.accounts.length}개 계좌 ›</small></h2>
+  return `<section class="card nw" style="--acc:var(--c-assets)" data-act="go" data-tab="assets"><h2>내 재산<span class="sp"></span><button class="btn sm primary" data-act="addAcct">＋ 재산 추가</button></h2>
    <div class="big">${won(t.net)}</div>
    <div class="hint" style="margin:2px 0 0">자산 ${won(t.assets)}${t.debt?` · 빚 ${won(t.debt)}`:''}${diff!=null?` · 지난달보다 <b class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${num(diff)}원</b>`:''}</div>
    ${stackBar(t.by,t.assets)}
@@ -773,10 +773,11 @@ function view_assets(){
   <section class="hero"><div class="hero-date">${today().replace(/-/g,'.')} 기준 순자산</div><div class="hero-num">${won(t.net)}</div>
    <div class="hero-sub">자산 ${won(t.assets)}${t.debt?` · 빚 ${won(t.debt)}`:''}${diff!=null?` · 지난달보다 <b class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${num(diff)}원</b>`:''}</div>
    ${stackBar(t.by,t.assets)}</section>
-  <div class="toolbar"><button class="btn primary" data-act="addAcct">＋ 계좌 추가</button><button class="btn" data-act="addMove">계좌 간 이동</button><span class="grow"></span></div>
+  <div class="toolbar"><button class="btn primary" data-act="addAcct" style="flex:1;padding:12px;font-size:15px">＋ 재산 추가</button><button class="btn" data-act="addMove" style="padding:12px">계좌 간 이동</button></div>
   ${months.length>1?`<section class="card"><h2>순자산 추이</h2>${barChart(months.map(m=>({label:Number(m.slice(5))+'월',value:Math.max(0,(S.assetHist[m]||{t:t.net}).t),hi:m===cm})))}</section>`:''}
   ${ACCT_TYPES.map(([k,l])=>{const list=S.accounts.filter(a=>a.type===k);if(!list.length)return '';const sum=list.filter(a=>a.inTotal!==false).reduce((x,a)=>x+acctValue(a),0);
     return `<section class="card" style="--acc:${ACCT_COLOR[k]}"><h2>${l}<span class="sp"></span><b style="font-size:15px" class="${k==='loan'?'neg':''}">${k==='loan'?'-':''}${won(sum)}</b></h2>${list.map(acctRow).join('')}</section>`;}).join('')}
+  <button class="btn" data-act="addAcct" style="width:100%;padding:12px;margin-bottom:12px;border-style:dashed">＋ 다른 재산 추가</button>
   ${S.moves.length?`<section class="card"><h2>최근 계좌 간 이동</h2><ul class="list">${S.moves.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8).map(m=>`<li class="row" data-act="editMove" data-id="${m.id}"><div class="grow"><b>${esc(acctById(m.from)?.name||'?')} → ${esc(acctById(m.to)?.name||'?')}</b><small>${m.date}${m.memo?' · '+esc(m.memo):''}</small></div><span class="amt">${num(m.amount)}</span></li>`).join('')}</ul></section>`:''}
   ${fs?`<section class="card" style="--acc:var(--c-care)"><h2>관리 중인 돈 (내 재산 아님)</h2><div class="row" data-act="go" data-tab="care" style="border:0"><div class="grow"><b>${esc(careName())} 부모님 자금</b><small>${esc(fundCfg().note||'')} · 아버지 장부에서 관리</small></div><span class="amt">${num(fs.bal)}</span></div></section>`:''}
   <section class="card"><details class="ref"><summary>정확하게 맞추는 요령</summary><ul class="hint" style="padding-left:18px;margin:8px 0 0">
@@ -832,10 +833,10 @@ function undoTrade(a){
   });
 }
 function acctDialog(a,mode){
-  const isNew=!a;a=a||{id:uid(),type:mode||'bank',name:'',inst:'',balance:'',asOf:today(),holdings:[],inTotal:true,main:!S.accounts.some(x=>x.main)};
+  const isNew=!a;a=a||{id:uid(),type:mode||'bank',name:'',inst:'',balance:'',asOf:today(),holdings:[],inTotal:true,main:false};
   const upd=mode==='update';
   const hrow=h=>`<div class="rule" style="grid-template-columns:1fr 50px 84px 84px 24px"><input class="hn" value="${esc(h.name||'')}" placeholder="종목명" aria-label="종목명"><input class="hq" type="number" inputmode="decimal" min="0" step="any" value="${esc(h.qty??'')}" placeholder="수량" aria-label="수량"><input class="ha" type="number" inputmode="numeric" min="0" value="${esc(h.avg??'')}" placeholder="매입가" aria-label="매입가(평단)"><input class="hp" type="number" inputmode="numeric" min="0" value="${esc(h.price??'')}" placeholder="현재가" aria-label="현재가"><button type="button" class="x" aria-label="삭제">✕</button></div>`;
-  dlgForm.innerHTML=`<h2>${upd?esc(a.name)+' 업데이트':isNew?'계좌 추가':'계좌 수정'}</h2>
+  dlgForm.innerHTML=`<h2>${upd?esc(a.name)+' 업데이트':isNew?'재산 추가':'재산 수정'}</h2>
    <div class="fld" ${upd?'hidden':''}><label for="at">종류</label><select id="at">${optHTML(ACCT_TYPES,a.type)}</select></div>
    <div class="fld2" ${upd?'hidden':''}><div class="fld"><label for="an">이름</label><input id="an" value="${esc(a.name)}" placeholder="예: 키움 위탁종합"></div>
    <div class="fld"><label for="ai">기관</label><input id="ai" value="${esc(a.inst||'')}" placeholder="예: 농협, 키움증권"></div></div>
@@ -846,7 +847,7 @@ function acctDialog(a,mode){
    <label class="fld chk" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="amain"${a.main?' checked':''}> 가계부 기본 통장 (새 기록의 ‘어느 통장’ 기본값)</label>
    <label class="fld chk" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="atot"${a.inTotal!==false?' checked':''}> 내 재산 합계에 포함</label></div>
    <p class="hint" id="ahint"></p>
-   <div class="actions">${!isNew&&!upd?'<button type="button" class="danger" data-x="del">삭제</button>':''}<span class="sp"></span><button type="button" data-x="cancel">취소</button><button type="submit" class="primary">저장</button></div>`;
+   <div class="actions">${!isNew&&!upd?'<button type="button" class="danger" data-x="del">삭제</button>':''}<span class="sp"></span><button type="button" data-x="cancel">취소</button>${isNew?'<button type="button" data-more="1">저장하고 하나 더</button>':''}<button type="submit" class="primary">저장</button></div>`;
   const $d=q=>dlgForm.querySelector(q),hrows=$d('#hrows');
   const PH={bank:['예: 농협 자립예탁금','예: 농협, 국민은행'],saving:['예: 농협 자유적금','예: 농협'],deposit:['예: 신협 정기예금','예: 신협'],stock:['예: 키움 위탁종합','예: 키움증권'],cash:['예: 지갑 현금, 비상금','예: 집 금고'],realty:['예: 아파트, 토지','시세 출처: 예) KB시세'],etc:['예: 전세보증금, 보험 해약환급금',''],loan:['예: 주택담보대출','예: 농협']};
   const sync=()=>{const ty=$d('#at').value;$d('#hbox').hidden=ty!=='stock';$d('#an').placeholder=PH[ty][0];$d('#ai').placeholder=PH[ty][1];
@@ -856,6 +857,7 @@ function acctDialog(a,mode){
   hrows.onclick=e=>{if(e.target.closest('.x'))e.target.closest('.rule').remove();};
   $d('#addH').onclick=()=>hrows.insertAdjacentHTML('beforeend',hrow({}));
   $d('[data-x=cancel]').onclick=()=>dlg.close();
+  let more=false;const mb=$d('[data-more]');if(mb)mb.onclick=()=>{more=true;dlgForm.requestSubmit();};
   const del=$d('[data-x=del]');
   if(del)del.onclick=async()=>{if(await askConfirm(`‘${a.name}’ 계좌를 삭제할까요? 가계부 기록은 남고 통장 연결만 풀립니다.`,'삭제')){S.accounts=S.accounts.filter(x=>x.id!==a.id);S.tx.forEach(t=>{if(t.acct===a.id)t.acct='';});S.moves=S.moves.filter(m=>m.from!==a.id&&m.to!==a.id);save();dlg.close();render();toast('삭제했습니다');}};
   dlgForm.onsubmit=e=>{e.preventDefault();
@@ -863,12 +865,16 @@ function acctDialog(a,mode){
     dlgForm.querySelectorAll('.bad').forEach(x=>x.classList.remove('bad'));dlgForm.querySelectorAll('.errmsg').forEach(x=>x.remove());
     const name=$d('#an').value.trim()||$d('#ai').value.trim()||typeName(ty).split(' (')[0];
     const hasHold=ty==='stock'&&[...hrows.querySelectorAll('.hn')].some(i=>i.value.trim());
-    if($d('#ab').value===''&&!hasHold){const el=$d('#ab');el.classList.add('bad');el.closest('.fld').insertAdjacentHTML('beforeend','<div class="errmsg">금액을 숫자로 넣어 주세요 (예: 1257805)</div>');el.focus();return;}
+    if($d('#ab').value===''&&!hasHold){more=false;const el=$d('#ab');el.classList.add('bad');el.closest('.fld').insertAdjacentHTML('beforeend','<div class="errmsg">금액을 숫자로 넣어 주세요 (예: 1257805)</div>');el.focus();return;}
     const holdings=ty==='stock'?[...hrows.querySelectorAll('.rule')].map(r=>({name:r.querySelector('.hn').value.trim(),qty:+r.querySelector('.hq').value||0,avg:+r.querySelector('.ha').value||0,price:+r.querySelector('.hp').value||0})).filter(h=>h.name):[];
     Object.assign(a,{type:ty,name,inst:$d('#ai').value.trim(),balance:+$d('#ab').value||0,asOf:$d('#ad').value||today(),holdings,checkedAt:Date.now(),memo:$d('#am').value.trim(),inTotal:$d('#atot').checked,main:ty!=='loan'&&$d('#amain').checked});
+    // 가계부 기본 통장이 아직 없으면 첫 입출금 통장을 기본으로
+    if(isNew&&ty==='bank'&&!S.accounts.some(x=>x.main))a.main=true;
     if(a.main)S.accounts.forEach(x=>{if(x!==a)x.main=false;});
     if(isNew)S.accounts.push(a);
-    save();dlg.close();render();toast(upd?'업데이트했습니다':'저장했습니다');
+    save();dlg.close();render();
+    if(more){acctDialog(null);toast(`‘${name}’ 저장 · 다음 재산을 입력하세요`);}
+    else toast(upd?'업데이트했습니다':isNew?`‘${name}’ 저장 · 더 넣으려면 ‘＋ 재산 추가’`:'저장했습니다');
   };
   showDlg();
 }
