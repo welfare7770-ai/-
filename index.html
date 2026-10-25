@@ -3,119 +3,162 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#2f6f5e">
+<meta name="theme-color" content="#1f7356">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
 <title>생활기록장</title>
 <style>
+/* 모듈마다 고유 색(--c-*)을 두고, 현재 탭의 색이 --acc로 화면 전체에 흐르는 구조 */
 :root{
-  --bg:#f4f5f2;--card:#fff;--text:#1d2420;--muted:#66706a;--line:#e1e4df;
-  --brand:#2f6f5e;--brand-weak:#e3efe9;
-  --pos:#1f6fb2;--neg:#c2410c;
-  --over:#b91c1c;--over-bg:#fde8e8;--soon:#a16207;--soon-bg:#fdf3d7;
-  --ok:#15803d;--ok-bg:#e3f4e8;--info:#1d4ed8;--info-bg:#e4ebfd;--none:#6b7280;--none-bg:#eceef0;
+  --bg:#f1f4f2;--card:#ffffff;--card2:#f6f8f7;--text:#16201b;--muted:#66726c;--line:#e2e8e4;
+  --shadow:0 1px 2px rgba(22,44,33,.05),0 6px 18px rgba(22,44,33,.06);
+  --c-home:#1f7356;--c-ledger:#1f7356;--c-car:#2a5db0;--c-recur:#6a4cbd;--c-sched:#b4620a;
+  --c-gift:#bd3a63;--c-hike:#46711f;--c-gym:#cc4f15;--c-health:#c8304a;--c-settings:#56626b;
+  --on-acc:#ffffff;--pos:#1d63ad;--neg:#c03f0b;
+  --over:#b4231f;--over-bg:#fde9e7;--soon:#98600a;--soon-bg:#fcf1d6;
+  --ok:#17773b;--ok-bg:#e1f3e7;--info:#2a4fc4;--info-bg:#e5ebfc;--none:#646c74;--none-bg:#ebeef0;
+  --acc:var(--c-home);
+  --font:"IBM Plex Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#141816;--card:#1e2421;--text:#e7ebe8;--muted:#9aa49e;--line:#2f3833;
-  --brand:#6fc3a6;--brand-weak:#22352e;--pos:#7ab8f0;--neg:#f59e6b;
-  --over:#fca5a5;--over-bg:#3b1d1d;--soon:#fcd34d;--soon-bg:#3a2f12;
-  --ok:#86efac;--ok-bg:#16301f;--info:#a5b4fc;--info-bg:#1f2547;--none:#b0b6bd;--none-bg:#2a2f33;
+  --bg:#0f1311;--card:#191f1c;--card2:#212824;--text:#e5ebe7;--muted:#97a29c;--line:#2b3430;--shadow:none;
+  --c-home:#5cc39d;--c-ledger:#5cc39d;--c-car:#7ea8f0;--c-recur:#ab95ee;--c-sched:#eea64c;
+  --c-gift:#ef7d9f;--c-hike:#9dc76b;--c-gym:#f48a52;--c-health:#f27587;--c-settings:#a5afb7;
+  --on-acc:#0e1411;--pos:#7cb8f0;--neg:#f59d6b;
+  --over:#fca5a0;--over-bg:#3a1c1b;--soon:#f6cf6a;--soon-bg:#382d12;
+  --ok:#86e2a6;--ok-bg:#15301f;--info:#a9b8fb;--info-bg:#1f2648;--none:#b0b7bd;--none-bg:#2a3034;
+  color-scheme:dark;
 }}
 :root[data-theme="dark"]{
-  --bg:#141816;--card:#1e2421;--text:#e7ebe8;--muted:#9aa49e;--line:#2f3833;
-  --brand:#6fc3a6;--brand-weak:#22352e;--pos:#7ab8f0;--neg:#f59e6b;
-  --over:#fca5a5;--over-bg:#3b1d1d;--soon:#fcd34d;--soon-bg:#3a2f12;
-  --ok:#86efac;--ok-bg:#16301f;--info:#a5b4fc;--info-bg:#1f2547;--none:#b0b6bd;--none-bg:#2a2f33;
+  --bg:#0f1311;--card:#191f1c;--card2:#212824;--text:#e5ebe7;--muted:#97a29c;--line:#2b3430;--shadow:none;
+  --c-home:#5cc39d;--c-ledger:#5cc39d;--c-car:#7ea8f0;--c-recur:#ab95ee;--c-sched:#eea64c;
+  --c-gift:#ef7d9f;--c-hike:#9dc76b;--c-gym:#f48a52;--c-health:#f27587;--c-settings:#a5afb7;
+  --on-acc:#0e1411;--pos:#7cb8f0;--neg:#f59d6b;
+  --over:#fca5a0;--over-bg:#3a1c1b;--soon:#f6cf6a;--soon-bg:#382d12;
+  --ok:#86e2a6;--ok-bg:#15301f;--info:#a9b8fb;--info-bg:#1f2648;--none:#b0b7bd;--none-bg:#2a3034;
+  color-scheme:dark;
 }
+body[data-tab="ledger"]{--acc:var(--c-ledger)}body[data-tab="car"]{--acc:var(--c-car)}body[data-tab="recur"]{--acc:var(--c-recur)}
+body[data-tab="sched"]{--acc:var(--c-sched)}body[data-tab="gift"]{--acc:var(--c-gift)}body[data-tab="hike"]{--acc:var(--c-hike)}
+body[data-tab="gym"]{--acc:var(--c-gym)}body[data-tab="health"]{--acc:var(--c-health)}body[data-tab="settings"]{--acc:var(--c-settings)}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0}
-body{background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;-webkit-text-size-adjust:100%}
-header.top{background:var(--brand);color:#fff;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top))}
-:root[data-theme="dark"] header.top{color:#0f1a16}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) header.top{color:#0f1a16}}
-header.top{display:flex;align-items:center;gap:8px}header.top h1{margin:0;font-size:18px;flex:1}#sync{font-size:12px;opacity:.85}
-nav#tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:4px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--line);padding:6px 8px;scrollbar-width:none}
+body{background:var(--bg);color:var(--text);font:15px/1.55 var(--font);-webkit-text-size-adjust:100%;font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--card);z-index:10}
+header.top{display:flex;align-items:center;gap:10px;background:var(--card);padding:14px max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
+header.top .logo{width:30px;height:30px;border-radius:9px;background:var(--acc);color:var(--on-acc);display:grid;place-items:center;transition:background .25s}
+header.top .logo svg{width:18px;height:18px}
+header.top h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em;flex:1}
+#sync{font-size:11.5px;color:var(--muted);background:var(--card2);border:1px solid var(--line);padding:3px 9px;border-radius:999px;white-space:nowrap}
+nav#tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:4px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--line);padding:6px max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));scrollbar-width:none}
 nav#tabs::-webkit-scrollbar{display:none}
-nav#tabs button{flex:0 0 auto;border:0;background:none;color:var(--muted);padding:8px 12px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer}
-nav#tabs button.on{background:var(--brand-weak);color:var(--brand)}
-main{max-width:760px;margin:0 auto;padding:12px 16px 80px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-.card h2{font-size:16px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+nav#tabs button{flex:0 0 auto;display:flex;align-items:center;gap:5px;border:0;background:none;color:var(--muted);padding:7px 11px;border-radius:999px;font:inherit;font-size:14px;font-weight:500}
+nav#tabs button .ic{width:16px;height:16px}
+nav#tabs button.on{background:var(--acc);color:var(--on-acc);font-weight:700}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+main{max-width:760px;margin:0 auto;padding-block:14px 90px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h2{font-size:15.5px;font-weight:700;margin:0 0 12px;display:flex;align-items:center;gap:8px;text-wrap:balance}
+.card h2::before{content:"";width:4px;height:15px;border-radius:2px;background:var(--acc)}
 .card h2 .sp{flex:1}
+.hero{border-radius:22px;padding:18px;margin-bottom:12px;background:linear-gradient(140deg,color-mix(in srgb,var(--acc) 20%,var(--card)),color-mix(in srgb,var(--acc) 6%,var(--card)));border:1px solid color-mix(in srgb,var(--acc) 25%,var(--line));position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-30px;bottom:-40px;width:180px;height:120px;background:var(--acc);opacity:.08;clip-path:polygon(0 100%,35% 30%,55% 60%,75% 15%,100% 100%)}
+.hero-date{font-size:13px;color:var(--muted);font-weight:500}
+.hero-label{margin-top:10px;font-size:13px;color:var(--muted)}
+.hero-num{font-size:30px;font-weight:700;letter-spacing:-.02em;color:var(--acc);line-height:1.2}
+.hero-sub{font-size:13.5px;margin-top:2px}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.stat{background:var(--bg);border-radius:10px;padding:8px 10px;min-width:0}
+.stat{background:var(--card2);border-radius:12px;padding:9px 11px;min-width:0}
 .stat small{display:block;color:var(--muted);font-size:12px}
-.stat b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat .pill{margin-top:3px;display:inline-block}
 .pos{color:var(--pos)}.neg{color:var(--neg)}
-.quick{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.quick{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
+.quick button{display:flex;flex-direction:column;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:14px;padding:10px 2px 8px;font-size:12px;font-weight:600;box-shadow:var(--shadow)}
+.quick button .ic{width:34px;height:34px;padding:7px;border-radius:11px;background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
+@media (max-width:480px){.quick{grid-template-columns:repeat(3,1fr)}}
 button{font:inherit;cursor:pointer}
-.btn,.quick button,.toolbar button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:8px 10px;font-weight:600}
-.quick button{padding:10px 2px;font-size:12.5px}
-.btn.primary,button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-:root[data-theme="dark"] button.primary,:root[data-theme="dark"] .btn.primary{color:#0f1a16}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.primary,:root:not([data-theme="light"]) .btn.primary{color:#0f1a16}}
-.btn.sm{padding:4px 10px;font-size:13px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[data-act]:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:11px;padding:8px 12px;font-weight:600}
+.btn.primary,button.primary{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+.btn.sm{padding:4px 10px;font-size:13px;border-radius:9px}
+.btn:disabled{opacity:.45;cursor:default}
 .danger{color:var(--over)!important}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .toolbar .grow{flex:1}
-.monthnav{display:flex;align-items:center;gap:6px;font-weight:700;font-size:16px}
+.monthnav{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
 .list{list-style:none;margin:0;padding:0}
-.row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-top:1px solid var(--line);cursor:pointer}
+.row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-top:1px solid var(--line);cursor:pointer}
 .list .row:first-child{border-top:0}
 .grow{flex:1;min-width:0}
 .row b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row small{display:block;color:var(--muted);font-size:12.5px}
 .amt{font-weight:700;white-space:nowrap;text-align:right}
-.daygrp{font-size:12.5px;color:var(--muted);margin:12px 2px 2px;display:flex;justify-content:space-between}
-.pill{flex:0 0 auto;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.daygrp{font-size:12.5px;color:var(--muted);margin:14px 2px 2px;display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.pill{flex:0 0 auto;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
 .pill.over{color:var(--over);background:var(--over-bg)}.pill.soon{color:var(--soon);background:var(--soon-bg)}
 .pill.ok{color:var(--ok);background:var(--ok-bg)}.pill.info{color:var(--info);background:var(--info-bg)}
 .pill.none{color:var(--none);background:var(--none-bg)}
-.bar{height:8px;background:var(--bg);border-radius:99px;overflow:hidden;margin-top:4px}
-.bar span{display:block;height:100%;background:var(--brand);border-radius:99px}
+.bar{height:8px;background:color-mix(in srgb,var(--acc) 12%,var(--card2));border-radius:99px;overflow:hidden;margin-top:5px}
+.bar span{display:block;height:100%;background:var(--acc);border-radius:99px}
 .bar.warn span{background:var(--soon)}.bar.over span{background:var(--over)}
-.catrow{display:grid;grid-template-columns:92px 1fr auto;gap:8px;align-items:center;font-size:13.5px;margin:6px 0}
+.goal{font-size:13.5px;margin-bottom:10px}.goal:last-child{margin-bottom:0}
+.goal div:first-child{display:flex;justify-content:space-between;gap:8px}
+.catrow{display:grid;grid-template-columns:92px 1fr auto;gap:8px;align-items:center;font-size:13.5px;margin:7px 0}
 .catrow .bar{margin:0}
-.empty{color:var(--muted);text-align:center;padding:14px 0;margin:0}
+.insights{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin-top:10px}
+.insights b{color:var(--text)}
+.empty{color:var(--muted);text-align:center;padding:16px 0;margin:0;font-size:14px}
 .hint{color:var(--muted);font-size:13px;margin:4px 0 10px}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
-.hike{border-top:1px solid var(--line);padding:12px 2px;cursor:pointer}.hike:first-child{border-top:0}
-.hike h3{margin:0;font-size:16px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}.hike h3 small{color:var(--muted);font-weight:400;font-size:13px}
-.hike .meta{color:var(--muted);font-size:13px;margin:2px 0 6px}
-.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--bg);border-radius:8px;padding:3px 8px;font-size:12.5px;white-space:nowrap}.chip b{font-weight:700}
-.hike p{margin:6px 0 0;font-size:13.5px;white-space:pre-line}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:0}
 .kv dt{color:var(--muted)}.kv dd{margin:0;font-weight:600}
-input,select,textarea{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
-textarea{min-height:64px;resize:vertical}
-input[type=checkbox]{width:auto}
-dialog{border:0;border-radius:16px;padding:0;width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 32px);background:var(--card);color:var(--text)}
-dialog::backdrop{background:rgba(0,0,0,.45)}
-#dlgForm{padding:16px;overflow:auto}
-#dlgForm h2{margin:0 0 12px;font-size:17px}
+input,select,textarea{font:inherit;color:var(--text);background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%;min-width:0}
+textarea{min-height:70px;resize:vertical}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--acc)}
+dialog{border:0;border-radius:20px;padding:0;width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 32px);background:var(--card);color:var(--text);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(10,20,15,.5)}
+#dlgForm{padding:18px;overflow:auto}
+#dlgForm h2{margin:0 0 14px;font-size:17px}
 .fld{margin-bottom:10px}
-.fld>label{display:block;font-size:13px;color:var(--muted);margin-bottom:3px}
+.fld>label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:3px;font-weight:500}
 .fld.chk label{display:flex;gap:8px;align-items:center;color:var(--text);font-size:14px}
-.fld2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
-.actions{display:flex;gap:8px;margin-top:14px;position:sticky;bottom:-16px;background:var(--card);padding:10px 0}
+.actions{display:flex;gap:8px;margin-top:14px;position:sticky;bottom:-18px;background:var(--card);padding:10px 0}
 .actions .sp{flex:1}
-.actions button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:9px 16px;font-weight:600}
+.actions button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:11px;padding:9px 16px;font-weight:600}
+.actions button.primary{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
 .rule{display:grid;grid-template-columns:1fr 78px 20px 60px 26px 30px;gap:4px;align-items:center;margin-bottom:6px;font-size:12.5px;color:var(--muted)}
 .rule input{padding:6px}
 .rule button{border:0;background:none;color:var(--over);font-size:16px}
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100vw - 32px)}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100vw - 32px)}
 #toast.show{opacity:1}
-svg.spark{width:100%;height:60px;display:block}
+svg.spark{width:100%;height:64px;display:block}
+.sparklab{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:2px 0 8px}
+.sparklab b{color:var(--text)}
+svg.chart{width:100%;height:auto;display:block}
+.chart text{font-size:10.5px;fill:var(--muted);font-family:var(--font)}
+.chart .cv{fill:var(--text);font-weight:600}
+.tblwrap{overflow-x:auto}
 .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
-.tbl th,.tbl td{text-align:left;padding:7px 4px;border-top:1px solid var(--line);vertical-align:top}
-.tbl th{color:var(--muted);font-weight:600;border-top:0;font-size:12.5px}
+.tbl th,.tbl td{text-align:left;padding:8px 4px;border-top:1px solid var(--line);vertical-align:top}
+.tbl th{color:var(--muted);font-weight:600;border-top:0;font-size:12px}
 .tbl tr[data-act]{cursor:pointer}
 .tbl td.r,.tbl th.r{text-align:right}
-@media (max-width:420px){
-  .stat b{font-size:13.5px}
-  .tbl .hide-sm{display:none}
-}
+.tbl small{color:var(--muted)}
+.v-over{color:var(--over);font-weight:700}.v-soon{color:var(--soon);font-weight:700}
+details.ref summary{cursor:pointer;font-weight:600;font-size:14px}
+details.ref .tbl{margin-top:8px;font-size:12.5px}
+.hike{border-top:1px solid var(--line);padding:13px 2px;cursor:pointer}.hike:first-child{border-top:0}
+.hike h3{margin:0;font-size:16px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}.hike h3 small{color:var(--muted);font-weight:400;font-size:13px}
+.hike .meta{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--card2);border-radius:8px;padding:3px 8px;font-size:12.5px;white-space:nowrap}.chip b{font-weight:700}
+.hike p{margin:6px 0 0;font-size:13.5px;white-space:pre-line}
+@media (max-width:420px){.stat b{font-size:14.5px}.tbl .hide-sm{display:none}.hero-num{font-size:27px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<header class="top"><h1>생활기록장</h1><span id="sync"></span></header>
+<header class="top"><span class="logo" id="logo"></span><h1>생활기록장</h1><span id="sync"></span></header>
 <nav id="tabs"></nav>
 <main id="view"></main>
 <dialog id="dlg"><form id="dlgForm" novalidate></form></dialog>
@@ -139,13 +182,13 @@ const DEFAULT_RULES=[
   {item:'타이어 교체',km:50000,months:48}
 ];
 const SCHED_CAT=['자동차','보험','건강','신분·면허','자격·교육','세금·공과','가족·기념일','기타'];
-const SCHED_TITLES=['자동차보험 만기','자동차 정기검사','자동차세 연납','운전면허 적성검사·갱신','국가건강검진','암검진','여권 만료','실손보험 갱신','재산세 납부(7월)','재산세 납부(9월)','종합소득세 신고(5월)','자격증 보수교육','부모님 생신','결혼기념일','제사'];
+const SCHED_TITLES=['자동차보험 만기','자동차 정기검사','자동차 종합검사','자동차세(6월·12월)','주민세(8월)','건강보험료 정산','자동차세 연납','운전면허 적성검사·갱신','국가건강검진','암검진','여권 만료','실손보험 갱신','재산세 납부(7월)','재산세 납부(9월)','종합소득세 신고(5월)','자격증 보수교육','부모님 생신','결혼기념일','제사'];
 const REPEAT=[['none','반복 없음'],['1m','매월'],['6m','6개월마다'],['1y','매년'],['2y','2년마다'],['5y','5년마다'],['10y','10년마다']];
 const REPEAT_M={none:0,'1m':1,'6m':6,'1y':12,'2y':24,'5y':60,'10y':120};
 const GIFT_KIND=['결혼','부고(조의)','돌·생일','회갑·칠순','개업·이전','병문안','출산','기타'];
 const GIFT_REL=['가족·친척','친구','직장','이웃·지인','모임·동호회','기타'];
 
-function blank(){return {tx:[],budget:0,car:{name:'',plate:'',odo:0,fuelType:'휘발유',year:''},rules:DEFAULT_RULES.map(r=>({...r})),maint:[],fuel:[],recur:[],sched:[],gift:[],health:[],hike:[]};}
+function blank(){return {tx:[],budget:0,car:{name:'',plate:'',odo:0,fuelType:'휘발유',year:''},rules:DEFAULT_RULES.map(r=>({...r})),maint:[],fuel:[],recur:[],sched:[],gift:[],health:[],hike:[],gym:[],lab:[],profile:{height:'',sex:''}};}
 let S;
 try{S=Object.assign(blank(),JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){S=blank();}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}cloud.push();}
@@ -154,8 +197,8 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}cloud
    다른 사람은 볼 수 없음. 가계부는 연도별 문서로 나눠 문서 크기 제한을 피함. */
 const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
   docs(){
-    const out={meta:{budget:S.budget,car:S.car,rules:S.rules}};
-    for(const k of ['maint','fuel','recur','sched','gift','health','hike'])out[k]={items:S[k]};
+    const out={meta:{budget:S.budget,car:S.car,rules:S.rules,profile:S.profile}};
+    for(const k of ['maint','fuel','recur','sched','gift','health','hike','gym','lab'])out[k]={items:S[k]};
     const years={};S.tx.forEach(t=>{(years[t.date.slice(0,4)]||=[]).push(t);});
     for(const y in years)out['tx-'+y]={items:years[y]};
     for(const id in this.sent)if(id.startsWith('tx-')&&!out[id])out[id]=null; // 비워진 연도는 삭제
@@ -182,8 +225,8 @@ const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
     if(snap.metadata.hasPendingWrites||this.busy||this.pending)return;
     const got={};snap.docs.forEach(d=>{got[d.id]=d.data();});
     const n=blank();
-    if(got.meta){n.budget=got.meta.budget||0;n.car={...n.car,...got.meta.car};if(Array.isArray(got.meta.rules))n.rules=got.meta.rules;}
-    for(const k of ['maint','fuel','recur','sched','gift','health','hike'])if(got[k])n[k]=JSON.parse(JSON.stringify(got[k].items||[]));
+    if(got.meta){n.budget=got.meta.budget||0;n.car={...n.car,...got.meta.car};if(Array.isArray(got.meta.rules))n.rules=got.meta.rules;if(got.meta.profile)n.profile={...n.profile,...got.meta.profile};}
+    for(const k of ['maint','fuel','recur','sched','gift','health','hike','gym','lab'])if(got[k])n[k]=JSON.parse(JSON.stringify(got[k].items||[]));
     for(const id in got)if(id.startsWith('tx-'))n.tx.push(...JSON.parse(JSON.stringify(got[id].items||[])));
     this.sent={};for(const id in got)this.sent[id]=JSON.stringify(got[id]);
     S=n;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
@@ -199,7 +242,7 @@ const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
     try{first=await db.collection(this.base).get();}catch(e){return setSync('이 기기에만 저장');}
     this.db=db;
     if(first.empty){ // 처음: 이 기기에 있던 기록을 올림
-      if(S.tx.length||S.maint.length||S.fuel.length||S.recur.length||S.sched.length||S.gift.length||S.health.length||S.hike.length||S.car.name)await this.flush();
+      if(S.tx.length||S.maint.length||S.fuel.length||S.recur.length||S.sched.length||S.gift.length||S.health.length||S.hike.length||S.gym.length||S.lab.length||S.car.name)await this.flush();
       else setSync('☁ 동기화됨');
     }else{this.apply(first);setSync('☁ 동기화됨');}
     db.collection(this.base).onSnapshot(s=>this.apply(s),()=>setSync('⚠ 연결 끊김'));
@@ -230,13 +273,45 @@ function askConfirm(msg,yes){
 }
 function addTx(o){S.tx.push({id:uid(),pay:'',memo:'',...o});}
 
+/* ---------- 아이콘·차트 ---------- */
+const ic=p=>`<svg viewBox="0 0 24 24" class="ic" aria-hidden="true">${p}</svg>`;
+const ICON={
+  home:ic('<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'),
+  ledger:ic('<rect x="3" y="6" width="18" height="14" rx="2.5"/><path d="M3 10.5h18M15.5 15h2.5"/>'),
+  car:ic('<path d="M4 16.5l1.8-5.6A2 2 0 0 1 7.7 9.5h8.6a2 2 0 0 1 1.9 1.4l1.8 5.6"/><rect x="3" y="15" width="18" height="4" rx="1.5"/><path d="M6 19v1.5M18 19v1.5"/>'),
+  recur:ic('<path d="M17 2.5l3 3-3 3"/><path d="M4 11V9.5a4 4 0 0 1 4-4h12"/><path d="M7 21.5l-3-3 3-3"/><path d="M20 13v1.5a4 4 0 0 1-4 4H4"/>'),
+  sched:ic('<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+  gift:ic('<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13M12 8C10.5 4.5 6.5 4 6.5 6.5S12 8 12 8s5.5-.5 5.5-1.5S13.5 4.5 12 8"/>'),
+  hike:ic('<path d="M2.5 20l7-12 4 6.5 2.5-3.5 5.5 9z"/><path d="M8 10.5l1.5 1 1.5-1"/>'),
+  gym:ic('<path d="M6.5 7v10M3.5 9.5v5M17.5 7v10M20.5 9.5v5M6.5 12h11"/>'),
+  health:ic('<path d="M12 20s-7.5-4.6-9.2-9.4A4.6 4.6 0 0 1 12 7.5a4.6 4.6 0 0 1 9.2 3.1C19.5 15.4 12 20 12 20z"/><path d="M7 12h2.5l1.5-2.5 2 4 1.5-1.5H17"/>'),
+  settings:ic('<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>')
+};
+const short=v=>v>=100000?Math.round(v/10000)+'만':v>=10000?(v/10000).toFixed(1).replace(/\.0$/,'')+'만':num(v);
+function barChart(data,fmt=short){
+  const W=320,H=150,top=20,bot=22,max=Math.max(...data.map(d=>d.value),1),bw=W/data.length;
+  const bars=data.map((d,i)=>{const h=Math.max((H-top-bot)*d.value/max,d.value?2:0),x=i*bw+bw*.2,w=bw*.6,y=H-bot-h,cx=(x+w/2).toFixed(1);
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="5" fill="var(--acc)" opacity="${d.hi?1:.38}"/>`+
+      (d.value?`<text x="${cx}" y="${(y-6).toFixed(1)}" text-anchor="middle" class="cv">${fmt(d.value)}</text>`:'')+
+      `<text x="${cx}" y="${H-6}" text-anchor="middle">${esc(d.label)}</text>`;}).join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="막대 그래프"><line x1="0" x2="${W}" y1="${H-bot}" y2="${H-bot}" stroke="var(--line)"/>${bars}</svg>`;
+}
+function spark(vals,color='var(--acc)',unit=''){
+  if(vals.length<2)return '';
+  const W=320,H=64,p=6,mn=Math.min(...vals),mx=Math.max(...vals),rg=mx-mn||1;
+  const pts=vals.map((v,i)=>[p+i*(W-2*p)/(vals.length-1),p+(H-2*p)*(1-(v-mn)/rg)]);
+  const line=pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="M${pts[0][0]},${H} L${line.replace(/ /g,' L')} L${pts.at(-1)[0]},${H} Z" fill="${color}" opacity=".12"/><polyline points="${line}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg><div class="sparklab"><span>최저 ${mn}${unit}</span><span>최근 <b>${vals.at(-1)}${unit}</b></span><span>최고 ${mx}${unit}</span></div>`;
+}
+function weekStart(s){const d=parseD(s);d.setDate(d.getDate()-((d.getDay()+6)%7));return fmtD(d);}
+
 /* ---------- 공용 입력 폼 ---------- */
 const dlg=$('#dlg'),dlgForm=$('#dlgForm');
 function optHTML(opts,val){return opts.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<option value="${esc(v)}"${String(v)===String(val)?' selected':''}>${esc(l)}</option>`;}).join('');}
 function fieldHTML(fd,val){
   if(val===undefined||val===null)val=typeof fd.def==='function'?fd.def():(fd.def??'');
   const id='f_'+fd.k,req=fd.req?' required':'';
-  if(fd.type==='checkbox')return `<div class="fld chk"><label><input type="checkbox" name="${fd.k}"${val?' checked':''}> ${esc(fd.label)}</label></div>`;
+  if(fd.type==='checkbox')return `<div class="fld chk" data-k="${fd.k}"><label><input type="checkbox" name="${fd.k}"${val?' checked':''}> ${esc(fd.label)}</label></div>`;
   let input;
   if(fd.type==='select')input=`<select id="${id}" name="${fd.k}"${req}>${fd.dep?'':optHTML(fd.options,val)}</select>`;
   else if(fd.type==='textarea')input=`<textarea id="${id}" name="${fd.k}">${esc(val)}</textarea>`;
@@ -246,11 +321,15 @@ function fieldHTML(fd,val){
     input=`<input id="${id}" name="${fd.k}" type="${fd.type||'text'}" value="${esc(val)}"${extra}${list}${req} placeholder="${esc(fd.ph||'')}" autocomplete="off">`+
       (fd.list?`<datalist id="${id}_l">${(typeof fd.list==='function'?fd.list():fd.list).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`:'');
   }
-  return `<div class="fld"><label for="${id}">${esc(fd.label)}${fd.req?' *':''}</label>${input}</div>`;
+  return `<div class="fld" data-k="${fd.k}"><label for="${id}">${esc(fd.label)}${fd.req?' *':''}</label>${input}</div>`;
 }
 function openForm(title,fields,rec,onSave,onDelete){
   dlgForm.innerHTML=`<h2>${esc(title)}</h2>`+fields.map(fd=>fieldHTML(fd,rec?rec[fd.k]:undefined)).join('')+
     `<div class="actions">${onDelete?'<button type="button" class="danger" data-x="del">삭제</button>':''}<span class="sp"></span><button type="button" data-x="cancel">취소</button><button type="submit" class="primary">저장</button></div>`;
+  const shown=fields.filter(fd=>fd.show);
+  if(shown.length){const kind=dlgForm.elements.namedItem('kind');
+    const upd=()=>shown.forEach(fd=>{dlgForm.querySelector(`.fld[data-k="${fd.k}"]`).hidden=!fd.show.includes(kind.value);});
+    kind.addEventListener('change',upd);upd();}
   fields.filter(fd=>fd.dep).forEach(fd=>{
     const el=dlgForm.elements.namedItem(fd.k),dep=dlgForm.elements.namedItem(fd.dep);
     const fill=keep=>{const cur=keep??el.value;el.innerHTML=optHTML(fd.map[dep.value]||[],cur);};
@@ -305,11 +384,12 @@ function txRow(t){
   return `<li class="row" data-act="editTx" data-id="${t.id}"><div class="grow"><b>${esc(t.memo||t.cat)}</b><small>${esc(t.cat)}${t.pay?' · '+esc(t.pay):''}</small></div><span class="amt ${t.type==='in'?'pos':'neg'}">${sign}${num(t.amount)}</span></li>`;
 }
 function view_ledger(){
-  const {inc,out}=monthSum(ledgerYM);
+  const {inc,out}=monthSum(ledgerYM),prev=monthSum(shiftYM(ledgerYM,-1));
   const q=ledgerQ.toLowerCase();
   const rows=S.tx.filter(t=>t.date.startsWith(ledgerYM)&&(!q||(t.memo+' '+t.cat+' '+t.pay).toLowerCase().includes(q))).sort((a,b)=>b.date.localeCompare(a.date));
   const cats={};S.tx.forEach(t=>{if(t.type==='out'&&t.date.startsWith(ledgerYM))cats[t.cat]=(cats[t.cat]||0)+(+t.amount||0);});
   const catArr=Object.entries(cats).sort((a,b)=>b[1]-a[1]),max=catArr[0]?.[1]||1;
+  const saving=cats['저축·투자']||0,diff=out-prev.out;
   let html='',cur='';
   for(const t of rows){
     if(t.date!==cur){
@@ -320,12 +400,16 @@ function view_ledger(){
     html+=txRow(t);
   }
   if(cur)html+='</ul>';
+  const months=[-5,-4,-3,-2,-1,0].map(n=>shiftYM(ledgerYM,n));
   return `
   <div class="toolbar"><div class="monthnav"><button class="btn sm" data-act="ym" data-n="-1" aria-label="이전 달">◀</button>${ymLabel(ledgerYM)}<button class="btn sm" data-act="ym" data-n="1" aria-label="다음 달">▶</button></div><span class="grow"></span><button class="btn primary" data-act="addTx">＋ 기록</button></div>
-  <section class="card"><div class="stats"><div class="stat"><small>수입</small><b class="pos">${won(inc)}</b></div><div class="stat"><small>지출</small><b class="neg">${won(out)}</b></div><div class="stat"><small>잔액</small><b>${won(inc-out)}</b></div></div>${budgetBar(out)}
-  <div style="margin-top:8px"><button class="btn sm" data-act="setBudget">월 예산 설정</button></div></section>
+  <section class="card"><div class="stats"><div class="stat"><small>수입</small><b class="pos">${won(inc)}</b></div><div class="stat"><small>지출</small><b class="neg">${won(out)}</b></div><div class="stat"><small>잔액</small><b>${won(inc-out)}</b></div></div>${budgetBar(out-saving)}
+  <div class="insights"><span>전월 대비 지출 <b class="${diff>0?'neg':'pos'}">${diff>0?'+':''}${num(diff)}원</b>${prev.out?` (${diff>0?'+':''}${Math.round(diff/prev.out*100)}%)`:''}</span><span>실제 소비 <b>${won(out-saving)}</b></span><span>저축률 <b>${inc?Math.round(saving/inc*100):0}%</b></span></div>
+  <p class="hint" style="margin:6px 0 0">‘저축·투자’로 분류한 금액은 돈이 사라진 게 아니라 자산으로 옮긴 것이므로 실제 소비와 예산 계산에서 뺍니다.</p>
+  <div style="margin-top:10px"><button class="btn sm" data-act="setBudget">월 예산 설정</button></div></section>
+  <section class="card"><h2>최근 6개월 지출</h2>${barChart(months.map(m=>({label:Number(m.slice(5))+'월',value:monthSum(m).out,hi:m===ledgerYM})))}</section>
   ${catArr.length?`<section class="card"><h2>분류별 지출</h2>${catArr.map(([c,v])=>`<div class="catrow"><span>${esc(c)}</span><div class="bar"><span style="width:${v/max*100}%"></span></div><span class="amt">${num(v)}<small style="color:var(--muted);font-weight:400"> ${out?Math.round(v/out*100):0}%</small></span></div>`).join('')}</section>`:''}
-  <section class="card"><h2>내역<span class="sp"></span></h2><input type="search" id="ledgerQ" placeholder="내용·분류 검색" value="${esc(ledgerQ)}">${html||'<p class="empty">이 달의 기록이 없습니다.</p>'}</section>
+  <section class="card"><h2>내역</h2><input type="search" id="ledgerQ" placeholder="내용·분류 검색" value="${esc(ledgerQ)}">${html||'<p class="empty">이 달의 기록이 없습니다.</p>'}</section>
   ${yearCard()}`;
 }
 function yearCard(){
@@ -333,7 +417,7 @@ function yearCard(){
   for(let m=1;m<=12;m++){const ym=`${y}-${String(m).padStart(2,'0')}`;const {inc,out}=monthSum(ym);if(!inc&&!out)continue;ti+=inc;to+=out;
     rows+=`<tr data-act="goYM" data-ym="${ym}"><td>${m}월</td><td class="r pos">${num(inc)}</td><td class="r neg">${num(out)}</td><td class="r">${num(inc-out)}</td></tr>`;}
   if(!rows)return '';
-  return `<section class="card"><h2>${y}년 월별 합계</h2><table class="tbl"><tr><th>월</th><th class="r">수입</th><th class="r">지출</th><th class="r">잔액</th></tr>${rows}<tr><th>합계</th><th class="r pos">${num(ti)}</th><th class="r neg">${num(to)}</th><th class="r">${num(ti-to)}</th></tr></table></section>`;
+  return `<section class="card"><h2>${y}년 월별 합계</h2><div class="tblwrap"><table class="tbl"><tr><th>월</th><th class="r">수입</th><th class="r">지출</th><th class="r">잔액</th></tr>${rows}<tr><th>합계</th><th class="r pos">${num(ti)}</th><th class="r neg">${num(to)}</th><th class="r">${num(ti-to)}</th></tr></table></div></section>`;
 }
 
 /* ---------- 자동차 ---------- */
@@ -389,7 +473,7 @@ function view_car(){
   const carSched=S.sched.filter(s=>s.cat==='자동차').map(s=>({...s,next:schedNext(s)})).sort((a,b)=>a.next.localeCompare(b.next));
   return `
   <section class="card"><h2>🚗 ${esc(c.name||'내 차량')}<span class="sp"></span><button class="btn sm" data-act="editCar">차량정보</button></h2>
-   <dl class="kv"><dt>차량번호</dt><dd>${esc(c.plate||'-')}</dd><dt>연식·연료</dt><dd>${esc([c.year,c.fuelType].filter(Boolean).join(' · ')||'-')}</dd><dt>현재 주행거리</dt><dd>${num(odo)} km <button class="btn sm" data-act="setOdo">갱신</button></dd><dt>평균 연비</dt><dd>${avg?avg.toFixed(1)+' km/L':'가득 주유 2회 이상 기록 시 계산'}</dd><dt>이번 달 주유비</dt><dd>${won(fuelMonth)}</dd><dt>${y}년 차량유지비</dt><dd>${won(carYear)} <small style="color:var(--muted);font-weight:400">(주유+정비)</small></dd></dl></section>
+   <dl class="kv"><dt>차량번호</dt><dd>${esc(c.plate||'-')}</dd><dt>연식·연료</dt><dd>${esc([c.year,c.fuelType].filter(Boolean).join(' · ')||'-')}</dd><dt>현재 주행거리</dt><dd>${num(odo)} km <button class="btn sm" data-act="setOdo">갱신</button></dd><dt>평균 연비</dt><dd>${avg?avg.toFixed(1)+' km/L':'가득 주유 2회 이상 기록 시 계산'}</dd><dt>1km당 연료비</dt><dd>${(()=>{const fs=[...S.fuel].sort((a,b)=>a.odo-b.odo);const span=fs.length>1?fs.at(-1).odo-fs[0].odo:0;return span>0?num(Math.round(fs.slice(1).reduce((s,f)=>s+(+f.amount||0),0)/span))+'원':'주유 2회 이상 기록 시 계산';})()}</dd><dt>이번 달 주유비</dt><dd>${won(fuelMonth)}</dd><dt>${y}년 차량유지비</dt><dd>${won(carYear)} <small style="color:var(--muted);font-weight:400">(주유+정비)</small></dd></dl></section>
   <div class="toolbar"><button class="btn primary" data-act="addMaint">＋ 정비기록</button><button class="btn primary" data-act="addFuel">＋ 주유기록</button><span class="grow"></span><button class="btn" data-act="editRules">정비주기 설정</button></div>
   <section class="card"><h2>소모품 교체 현황</h2><p class="hint">항목을 누르면 해당 항목으로 정비기록을 추가합니다. 주기는 일반 권장값이니 차량 취급설명서에 맞게 수정하세요.</p>
    <ul class="list">${st.map(s=>`<li class="row" data-act="addMaint" data-item="${esc(s.rule.item)}"><span class="pill ${s.level}">${s.label}</span><div class="grow"><b>${esc(s.rule.item)}</b><small>${s.last?`최근 ${s.last.date}${s.last.km!=null?' · '+num(s.last.km)+'km':''}`:'최근 교체 기록을 입력하세요'}</small>${s.last?`<small>다음 ${[s.nextKm!=null?num(s.nextKm)+'km':'',s.nextDate||''].filter(Boolean).join(' 또는 ')}</small>`:''}</div><div class="amt" style="font-size:13px">${s.remKm!=null?(s.remKm>0?num(s.remKm)+'km 남음':num(-s.remKm)+'km 초과'):''}${s.days!=null?'<br><small>'+ddayLabel(s.days)+'</small>':''}</div></li>`).join('')}</ul></section>
@@ -488,33 +572,78 @@ const healthFields=[
   {k:'sugar',label:'혈당(mg/dL)',type:'number'},
   {k:'sugarWhen',label:'혈당 측정 시점',type:'select',options:['공복','식후 2시간','기타'],def:'공복'},
   {k:'weight',label:'체중(kg)',type:'number',dec:1},
-  {k:'memo',label:'메모',type:'text',ph:'예: 약 복용 후, 운동 후'}
+  {k:'meds',label:'오늘 약 복용',type:'checkbox'},
+  {k:'memo',label:'메모',type:'text',ph:'예: 아침 기상 직후, 운동 후'}
 ];
-// 참고용 분류(대한고혈압학회 2022 진료지침 / 공복혈당 기준) — 진단 아님
+const labFields=[
+  {k:'date',label:'검사일',type:'date',def:today,req:1},
+  {k:'place',label:'검사 기관',type:'text',ph:'예: ○○내과, 국가건강검진'},
+  {k:'a1c',label:'당화혈색소 HbA1c(%)',type:'number',dec:1},
+  {k:'fbs',label:'공복혈당(mg/dL)',type:'number'},
+  {k:'tc',label:'총콜레스테롤(mg/dL)',type:'number'},
+  {k:'ldl',label:'LDL 콜레스테롤(mg/dL)',type:'number'},
+  {k:'hdl',label:'HDL 콜레스테롤(mg/dL)',type:'number'},
+  {k:'tg',label:'중성지방(mg/dL)',type:'number'},
+  {k:'waist',label:'허리둘레(cm)',type:'number',dec:1},
+  {k:'memo',label:'의사 소견·메모',type:'textarea',ph:'예: 3개월 후 재검, 약 용량 조정'}
+];
+// 참고 기준(진단 아님): 대한고혈압학회·대한당뇨병학회·한국지질동맥경화학회·대한비만학회 진료지침의 일반 성인 기준
 function bpClass(s,d){if(!s||!d)return null;if(s>=140||d>=90)return ['고혈압 범위','over'];if(s>=130||d>=80)return ['고혈압 전단계','soon'];if(s>=120)return ['주의혈압','info'];return ['정상','ok'];}
-function sugarClass(v,when){if(!v||when!=='공복')return null;if(v>=126)return ['당뇨 의심 범위','over'];if(v>=100)return ['공복혈당장애 범위','soon'];return ['정상','ok'];}
-function spark(vals,color){
-  if(vals.length<2)return '';
-  const mn=Math.min(...vals),mx=Math.max(...vals),rg=mx-mn||1,w=300,h=56;
-  const pts=vals.map((v,i)=>`${(i/(vals.length-1)*w).toFixed(1)},${(h-4-(v-mn)/rg*(h-8)).toFixed(1)}`).join(' ');
-  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
-}
+function sugarClass(v,when){if(!v||when!=='공복')return null;if(v>=126)return ['당뇨병 의심 범위','over'];if(v>=100)return ['공복혈당장애 범위','soon'];return ['정상','ok'];}
+function a1cClass(v){if(!v)return null;if(v>=6.5)return ['당뇨병 범위','over'];if(v>=5.7)return ['당뇨병 전단계','soon'];return ['정상','ok'];}
+const LAB_CLS={
+  a1c:v=>a1cClass(v),
+  fbs:v=>sugarClass(v,'공복'),
+  tc:v=>v>=240?['높음','over']:v>=200?['경계','soon']:['적정','ok'],
+  ldl:v=>v>=160?['높음','over']:v>=130?['경계','soon']:['적정','ok'],
+  hdl:v=>v<40?['낮음','soon']:['적정','ok'],
+  tg:v=>v>=200?['높음','over']:v>=150?['경계','soon']:['적정','ok'],
+  waist:v=>S.profile.sex==='남'?(v>=90?['복부비만','soon']:['정상','ok']):S.profile.sex==='여'?(v>=85?['복부비만','soon']:['정상','ok']):null
+};
+function bmiOf(w){const h=+S.profile.height;if(!w||!h)return null;return w/((h/100)**2);}
+function bmiClass(b){if(!b)return null;if(b>=35)return ['3단계 비만','over'];if(b>=30)return ['2단계 비만','over'];if(b>=25)return ['1단계 비만','soon'];if(b>=23)return ['비만 전단계','info'];if(b>=18.5)return ['정상','ok'];return ['저체중','info'];}
+const pillOf=c=>c?`<span class="pill ${c[1]}">${c[0]}</span>`:'';
+const vCls=c=>c&&(c[1]==='over'||c[1]==='soon')?'v-'+c[1]:'';
 function view_health(){
-  const list=[...S.health].sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
-  const lastBp=list.find(h=>h.sys&&h.dia),lastSg=list.find(h=>h.sugar),lastW=list.find(h=>h.weight);
-  const chron=[...list].reverse();
-  const sysV=chron.filter(h=>h.sys).slice(-30).map(h=>h.sys),wV=chron.filter(h=>h.weight).slice(-30).map(h=>h.weight);
-  const bc=lastBp&&bpClass(lastBp.sys,lastBp.dia),sc=lastSg&&sugarClass(lastSg.sugar,lastSg.sugarWhen);
+  const list=S.health.slice().sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
+  const labs=S.lab.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const lastBp=list.find(h=>h.sys&&h.dia),lastSg=list.find(h=>h.sugar),lastW=list.find(h=>h.weight),lastA=labs.find(l=>l.a1c);
+  const chron=list.slice().reverse();
+  const sysV=chron.filter(h=>h.sys).slice(-30).map(h=>h.sys),diaV=chron.filter(h=>h.dia).slice(-30).map(h=>h.dia),wV=chron.filter(h=>h.weight).slice(-30).map(h=>h.weight);
+  const aV=labs.slice().reverse().filter(l=>l.a1c).map(l=>l.a1c);
+  const bmi=lastW&&bmiOf(lastW.weight);
+  // 최근 7일 평균 혈압 (가정혈압은 1회 수치보다 평균이 중요)
+  const wk=fmtD(new Date(Date.now()-6*864e5)),bp7=list.filter(h=>h.sys&&h.dia&&h.date>=wk);
+  const avg7=bp7.length?[Math.round(bp7.reduce((s,h)=>s+h.sys,0)/bp7.length),Math.round(bp7.reduce((s,h)=>s+h.dia,0)/bp7.length)]:null;
+  const labCell=(l,k)=>{const v=l[k];if(v==null||v==='')return '<td class="r">-</td>';const c=LAB_CLS[k](v);return `<td class="r ${vCls(c)}">${v}</td>`;};
   return `
-  <div class="toolbar"><span class="grow"></span><button class="btn primary" data-act="addHealth">＋ 측정 기록</button></div>
-  <section class="card"><div class="stats">
-   <div class="stat"><small>최근 혈압</small><b>${lastBp?lastBp.sys+'/'+lastBp.dia:'-'}</b>${bc?`<span class="pill ${bc[1]}">${bc[0]}</span>`:''}</div>
-   <div class="stat"><small>최근 혈당</small><b>${lastSg?lastSg.sugar:'-'}</b>${sc?`<span class="pill ${sc[1]}">${sc[0]}</span>`:lastSg?`<small>${esc(lastSg.sugarWhen)}</small>`:''}</div>
-   <div class="stat"><small>최근 체중</small><b>${lastW?lastW.weight+'kg':'-'}</b></div></div>
-   ${sysV.length>1?`<p class="hint" style="margin-top:10px">수축기 혈압 추이 (최근 ${sysV.length}회)</p>${spark(sysV,'var(--neg)')}`:''}
-   ${wV.length>1?`<p class="hint">체중 추이 (최근 ${wV.length}회)</p>${spark(wV,'var(--pos)')}`:''}
-   <p class="hint">분류는 참고용(가정혈압·자가측정 기준 아님)이며 진단이 아닙니다. 진료 시 이 기록을 보여드리세요.</p></section>
-  <section class="card"><h2>측정 기록</h2>${list.length?`<table class="tbl"><tr><th>날짜</th><th class="r">혈압</th><th class="r">맥박</th><th class="r">혈당</th><th class="r">체중</th></tr>${list.map(h=>`<tr data-act="editHealth" data-id="${h.id}"><td>${h.date.slice(2)}<br><small style="color:var(--muted)">${esc(h.time||'')}</small></td><td class="r">${h.sys&&h.dia?h.sys+'/'+h.dia:'-'}</td><td class="r">${h.pulse||'-'}</td><td class="r">${h.sugar?h.sugar+`<br><small style="color:var(--muted)">${esc(h.sugarWhen||'')}</small>`:'-'}</td><td class="r">${h.weight||'-'}</td></tr>`).join('')}</table>`:'<p class="empty">혈압·혈당·체중을 기록하세요.</p>'}</section>`;
+  <div class="toolbar"><button class="btn primary" data-act="addHealth">＋ 혈압·혈당·체중</button><button class="btn primary" data-act="addLab">＋ 검사 결과</button><span class="grow"></span><button class="btn" data-act="setProfile">키·성별</button></div>
+  <section class="card"><h2>최근 수치</h2><div class="stats" style="grid-template-columns:repeat(2,1fr)">
+   <div class="stat"><small>혈압 (최근)</small><b>${lastBp?lastBp.sys+'/'+lastBp.dia:'-'}</b>${lastBp?pillOf(bpClass(lastBp.sys,lastBp.dia)):''}${avg7?`<small style="margin-top:3px">7일 평균 ${avg7[0]}/${avg7[1]} (${bp7.length}회)</small>`:''}</div>
+   <div class="stat"><small>당화혈색소</small><b>${lastA?lastA.a1c+'%':'-'}</b>${lastA?pillOf(a1cClass(lastA.a1c))+`<small style="margin-top:3px">${lastA.date} 검사</small>`:'<small>검사 결과로 입력</small>'}</div>
+   <div class="stat"><small>혈당 (${lastSg?esc(lastSg.sugarWhen):'최근'})</small><b>${lastSg?lastSg.sugar+' mg/dL':'-'}</b>${lastSg?pillOf(sugarClass(lastSg.sugar,lastSg.sugarWhen)):''}</div>
+   <div class="stat"><small>체중 · BMI</small><b>${lastW?lastW.weight+'kg':'-'}${bmi?' · '+bmi.toFixed(1):''}</b>${bmi?pillOf(bmiClass(bmi)):lastW?'<small>키를 입력하면 BMI 계산</small>':''}</div>
+  </div><p class="hint" style="margin:10px 0 0">분류는 일반 성인 기준의 참고 표시이며 진단이 아닙니다. 집에서 잰 혈압은 135/85 이상이면 고혈압 범위로 봅니다. 진료 때 이 기록을 보여드리세요.</p></section>
+  ${sysV.length>1||wV.length>1||aV.length>1?`<section class="card"><h2>추이</h2>
+   ${sysV.length>1?`<p class="hint" style="margin:0">수축기 혈압 (최근 ${sysV.length}회)</p>${spark(sysV,'var(--c-health)')}`:''}
+   ${diaV.length>1?`<p class="hint" style="margin:0">이완기 혈압</p>${spark(diaV,'var(--c-recur)')}`:''}
+   ${aV.length>1?`<p class="hint" style="margin:0">당화혈색소 (검사 ${aV.length}회)</p>${spark(aV,'var(--c-sched)','%')}`:''}
+   ${wV.length>1?`<p class="hint" style="margin:0">체중</p>${spark(wV,'var(--c-car)','kg')}`:''}</section>`:''}
+  <section class="card"><h2>검사 결과</h2>${labs.length?`<div class="tblwrap"><table class="tbl"><tr><th>검사일</th><th class="r">HbA1c</th><th class="r">공복혈당</th><th class="r">LDL</th><th class="r">HDL</th><th class="r">중성지방</th><th class="r hide-sm">허리</th></tr>${labs.map(l=>`<tr data-act="editLab" data-id="${l.id}"><td>${l.date.slice(2)}${l.place?`<br><small>${esc(l.place)}</small>`:''}</td>${labCell(l,'a1c')}${labCell(l,'fbs')}${labCell(l,'ldl')}${labCell(l,'hdl')}${labCell(l,'tg')}<td class="r hide-sm">${l.waist||'-'}</td></tr>`).join('')}</table></div><p class="hint" style="margin:6px 0 0">색 표시: 주황=경계, 빨강=높음·낮음</p>`:'<p class="empty">병원·건강검진에서 받은 당화혈색소, 콜레스테롤 결과를 입력하세요.</p>'}</section>
+  <section class="card"><h2>측정 기록</h2>${list.length?`<div class="tblwrap"><table class="tbl"><tr><th>날짜</th><th class="r">혈압</th><th class="r">맥박</th><th class="r">혈당</th><th class="r">체중</th></tr>${list.map(h=>{const bc=h.sys&&h.dia?bpClass(h.sys,h.dia):null;return `<tr data-act="editHealth" data-id="${h.id}"><td>${h.date.slice(2)}<br><small>${esc(h.time||'')}${h.meds?' 💊':''}</small></td><td class="r ${vCls(bc)}">${h.sys&&h.dia?h.sys+'/'+h.dia:'-'}</td><td class="r">${h.pulse||'-'}</td><td class="r">${h.sugar?h.sugar+`<br><small>${esc(h.sugarWhen||'')}</small>`:'-'}</td><td class="r">${h.weight||'-'}</td></tr>`;}).join('')}</table></div>`:'<p class="empty">혈압·혈당·체중을 기록하세요.</p>'}</section>
+  <section class="card"><details class="ref"><summary>참고 기준표 (일반 성인)</summary><div class="tblwrap"><table class="tbl">
+   <tr><th>항목</th><th>정상·적정</th><th>주의·경계</th><th>높음</th></tr>
+   <tr><td>혈압(진료실)</td><td>&lt;120/80</td><td>120~139 / 80~89</td><td>≥140/90</td></tr>
+   <tr><td>혈압(가정)</td><td colspan="2">평균으로 판단</td><td>≥135/85</td></tr>
+   <tr><td>공복혈당</td><td>&lt;100</td><td>100~125</td><td>≥126</td></tr>
+   <tr><td>당화혈색소</td><td>&lt;5.7%</td><td>5.7~6.4%</td><td>≥6.5%</td></tr>
+   <tr><td>총콜레스테롤</td><td>&lt;200</td><td>200~239</td><td>≥240</td></tr>
+   <tr><td>LDL</td><td>&lt;130</td><td>130~159</td><td>≥160</td></tr>
+   <tr><td>HDL</td><td>≥40</td><td colspan="2">&lt;40 낮음</td></tr>
+   <tr><td>중성지방</td><td>&lt;150</td><td>150~199</td><td>≥200</td></tr>
+   <tr><td>BMI</td><td>18.5~22.9</td><td>23~24.9</td><td>≥25 비만</td></tr>
+   <tr><td>허리둘레</td><td colspan="2">남 &lt;90 · 여 &lt;85cm</td><td>이상이면 복부비만</td></tr>
+  </table></div><p class="hint">당뇨병·고혈압·이상지질혈증으로 치료 중이면 개인별 목표치가 다릅니다(예: 당뇨병 환자의 당화혈색소 목표는 보통 6.5% 미만). 주치의 지시를 따르세요.</p></details></section>`;
 }
 
 /* ---------- 등산 ---------- */
@@ -580,6 +709,83 @@ function view_hike(){
   <section class="card"><h2>산행 일지</h2>${list.length?list.map(card).join(''):'<p class="empty">다녀온 산행을 기록하세요. 날씨·거리·걸음수·코스·느낀 점까지 남길 수 있습니다.</p>'}</section>`;
 }
 
+/* ---------- 헬스 ---------- */
+const GYM_KIND=['근력','런닝머신','실내자전거','걷기','기타 유산소','스트레칭'];
+const CARDIO=['런닝머신','실내자전거','걷기','기타 유산소'];
+const GYM_NAMES=['벤치프레스','스쿼트','데드리프트','레그프레스','랫풀다운','시티드 로우','숄더프레스','체스트프레스','덤벨 컬','케이블 푸시다운','레그 컬','레그 익스텐션','런지','플랭크','크런치','팔굽혀펴기','턱걸이'];
+const gymFields=()=>[
+  {k:'date',label:'날짜',type:'date',def:today,req:1},
+  {k:'kind',label:'종류',type:'select',options:GYM_KIND,def:'근력'},
+  {k:'name',label:'운동 이름',type:'text',show:['근력','스트레칭'],list:()=>[...new Set([...S.gym.map(g=>g.name).filter(Boolean),...GYM_NAMES])],ph:'예: 벤치프레스'},
+  {k:'weight',label:'무게(kg)',type:'number',dec:1,show:['근력'],ph:'맨몸이면 비워두기'},
+  {k:'sets',label:'세트',type:'number',show:['근력'],def:3},
+  {k:'reps',label:'횟수(회/세트)',type:'number',show:['근력'],def:10},
+  {k:'minutes',label:'운동 시간(분)',type:'number'},
+  {k:'speed',label:'속도(km/h)',type:'number',dec:1,show:['런닝머신','걷기']},
+  {k:'incline',label:'경사(%)',type:'number',dec:1,show:['런닝머신']},
+  {k:'distance',label:'거리(km)',type:'number',dec:1,show:CARDIO},
+  {k:'kcal',label:'소모 칼로리(kcal)',type:'number',ph:'기계·워치 표시값'},
+  {k:'feel',label:'힘든 정도',type:'select',options:['가벼움','적당함(대화 가능)','힘듦(숨참)','매우 힘듦'],def:'적당함(대화 가능)'},
+  {k:'memo',label:'메모',type:'text',ph:'예: 어깨 통증 있음, 다음엔 무게 올리기'}
+];
+function weekStats(start){
+  const ws=start||weekStart(today()),we=(()=>{const d=parseD(ws);d.setDate(d.getDate()+6);return fmtD(d);})();
+  const inWk=d=>d>=ws&&d<=we;
+  const g=S.gym.filter(x=>inWk(x.date)),h=S.hike.filter(x=>inWk(x.date));
+  const cardio=g.filter(x=>CARDIO.includes(x.kind)).reduce((s,x)=>s+(+x.minutes||0),0)+h.reduce((s,x)=>s+(hikeMin(x)||0),0);
+  const strengthDays=new Set(g.filter(x=>x.kind==='근력').map(x=>x.date)).size;
+  const days=new Set([...g.map(x=>x.date),...h.map(x=>x.date)]).size;
+  const kcal=g.reduce((s,x)=>s+(+x.kcal||0),0)+h.reduce((s,x)=>s+(+x.kcal||0),0);
+  const total=g.reduce((s,x)=>s+(+x.minutes||0),0)+h.reduce((s,x)=>s+(hikeMin(x)||0),0);
+  return {ws,cardio,strengthDays,days,kcal,total};
+}
+function goalBars(w){
+  const p1=Math.min(w.cardio/150*100,100),p2=Math.min(w.strengthDays/2*100,100);
+  return `<div class="goal"><div><span>유산소 <b>${w.cardio}분</b> / 150분</span><span>${w.cardio>=150?'✔ 달성':`${150-w.cardio}분 남음`}</span></div><div class="bar"><span style="width:${p1}%"></span></div></div>
+  <div class="goal"><div><span>근력운동 <b>${w.strengthDays}일</b> / 2일</span><span>${w.strengthDays>=2?'✔ 달성':`${2-w.strengthDays}일 남음`}</span></div><div class="bar"><span style="width:${p2}%"></span></div></div>`;
+}
+function gymRow(g){
+  let title,parts;
+  if(g.kind==='근력'||g.kind==='스트레칭'){
+    title=g.name||g.kind;
+    parts=[g.weight?g.weight+'kg':'',g.sets&&g.reps?`${g.sets}세트 × ${g.reps}회`:g.reps?g.reps+'회':'',g.minutes?g.minutes+'분':''];
+  }else{
+    title=g.kind;
+    parts=[g.minutes?g.minutes+'분':'',g.distance?g.distance+'km':'',g.speed?g.speed+'km/h':'',g.incline?'경사 '+g.incline+'%':''];
+  }
+  const vol=g.kind==='근력'&&g.weight&&g.sets&&g.reps?g.weight*g.sets*g.reps:0;
+  return `<li class="row" data-act="editGym" data-id="${g.id}"><span class="pill ${g.kind==='근력'?'soon':g.kind==='스트레칭'?'none':'info'}">${esc(g.kind)}</span><div class="grow"><b>${esc(title)}</b><small>${parts.filter(Boolean).join(' · ')||'-'}${vol?` · 볼륨 ${num(vol)}kg`:''}${g.memo?' · '+esc(g.memo):''}</small></div><span class="amt">${g.kcal?num(g.kcal)+' kcal':''}</span></li>`;
+}
+let gymYM=today().slice(0,7);
+function view_gym(){
+  const w=weekStats();
+  const weeks=[-7,-6,-5,-4,-3,-2,-1,0].map(n=>{const d=parseD(w.ws);d.setDate(d.getDate()+n*7);return fmtD(d);});
+  const list=S.gym.filter(g=>g.date.startsWith(gymYM)).sort((a,b)=>b.date.localeCompare(a.date));
+  const mDays=new Set(list.map(g=>g.date)).size,mMin=list.reduce((s,g)=>s+(+g.minutes||0),0),mK=list.reduce((s,g)=>s+(+g.kcal||0),0);
+  let html='',cur='';
+  for(const g of list){
+    if(g.date!==cur){
+      if(cur)html+='</ul>';cur=g.date;
+      const dl=list.filter(x=>x.date===cur);
+      html+=`<div class="daygrp"><span>${dLabel(cur)}</span><span>${num(dl.reduce((s,x)=>s+(+x.minutes||0),0))}분 · ${num(dl.reduce((s,x)=>s+(+x.kcal||0),0))}kcal <button class="btn sm" data-act="addGym" data-date="${cur}">＋</button></span></div><ul class="list">`;
+    }
+    html+=gymRow(g);
+  }
+  if(cur)html+='</ul>';
+  const best={};S.gym.filter(g=>g.kind==='근력'&&g.name).forEach(g=>{const b=best[g.name];if(!b||(+g.weight||0)>(+b.weight||0)||((+g.weight||0)===(+b.weight||0)&&(+g.reps||0)>(+b.reps||0)))best[g.name]=g;});
+  const last={};S.gym.filter(g=>g.kind==='근력'&&g.name).forEach(g=>{if(!last[g.name]||g.date>last[g.name].date)last[g.name]=g;});
+  const bestArr=Object.values(best).sort((a,b)=>(last[b.name].date).localeCompare(last[a.name].date));
+  return `
+  <div class="toolbar"><button class="btn primary" data-act="addGym" data-kind="근력">＋ 근력</button><button class="btn primary" data-act="addGym" data-kind="런닝머신">＋ 런닝머신</button><button class="btn" data-act="addGym" data-kind="실내자전거">＋ 기타</button></div>
+  <section class="card"><h2>이번 주 목표<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${w.ws.slice(5).replace('-','/')} ~</small></h2>${goalBars(w)}
+   <div class="stats" style="margin-top:12px"><div class="stat"><small>운동한 날</small><b>${w.days}일</b></div><div class="stat"><small>총 운동시간</small><b>${w.total}분</b></div><div class="stat"><small>소모 칼로리</small><b>${num(w.kcal)}kcal</b></div></div>
+   <p class="hint" style="margin:10px 0 0">보건복지부 「한국인을 위한 신체활동 지침」 성인 권장량: 숨이 약간 차는 중강도 유산소 주 150분 이상(고강도는 75분), 근력운동 주 2일 이상. 등산 기록도 유산소 시간에 합산됩니다.</p></section>
+  <section class="card"><h2>최근 8주 운동시간(분)</h2>${barChart(weeks.map((ws,i)=>({label:i===7?'이번주':Number(ws.slice(5,7))+'/'+Number(ws.slice(8)),value:weekStats(ws).total,hi:i===7})),num)}</section>
+  ${bestArr.length?`<section class="card"><h2>근력 운동별 기록</h2><div class="tblwrap"><table class="tbl"><tr><th>운동</th><th class="r">최고 무게</th><th class="r">최근</th></tr>${bestArr.map(b=>{const l=last[b.name];return `<tr><td>${esc(b.name)}</td><td class="r">${b.weight?b.weight+'kg':'맨몸'} × ${b.reps||'-'}회</td><td class="r">${l.weight?l.weight+'kg':'맨몸'} × ${l.reps||'-'}회<br><small>${l.date.slice(5).replace('-','/')}</small></td></tr>`;}).join('')}</table></div><p class="hint" style="margin:6px 0 0">같은 무게로 정해진 횟수를 2회 연속 채우면 무게를 2~5% 올리는 것이 일반적인 점진적 과부하 방법입니다.</p></section>`:''}
+  <section class="card"><h2>운동 기록<span class="sp"></span><span class="monthnav" style="font-size:14px"><button class="btn sm" data-act="gymYM" data-n="-1" aria-label="이전 달">◀</button>${ymLabel(gymYM)}<button class="btn sm" data-act="gymYM" data-n="1" aria-label="다음 달">▶</button></span></h2>
+   <p class="hint" style="margin:0 0 4px">이 달 ${mDays}일 · ${num(mMin)}분 · ${num(mK)}kcal</p>${html||'<p class="empty">근력은 세트·횟수, 런닝머신은 시간·칼로리만 입력해도 됩니다.</p>'}</section>`;
+}
+
 /* ---------- 홈 ---------- */
 function collectAlerts(){
   const a=[];
@@ -590,19 +796,23 @@ function collectAlerts(){
   return a.sort((x,y)=>x.k-y.k);
 }
 function view_home(){
-  const ym=today().slice(0,7),{inc,out}=monthSum(ym),al=collectAlerts();
+  const t=today(),d=parseD(t),ym=t.slice(0,7),{inc,out}=monthSum(ym),al=collectAlerts(),w=weekStats();
   const recent=[...S.tx].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  const Q=[['addTx','ledger','가계부'],['addFuel','car','주유'],['addMaint','car','정비'],['addHealth','health','혈압·혈당'],['addGym','gym','운동'],['addHike','hike','등산']];
   return `
-  <section class="card"><h2>${ymLabel(ym)} 가계</h2><div class="stats"><div class="stat"><small>수입</small><b class="pos">${won(inc)}</b></div><div class="stat"><small>지출</small><b class="neg">${won(out)}</b></div><div class="stat"><small>잔액</small><b>${won(inc-out)}</b></div></div>${budgetBar(out)}</section>
-  <div class="quick"><button data-act="addTx">＋ 가계부</button><button data-act="addFuel">⛽ 주유</button><button data-act="addMaint">🔧 정비</button><button data-act="addHealth">❤️ 혈압</button><button data-act="addHike">⛰ 등산</button></div>
+  <section class="hero"><div class="hero-date">${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일</div>
+   <div class="hero-label">${d.getMonth()+1}월 지출</div><div class="hero-num">${won(out)}</div>
+   <div class="hero-sub">수입 ${won(inc)} · 잔액 <b>${won(inc-out)}</b></div>${budgetBar(out-(S.tx.filter(x=>x.type==='out'&&x.cat==='저축·투자'&&x.date.startsWith(ym)).reduce((s,x)=>s+(+x.amount||0),0)))}</section>
+  <div class="quick">${Q.map(([a,k,l])=>`<button data-act="${a}" style="--acc:var(--c-${k})">${ICON[k]}<span>${l}</span></button>`).join('')}</div>
   <section class="card"><h2>알림 · 다가오는 일</h2>${al.length?`<ul class="list">${al.map(x=>`<li class="row" data-act="go" data-tab="${x.tab}"><span class="pill ${x.level}">${esc(x.badge)}</span><div class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)}</small></div></li>`).join('')}</ul>`:'<p class="empty">임박한 일이 없습니다.</p>'}</section>
+  <section class="card" style="--acc:var(--c-gym)"><h2>이번 주 운동<span class="sp"></span><button class="btn sm" data-act="go" data-tab="gym">헬스</button></h2>${goalBars(w)}</section>
   <section class="card"><h2>최근 가계부<span class="sp"></span><button class="btn sm" data-act="go" data-tab="ledger">전체</button></h2>${recent.length?`<ul class="list">${recent.map(txRow).join('')}</ul>`:'<p class="empty">아직 기록이 없습니다.</p>'}</section>
-  ${!S.tx.length&&!S.maint.length?`<section class="card"><h2>처음 사용하시나요?</h2><p class="hint" style="margin:0">① 설정 없이 바로 가계부를 쓸 수 있습니다.<br>② 자동차 탭 → 차량정보·현재 주행거리 입력 → 소모품별 최근 교체일을 한 번씩 입력하면 다음 교체 시기를 자동 계산합니다.<br>③ 데이터는 이 기기 브라우저에만 저장됩니다. 설정 탭에서 주기적으로 백업하세요.</p></section>`:''}`;
+  ${!S.tx.length&&!S.maint.length?`<section class="card"><h2>처음 사용하시나요?</h2><p class="hint" style="margin:0">① 가계부는 설정 없이 바로 쓸 수 있습니다.<br>② 자동차 탭에서 차량정보와 현재 주행거리를 넣고, 소모품별 최근 교체일을 한 번씩 입력하면 다음 교체 시기를 자동 계산합니다.<br>③ 건강 탭의 「키·성별」을 넣으면 BMI와 복부비만 기준을 함께 보여줍니다.</p></section>`:''}`;
 }
 
 /* ---------- 설정 ---------- */
 function view_settings(){
-  const cnt=`가계부 ${S.tx.length} · 정비 ${S.maint.length} · 주유 ${S.fuel.length} · 고정지출 ${S.recur.length} · 기한 ${S.sched.length} · 경조사 ${S.gift.length} · 건강 ${S.health.length} · 등산 ${S.hike.length}`;
+  const cnt=`가계부 ${S.tx.length} · 정비 ${S.maint.length} · 주유 ${S.fuel.length} · 고정지출 ${S.recur.length} · 기한 ${S.sched.length} · 경조사 ${S.gift.length} · 건강 ${S.health.length} · 등산 ${S.hike.length} · 헬스 ${S.gym.length} · 검사 ${S.lab.length}`;
   let lastBk='';try{lastBk=localStorage.getItem(KEY+'.lastBackup')||'';}catch(e){}
   return `
   <section class="card"><h2>백업 · 복원</h2><p class="hint">${cloud.db?'claude.ai 계정에 저장되어 휴대폰·PC 어디서 열어도 같은 기록이 보입니다. 다른 사람은 이 기록을 볼 수 없습니다. 만일을 위해 가끔 백업 파일도 받아 두세요.':'지금은 이 기기의 이 브라우저에만 저장됩니다. 브라우저 데이터 삭제·기기 변경 시 사라지므로 백업 파일을 보관하세요.'}<br>현재: ${cnt}<br>마지막 백업: ${lastBk||'없음'}</p>
@@ -614,10 +824,11 @@ function view_settings(){
 }
 
 /* ---------- 렌더 & 동작 ---------- */
-const TABS=[['home','홈'],['ledger','가계부'],['car','자동차'],['recur','고정지출'],['sched','기한관리'],['gift','경조사'],['hike','등산'],['health','건강'],['settings','설정']];
+const TABS=[['home','홈'],['ledger','가계부'],['car','자동차'],['recur','고정지출'],['sched','기한관리'],['gift','경조사'],['hike','등산'],['gym','헬스'],['health','건강'],['settings','설정']];
 let tab='home';try{tab=localStorage.getItem(KEY+'.tab')||'home';}catch(e){}
 function render(){
-  $('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${l}</button>`).join('');
+  document.body.dataset.tab=tab;$('#logo').innerHTML=ICON[tab]||ICON.home;
+  $('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-tab="${k}" class="${k===tab?'on':''}">${ICON[k]}<span>${l}</span></button>`).join('');
   $('#view').innerHTML=(window['view_'+tab]||view_home)();
 }
 function go(t){tab=t;try{localStorage.setItem(KEY+'.tab',t);}catch(e){}render();window.scrollTo(0,0);}
@@ -691,6 +902,12 @@ const ACT={
     if(_ledger&&r.cost>0)addTx({type:'out',date:r.date,amount:r.cost,cat:'문화·여가',memo:`[등산] ${r.mountain}`});
   }),
   editHike:d=>crud('hike','산행 기록',hikeFields(),find('hike',d.id)),
+  addGym:d=>crud('gym','운동 기록',gymFields(),null,(d.date||d.kind)?{date:d.date||today(),kind:d.kind||'근력'}:null),
+  editGym:d=>crud('gym','운동 기록',gymFields(),find('gym',d.id)),
+  gymYM:d=>{gymYM=shiftYM(gymYM,+d.n);render();},
+  addLab:()=>crud('lab','검사 결과',labFields,null),
+  editLab:d=>crud('lab','검사 결과',labFields,find('lab',d.id)),
+  setProfile:()=>openForm('키·성별',[{k:'height',label:'키(cm)',type:'number',dec:1},{k:'sex',label:'성별 (허리둘레 기준에 사용)',type:'select',options:[['','선택 안 함'],['남','남'],['여','여']]}],S.profile,v=>{S.profile={height:v.height||'',sex:v.sex};}),
   addHealth:()=>crud('health','측정 기록',healthFields,null),
   editHealth:d=>crud('health','측정 기록',healthFields,find('health',d.id)),
   backup:()=>{const t=today();download(`생활기록장_백업_${t}.json`,JSON.stringify({app:'lifebook',version:1,exported:new Date().toISOString(),data:S},null,1),'application/json');try{localStorage.setItem(KEY+'.lastBackup',t);}catch(e){}setTimeout(render,300);},
