@@ -818,13 +818,26 @@ const typeName=k=>(ACCT_TYPES.find(x=>x[0]===k)||['','기타'])[1];
 const acctById=id=>S.accounts.find(a=>a.id===id);
 const acctOpts=()=>[['','선택 안 함'],...S.accounts.filter(a=>a.type!=='loan').map(a=>[a.id,a.name])];
 const mainAcct=()=>(S.accounts.find(a=>a.main)||{}).id||'';
+// 아버지 돈이 실제로 드나드는 내 통장: 지정한 통장, 없으면 가계부 기본 통장 (아버지 명의 통장에 따로 있으면 없음)
+function fundAcct(){const f=fundCfg();if(f.inMine===false)return '';return f.acct&&acctById(f.acct)?f.acct:mainAcct();}
+// 통장 잔액을 확인한 뒤 입력한 수입·지출이 얼마나 반영됐는지
+function flowSummary(){
+  let inc=0,out=0,n=0;const fa=fundAcct();
+  for(const a of S.accounts){if(a.type==='loan')continue;const af=a.asOf||'',ck=a.checkedAt||0,after=r=>r.date>af||(r.date===af&&(r.ts||0)>ck);
+    S.tx.forEach(t=>{if(t.acct===a.id&&after(t)){n++;if(t.type==='in')inc+=+t.amount||0;else out+=+t.amount||0;}});
+    if(fa===a.id)S.care.forEach(c=>{if(c.who===SELF&&c.cat!=='잔액 조정'&&after(c)){n++;if(c.type==='in')inc+=+c.amount||0;else out+=+c.amount||0;}});}
+  const unlinked=S.tx.filter(t=>!t.acct&&t.date>=today().slice(0,7)+'-01').length;
+  return {inc,out,n,unlinked};
+}
+// 전체 관리 금액 = 내 순자산 + 아버지 돈
+function grandTotal(){const t=assetTotals(),fs=fundStats(),fb=fs?fs.bal:0;return {...t,father:fb,total:t.net+fb};}
 function acctFlow(a){
   // 확인일 다음 날부터의 기록 + 확인일 당일이라도 잔액을 확인한 뒤에 입력한 기록
   let f=0;const af=a.asOf||'',ck=a.checkedAt||0,after=r=>r.date>af||(r.date===af&&(r.ts||0)>ck);
   S.tx.forEach(t=>{if(t.acct===a.id&&after(t))f+=t.type==='in'?+t.amount||0:-(+t.amount||0);});
   S.moves.forEach(m=>{if(after(m)){if(m.to===a.id)f+=+m.amount||0;if(m.from===a.id)f-=+m.amount||0;}});
   // 아버지 돈을 보관한 통장: 아버지 돈으로 들어오고 나간 것도 이 통장 잔액에 반영
-  if(fundCfg().acct===a.id)S.care.forEach(c=>{if(c.who===SELF&&c.cat!=='잔액 조정'&&after(c))f+=c.type==='in'?+c.amount||0:-(+c.amount||0);});
+  if(fundAcct()===a.id)S.care.forEach(c=>{if(c.who===SELF&&c.cat!=='잔액 조정'&&after(c))f+=c.type==='in'?+c.amount||0:-(+c.amount||0);});
   return f;
 }
 const stockVal=a=>(a.holdings||[]).reduce((s,h)=>s+(+h.qty||0)*(+h.price||0),0);
@@ -866,13 +879,16 @@ function fatherCard(){
 }
 function netWorthCard(){
   if(!S.accounts.length)return `<section class="card nw" style="--acc:var(--c-assets)" data-act="go" data-tab="assets"><h2>내 재산<span class="sp"></span><button class="btn sm primary" data-act="addAcct">＋ 재산 추가</button></h2><p class="hint" style="margin:0">통장·적금·증권·부동산을 등록하면 여기에서 전체 재산을 한눈에 봅니다.</p></section>`;
-  const t=assetTotals(),prev=S.assetHist[shiftYM(today().slice(0,7),-1)],stale=S.accounts.filter(a=>staleDays(a)>30).length;
-  const diff=prev?t.net-prev.t:null;
-  return `<section class="card nw" style="--acc:var(--c-assets)" data-act="go" data-tab="assets"><h2>내 재산<span class="sp"></span><button class="btn sm primary" data-act="addAcct">＋ 재산 추가</button></h2>
+  const t=grandTotal(),prev=S.assetHist[shiftYM(today().slice(0,7),-1)],stale=S.accounts.filter(a=>staleDays(a)>30).length;
+  const diff=prev?t.net-prev.t:null,fl=flowSummary(),pn=careName();
+  return `<section class="card nw" style="--acc:var(--c-assets)" data-act="go" data-tab="assets"><h2>전체 돈<span class="sp"></span><button class="btn sm primary" data-act="addAcct">＋ 재산 추가</button></h2>
+   ${t.father?`<div class="stats" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:8px"><div class="stat"><small>전체 합계</small><b>${short(t.total)}원</b></div><div class="stat"><small>내 재산</small><b style="color:var(--c-assets)">${short(t.net)}원</b></div><div class="stat"><small>${esc(pn)} 돈</small><b style="color:var(--c-care)">${short(t.father)}원</b></div></div>`:''}
+   <div class="hint" style="margin:0 0 2px">내 재산 (${esc(pn)} 돈 제외)</div>
    <div class="big">${won(t.net)}</div>
    <div class="hint" style="margin:2px 0 0">통장 등 합계 ${won(t.assets)}${t.held?` − ${esc(careName())} 돈 ${won(t.held)}`:''}${t.debt?` − 빚 ${won(t.debt)}`:''}${diff!=null?` · 지난달보다 <b class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${num(diff)}원</b>`:''}</div>
    ${stackBar(t.by,t.assets)}
-   ${stale?`<p class="hint" style="margin:8px 0 0;color:var(--soon)">잔액을 확인한 지 30일이 넘은 계좌 ${stale}개 — 통장 앱을 보고 업데이트해 주세요</p>`:''}</section>`;
+   <p class="hint" style="margin:8px 0 0">${fl.n?`통장 확인 후 입력한 수입 <b class="pos">+${num(fl.inc)}</b> · 지출 <b class="neg">−${num(fl.out)}</b> (${fl.n}건) 반영된 <b>현재 잔액</b>`:'모든 금액은 통장에서 확인한 잔액 그대로입니다'}${fl.unlinked?` · 통장을 고르지 않은 기록(카드 등) ${fl.unlinked}건은 잔액에 안 들어감`:''}</p>
+   ${stale?`<p class="hint" style="margin:6px 0 0;color:var(--soon)">잔액을 확인한 지 30일이 넘은 계좌 ${stale}개 — 통장 앱을 보고 업데이트해 주세요</p>`:''}</section>`;
 }
 function acctRow(a){
   const v=acctValue(a),fl=acctFlow(a),sd=staleDays(a);
@@ -900,7 +916,8 @@ function view_assets(){
   const months=Array.from({length:12},(_,i)=>shiftYM(cm,i-11)).filter(m=>S.assetHist[m]||m===cm);
   const fs=fundStats();
   return `
-  <section class="hero"><div class="hero-date">${today().replace(/-/g,'.')} 기준 내 순자산</div><div class="hero-num">${won(t.net)}</div>
+  ${(()=>{const g=grandTotal();return g.father?`<section class="card" style="margin-bottom:10px"><div class="stats"><div class="stat"><small>전체 합계</small><b>${won(g.total)}</b></div><div class="stat"><small>내 재산</small><b style="color:var(--c-assets)">${won(g.net)}</b></div><div class="stat"><small>${esc(careName())} 돈</small><b style="color:var(--c-care)">${won(g.father)}</b></div></div></section>`:'';})()}
+  <section class="hero"><div class="hero-date">${today().replace(/-/g,'.')} 기준 내 순자산 (${esc(careName())} 돈 제외)</div><div class="hero-num">${won(t.net)}</div>
    <div class="hero-sub">통장 등 합계 ${won(t.assets)}${t.held?` − 보관 중인 ${esc(careName())} 돈 ${won(t.held)}`:''}${t.debt?` − 빚 ${won(t.debt)}`:''}${diff!=null?` · 지난달보다 <b class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${num(diff)}원</b>`:''}</div>
    ${stackBar(t.by,t.assets)}</section>
   <div class="toolbar"><button class="btn primary" data-act="addAcct" style="flex:1;padding:12px;font-size:15px">＋ 재산 추가</button><button class="btn" data-act="addMove" style="padding:12px">계좌 간 이동</button></div>
