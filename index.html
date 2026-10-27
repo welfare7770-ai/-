@@ -961,15 +961,20 @@ function closeDays(){
   const by=new Map(S.close.map(c=>[c.id,c]));let ch=false;
   for(let d=addDay(st,-1);d<t;d=addDay(d,1)){if(by.has(d))continue;
     const m=moneyAt(d),pc=by.get(addDay(d,-1)),p=pc?{me:pc.me,fa:pc.fa}:moneyAt(addDay(d,-1));
-    const c={id:d,date:d,me:m.me,fa:m.fa,dm:m.me-p.me,df:m.fa-p.fa,ev:d<st?[]:withAdj(dayEvents(d),m.me-p.me,m.fa-p.fa).map(e=>({w:e.who,v:e.v,m:String(e.m||'').slice(0,40),c:e.card?1:0})),at:Date.now()};
+    const ev=d<st?[]:withAdj(dayEvents(d),m.me-p.me,m.fa-p.fa,d),ua=ev.filter(e=>e.ua).reduce((x,e)=>x+e.v,0),uf=ev.filter(e=>e.uf).reduce((x,e)=>x+e.v,0);
+    const c={id:d,date:d,me:m.me,fa:m.fa,dm:m.me-p.me,df:m.fa-p.fa,ev:ev.map(e=>({w:e.who,v:e.v,m:String(e.m||'').slice(0,40),c:e.card?1:0})),at:Date.now()};
+    // 잔액 업데이트로 맞춘 몫·지난 날짜 고침을 넘겨받은 몫: 다시 계산하면 그날 증감에 안 나오므로 '마감 후 고침'으로 잡지 않게 따로 기억
+    if(ua)c.ua=ua;if(uf)c.uf=uf;
     if(d<st)c.base=1;S.close.push(c);by.set(d,c);ch=true;}
   return ch;
 }
 // 그날 증감 중 그날 내역으로 설명되지 않는 부분(지난 날짜 기록을 늦게 고친 몫)을 한 줄로 덧붙인다
-function withAdj(ev,dm,df){
+function withAdj(ev,dm,df,d){
   const me=ev.filter(e=>e.who==='me'&&!e.card).reduce((x,e)=>x+e.v,0),fa=ev.filter(e=>e.who==='fa').reduce((x,e)=>x+e.v,0),out=ev.slice();
-  if(df-fa)out.unshift({who:'adj',v:df-fa,m:'지난 날짜 고친 기록 반영('+careName()+' 돈)'});
-  if(dm-me)out.unshift({who:'adj',v:dm-me,m:'지난 날짜 고친 기록 반영(내 재산)'});
+  // 그날 통장 잔액을 업데이트했다면 그 차이는 '기록하지 않은 입출금'을 맞춘 몫
+  const upd=d&&S.accounts.some(a=>a.asOf===d&&a.type!=='loan');
+  if(df-fa)out.unshift({who:'adj',v:df-fa,uf:1,m:'지난 날짜 고친 기록 반영('+careName()+' 돈)'});
+  if(dm-me)out.unshift({who:'adj',v:dm-me,ua:1,m:upd?'잔액 업데이트로 맞춘 차이':'지난 날짜 고친 기록 반영(내 재산)'});
   return out;}
 const closeOf=d=>(S.close||[]).find(c=>c.id===d);
 const flowBase=()=>{const st=flowStart(),c=closeOf(addDay(st,-1));return c?{me:c.me,fa:c.fa}:moneyAt(addDay(st,-1));};
@@ -1016,9 +1021,11 @@ function flowCard(){
   const days=[];for(let d=st;d<=t;d=addDay(d,1))days.push(d);
   const base=flowBase();
   // 마감된 날은 저장된 마감값, 오늘(아직 마감 전)은 지금 기록으로 계산
+  // 마감 후 고침은 '그날 하루의 증감'이 달라진 만큼만 본다 → 잔액 업데이트로 전체 금액이 한꺼번에 옮겨져도 지난날마다 표시되지 않음
+  const calc=new Map();const at=d=>{if(!calc.has(d))calc.set(d,moneyAt(d));return calc.get(d);};
   let prev=base;const rows=days.map(d=>{const c=d<t&&closeOf(d);let r;
-    if(c){const now=moneyAt(d);r={d,me:c.me,fa:c.fa,dm:c.dm,df:c.df,ev:(c.ev||[]).map(e=>({who:e.w,v:e.v,m:e.m,card:!!e.c})),closed:true,adjMe:now.me-c.me,adjFa:now.fa-c.fa};}
-    else{const m=moneyAt(d);r={d,...m,dm:m.me-prev.me,df:m.fa-prev.fa,closed:false};r.ev=withAdj(dayEvents(d),r.dm,r.df);}
+    if(c){const now=at(d),pv=at(addDay(d,-1));r={d,me:c.me,fa:c.fa,dm:c.dm,df:c.df,ev:(c.ev||[]).map(e=>({who:e.w,v:e.v,m:e.m,card:!!e.c})),closed:true,adjMe:(now.me-pv.me)-(c.dm-(c.ua||0)),adjFa:(now.fa-pv.fa)-(c.df-(c.uf||0))};}
+    else{const m=moneyAt(d);r={d,...m,dm:m.me-prev.me,df:m.fa-prev.fa,closed:false};r.ev=withAdj(dayEvents(d),r.dm,r.df,d);}
     prev=r;return r;});
   const now=rows[rows.length-1],sg=v=>v>0?'+':v<0?'−':'±',cl=v=>v<0?'neg':v>0?'pos':'',w=v=>`<b class="${cl(v)}">${sg(v)}${num(Math.abs(v))}</b>`;
   const act=r=>r.dm||r.df||r.ev.length||r.adjMe||r.adjFa||r.d===t||r.d===st;
