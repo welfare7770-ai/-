@@ -239,7 +239,9 @@ details.ref .tbl{margin-top:8px;font-size:12.5px}
 const KEY='lifebook.v1';
 const CAT_OUT=['식비','외식·카페','생활용품','주거·관리비','공과금','통신','구독·서비스','교통·차량','의료·건강','보험','부모님·가족','경조사','교육','문화·여가','의류·미용','용돈','저축·투자','세금','카드대금','기타'];
 const CAT_IN=['급여','연금','사업소득','이자·배당','용돈','환급','경조금','기타'];
-const PAY=['카드','현금','계좌이체','간편결제','자동이체'];
+// 체크카드는 통장에서 바로 빠지고, 신용카드는 카드대금을 낼 때 통장에서 빠진다
+const PAY=['체크카드','신용카드','현금','계좌이체','간편결제','자동이체'];
+const PAY_OPTS=[['체크카드','체크카드 (통장에서 바로 빠짐)'],['신용카드','신용카드 (카드대금 낼 때 빠짐)'],'현금','계좌이체','간편결제','자동이체'];
 // 일반적 권장 주기(차량·운행조건마다 다름 → 취급설명서 기준으로 수정)
 const DEFAULT_RULES=[
   {item:'엔진오일',km:7000,months:6},{item:'오일필터',km:7000,months:6},
@@ -578,13 +580,13 @@ const txFields=[
   {k:'date',label:'날짜',type:'date',def:today,req:1},
   {k:'amount',label:'금액(원)',type:'number',req:1},
   {k:'cat',label:'분류',type:'select',dep:'type',map:{out:CAT_OUT,in:CAT_IN}},
-  {k:'pay',label:'결제수단',type:'select',options:['',...PAY]},
-  {k:'acct',label:'어느 통장 (카드 결제는 카드대금 낼 때 빠짐)',type:'select',options:()=>acctOpts(),def:()=>mainAcct()},
+  {k:'pay',label:'결제수단',type:'select',options:['',...PAY_OPTS]},
+  {k:'acct',label:'어느 통장 (신용카드는 카드대금 낼 때 빠짐)',type:'select',options:()=>acctOpts(),def:()=>mainAcct()},
   {k:'memo',label:'내용',type:'text',ph:'예: 마트 장보기'}
 ];
-// 카드: 쓸 때 지출로 잡고(통장에서는 아직 안 빠짐), 카드대금을 낼 때 통장에서 빠진다(지출 합계에는 다시 넣지 않음 → 이중 계산 방지)
+// 신용카드: 쓸 때 지출로 잡고(통장에서는 아직 안 빠짐), 카드대금을 낼 때 통장에서 빠진다(지출 합계에는 다시 넣지 않음 → 이중 계산 방지)
 const isCardBill=t=>t.type==='out'&&t.cat==='카드대금';
-const isCardBuy=t=>t.type==='out'&&t.pay==='카드'&&!isCardBill(t);
+const isCardBuy=t=>t.type==='out'&&t.pay==='신용카드'&&!isCardBill(t);
 const hitsAcct=t=>!isCardBuy(t);
 function monthSum(ym){let inc=0,out=0;for(const t of S.tx)if(t.date.startsWith(ym)){if(t.type==='in')inc+=+t.amount||0;else if(!isCardBill(t))out+=+t.amount||0;}return {inc,out};}
 function budgetBar(out){
@@ -727,7 +729,7 @@ const recurFields=()=>{const f=[
   {k:'amount',label:'금액(원, 대략)',type:'number',req:1},
   {k:'day',label:'매월 납부일(1~31)',type:'number',req:1,def:25},
   {k:'cat',label:'분류',type:'select',dep:'owner',map:{me:CAT_OUT,parent:null},def:'공과금'},
-  {k:'pay',label:'결제수단',type:'select',options:PAY,def:'자동이체',show:['me'],showBy:'owner'},
+  {k:'pay',label:'결제수단',type:'select',options:PAY_OPTS,def:'자동이체',show:['me'],showBy:'owner'},
   {k:'acct',label:'어느 통장에서 나가나 (카드는 비워 두기)',type:'select',options:()=>acctOpts(),def:()=>mainAcct(),show:['me'],showBy:'owner'},
   {k:'from',label:'누구 돈으로',type:'select',options:[[SELF,careName()+' 돈 (자동이체)'],[ME,'내 돈 (내가 대신 냄)']],def:SELF,show:['parent'],showBy:'owner'},
   {k:'manual',label:'영수증 받고 직접 입력 (자동으로 빼지 않고, 납부일에 입력 알림)',type:'checkbox'},
@@ -770,7 +772,7 @@ function moveToMe(){
   dlgForm.innerHTML=`<h2>내 고정비로 옮기기</h2>
    <p class="hint">${esc(pn)} 고정비 중 내가 내는 것으로 바꿀 항목을 고르세요. 옮기면 ${esc(pn)} 고정비에서는 빠집니다.</p>
    <ul class="list" id="mvList">${theirs.map(r=>`<li class="row" style="cursor:default"><label style="display:flex;gap:10px;align-items:center;flex:1;min-width:0"><input type="checkbox" value="${r.id}"><span class="grow"><b>${esc(r.name)}</b><small>${esc(r.cat)} · ${esc(whoLabel(r.from||SELF))} · 매월 ${r.day}일</small></span><span class="amt">${num(r.amount)}</span></label></li>`).join('')}</ul>
-   <div class="fld" style="margin-top:12px"><label for="mvPay">결제수단</label><select id="mvPay">${optHTML(PAY,'자동이체')}</select></div>
+   <div class="fld" style="margin-top:12px"><label for="mvPay">결제수단</label><select id="mvPay">${optHTML(PAY_OPTS,'자동이체')}</select></div>
    <label class="fld chk" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mvTx" checked> 이미 ${esc(pn)} 장부에 기록된 같은 고정비도 내 가계부로 옮기기</label>
    <div class="actions"><span class="sp"></span><button type="button" data-x="cancel">취소</button><button type="submit" class="primary">옮기기</button></div>`;
   dlgForm.querySelector('[data-x=cancel]').onclick=()=>dlg.close();
@@ -1088,8 +1090,13 @@ function moveDialog(m){
     },isNew?null:()=>{S.moves=S.moves.filter(x=>x!==m);});
 }
 // 내용에 '카드대금·카드값'이 들어간 지출은 한 번만 '카드대금'으로 분류 (카드로 쓴 돈과 이중 계산 방지). 직접 다른 분류로 바꾸면 그대로 둔다
+// 예전 결제수단 '카드'를 나눔: 기록은 체크카드(통장에서 바로)로, 카드대금은 자동이체로, 고정지출 중 메모에 '농협카드·신용카드'가 있거나 Claude 구독은 신용카드로
+function fixPay(){let ch=false;
+  S.tx.forEach(t=>{if(t.pay==='카드'){t.pay=t.cat==='카드대금'?'자동이체':'체크카드';ch=true;}});
+  S.recur.forEach(r=>{if(r.pay==='카드'){r.pay=/농협카드|신용카드/.test(r.memo||'')||/claude/i.test(r.name||'')?'신용카드':'체크카드';ch=true;}});
+  return ch;}
 function fixCardBills(){let ch=false;S.tx.forEach(t=>{if(t.type==='out'&&!t.cb&&t.cat!=='카드대금'&&/카드\s*(대금|값)/.test(t.memo||'')){t.cat='카드대금';t.cb=1;ch=true;}});return ch;}
-const autoPost=()=>{const z=fixCardBills(),a=postPensions(),b=postRecurAuto(),c=snapAssets();return z||a||b||c;};
+const autoPost=()=>{const z=fixCardBills(),y=fixPay(),a=postPensions(),b=postRecurAuto(),c=snapAssets();return y||z||a||b||c;};
 /* 빠진 고정비 정리: 항목마다 '기록' 또는 '기록 안 함'을 고른다.
    기본값은 현금(통장)과 맞추는 쪽으로 미리 골라 둔다.
    - 아버지 것 중 부모님 자금에서 나간 것: 잔액 확인일 전이면 이미 통장 잔액에 반영됨 → 기록 안 함
@@ -1993,7 +2000,7 @@ const ACT={
     // 구독 서비스 이름을 고르면 분류를 '구독·서비스'로 자동 선택
     const nm=dlgForm.elements.namedItem('name'),cat=dlgForm.elements.namedItem('cat'),pay=dlgForm.elements.namedItem('pay');
     const vr=dlgForm.elements.namedItem('variable');nm.addEventListener('change',()=>{vr.checked=/전기|가스|수도|관리비/.test(nm.value);});
-    nm.addEventListener('change',()=>{if(/ChatGPT|Claude|넷플릭스|유튜브|쿠팡|네이버플러스|Google|디즈니|티빙|구독/i.test(nm.value)){cat.value='구독·서비스';pay.value='카드';}});},
+    nm.addEventListener('change',()=>{if(/ChatGPT|Claude|넷플릭스|유튜브|쿠팡|네이버플러스|Google|디즈니|티빙|구독/i.test(nm.value)){cat.value='구독·서비스';}});},
   editRecur:d=>crud('recur','고정지출',recurFields(),find('recur',d.id)),
   addAcct:d=>acctDialog(null,d.type),
   editAcct:d=>acctDialog(acctById(d.id)),
