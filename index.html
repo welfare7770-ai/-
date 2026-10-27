@@ -1519,8 +1519,15 @@ function top100Card(){
   const rows=TOP100.map((k,i)=>[i+1,k,...TOP100_INFO[k]]).filter(r=>hike100Sido==='전체'||(hike100Sido==='다녀옴'?been[r[1]]:hike100Sido==='안 가 봄'?!been[r[1]]:r[3]===hike100Sido||r[5].includes(SIDO_FULL[hike100Sido]||'@')));
   return `<section class="card" id="hike100">${head}
    <div class="toolbar" style="margin:0 0 6px"><select id="hike100Sido" style="width:auto" aria-label="시·도">${optHTML([['전체','전체 (100곳)'],['다녀옴',`다녀옴 (${done})`],['안 가 봄',`안 가 봄 (${100-done})`],...SIDO.filter(x=>cnt[x]||TOP100.some(k=>TOP100_INFO[k][3].includes(SIDO_FULL[x]))).map(x=>[x,x])],hike100Sido)}</select><small class="hint" style="margin:0">산림청 자료(2022.1.1. 기준) · 소재지에 걸친 시·도로 찾기</small></div>
-   <div class="tblwrap"><table class="tbl"><tr><th>번호</th><th>산</th><th class="r">높이</th><th>소재지</th><th class="r">다녀옴</th></tr>
-   ${rows.map(([n,k,h,sd,pk,loc])=>`<tr${been[k]?` data-act="hikeFind" data-m="${esc(k)}" style="cursor:pointer"`:''}><td>${n}</td><td><b>${esc(k)}</b>${pk?`<br><small>${esc(pk)}</small>`:''}</td><td class="r">${num(Math.round(h))}m</td><td><small>${esc(loc)}</small></td><td class="r">${been[k]?`<b class="pos">✔</b><br><small>${been[k].slice(2).replace(/-/g,'.')}</small>`:'<small style="color:var(--muted)">-</small>'}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">해당하는 산이 없습니다</td></tr>'}
+   <div class="tblwrap"><table class="tbl"><tr><th>산</th><th class="r">높이</th><th>소재지</th><th class="r">다녀옴</th></tr>
+   ${(()=>{ // 시·도별로 묶어 보기 (산림청 자료의 첫 소재지 기준), 같은 시·도 안에서는 가나다순
+     const ord=sd=>{const i=SIDO.indexOf(sd);return i<0?99:i;};
+     const list=rows.slice().sort((a,b)=>ord(a[3])-ord(b[3])||a[1].localeCompare(b[1],'ko'));let cur='',out='';
+     list.forEach(([n,k,h,sd,pk,loc])=>{
+       if(sd!==cur){cur=sd;const g=list.filter(r=>r[3]===sd),gd=g.filter(r=>been[r[1]]).length;
+         out+=`<tr><th colspan="4" style="text-align:left;background:var(--card2)">${esc(sd)} <small style="font-weight:400;color:var(--muted)">${g.length}곳${gd?` · 다녀옴 ${gd}`:''}</small></th></tr>`;}
+       out+=`<tr${been[k]?` data-act="hikeFind" data-m="${esc(k)}" style="cursor:pointer"`:''}><td style="white-space:nowrap"><b>${esc(k)}</b><br><small style="color:var(--muted)">${pk?esc(pk)+' · ':''}No.${n}</small></td><td class="r" style="white-space:nowrap">${num(Math.round(h))}m</td><td><small>${esc(loc)}</small></td><td class="r">${been[k]?`<b class="pos">✔</b><br><small>${been[k].slice(2).replace(/-/g,'.')}</small>`:'<small style="color:var(--muted)">-</small>'}</td></tr>`;});
+     return out||'<tr><td colspan="4" class="empty">해당하는 산이 없습니다</td></tr>';})()}
    </table></div></section>`;
 }
 const SIDO_FULL={서울:'서울',부산:'부산',대구:'대구',인천:'인천',광주:'광주',대전:'대전',울산:'울산',세종:'세종',경기:'경기',강원:'강원',충북:'충청북도',충남:'충청남도',전북:'전라북도',전남:'전라남도',경북:'경상북도',경남:'경상남도',제주:'제주'};
