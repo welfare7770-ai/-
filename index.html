@@ -1323,11 +1323,11 @@ function hikeTop100Helper(){
     if(el('sido')&&!el('sido').value)el('sido').value=sido;if(peak&&el('peak')&&!el('peak').value)el('peak').value=peak;};
   mt.addEventListener('input',upd);mt.addEventListener('change',upd);upd();
 }
-let hikeYear='전체',hikeQ='',hikeSido='전체';
+let hikeYear='전체',hikeQ='',hikeSido='전체',hikeTop=false;
 function view_hike(){
   const years=[...new Set(S.hike.map(h=>h.date.slice(0,4)))].sort().reverse();
   const q=hikeQ.trim();
-  const list=S.hike.filter(h=>(hikeYear==='전체'||h.date.startsWith(hikeYear))&&(hikeSido==='전체'||sidoOf(h)===hikeSido)&&(!q||[h.mountain,h.peak,sidoOf(h),h.region,h.course,h.with,h.memo].join(' ').includes(q))).sort((a,b)=>b.date.localeCompare(a.date)||(b.start||'').localeCompare(a.start||''));
+  const list=S.hike.filter(h=>(!hikeTop||h.top100)&&(hikeYear==='전체'||h.date.startsWith(hikeYear))&&(hikeSido==='전체'||sidoOf(h)===hikeSido)&&(!q||[h.mountain,h.peak,sidoOf(h),h.region,h.course,h.with,h.memo].join(' ').includes(q))).sort((a,b)=>b.date.localeCompare(a.date)||(b.start||'').localeCompare(a.start||''));
   const sum=k=>list.reduce((s,h)=>s+(+h[k]||0),0);
   const mins=list.reduce((s,h)=>s+hikeMinutes(h).m,0);
   const bySido={};S.hike.filter(h=>hikeYear==='전체'||h.date.startsWith(hikeYear)).forEach(h=>{const k=sidoOf(h)||'미지정';bySido[k]=(bySido[k]||0)+1;});
@@ -1354,8 +1354,8 @@ function view_hike(){
     </div>`;};
   return `
   ${nudgeBox(['hike'])}
-  <div class="toolbar"><select id="hikeYear" style="width:auto" aria-label="연도">${optHTML([['전체','전체 연도'],...years.map(y=>[y,y+'년'])],hikeYear)}</select><select id="hikeSido" style="width:auto" aria-label="시·도">${optHTML(sidoOpts,hikeSido)}</select><button class="btn primary" data-act="addHike">＋ 산행 기록</button><input type="search" id="hikeQ" placeholder="산 이름·지역·동행 검색" value="${esc(q)}" style="flex:1 1 100%"></div>
-  <section class="card"><h2>${hikeYear==='전체'?'전체':hikeYear+'년'}${hikeSido==='전체'?'':' · '+hikeSido} 산행 요약</h2>
+  <div class="toolbar"><select id="hikeYear" style="width:auto" aria-label="연도">${optHTML([['전체','전체 연도'],...years.map(y=>[y,y+'년'])],hikeYear)}</select><select id="hikeSido" style="width:auto" aria-label="시·도">${optHTML(sidoOpts,hikeSido)}</select><button class="btn" data-act="hikeReset" title="연도·지역·검색을 처음으로 되돌림">↻ 새로고침</button><button class="btn primary" data-act="addHike">＋ 산행 기록</button><input type="search" id="hikeQ" placeholder="산 이름·지역·동행 검색" value="${esc(q)}" style="flex:1 1 100%"></div>
+  <section class="card"><h2 data-act="hikeReset" style="cursor:pointer" title="눌러서 새로고침">${hikeYear==='전체'?'전체':hikeYear+'년'}${hikeSido==='전체'?'':' · '+hikeSido}${hikeTop?' · 100대 명산':''} 산행 요약<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">↻</small></h2>
    <div class="stats">
     <div class="stat"><small>산행 횟수</small><b>${list.length}회</b><small>${revisit>0?`재방문 ${revisit}회`:'모두 다른 산'}</small></div>
     <div class="stat"><small>정상 오른 산</small><b>${peaks}곳</b><small>${hikeYear==='전체'?`정상 미등정 ${list.length-summitList.length}회`:`처음 오른 산 ${newPeaks}곳`}</small></div>
@@ -1363,11 +1363,11 @@ function view_hike(){
     <div class="stat"><small>총 거리</small><b>${(Math.round(sum('distance')*10)/10).toLocaleString('ko-KR')}km</b></div>
     <div class="stat"><small>총 걸음</small><b>${sum('steps')?num(sum('steps'))+'보':'-'}</b></div>
     <div class="stat"><small>총 산행시간</small><b>${mins?hm(mins):"0분"}</b></div></div>
-   <div class="goal" style="margin-top:12px"><div><span>산림청 100대 명산 <b>${t100}곳</b> / 100곳</span><span>${100-t100}곳 남음</span></div><div class="bar"><span style="width:${t100}%"></span></div></div>
+   <div class="goal" data-act="hikeTop100" style="margin-top:12px;cursor:pointer" title="눌러서 다녀온 100대 명산 보기"><div><span>산림청 100대 명산 <b>${t100}곳</b> / 100곳 <small style="color:var(--acc)">${hikeTop?'✕ 전체 보기':'▶ 보기'}</small></span><span>${100-t100}곳 남음</span></div><div class="bar"><span style="width:${t100}%"></span></div></div>
    ${Object.keys(bySido).length>1?`<div class="chips" style="margin-top:10px">${Object.entries(bySido).sort((a,b)=>b[1]-a[1]).map(([k,c])=>`<span class="chip">${esc(k)} <b>${c}</b>회</span>`).join('')}</div>`:''}
    </section>
-  ${mineArr.length?`<section class="card"><h2>나의 산 목록<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${mineArr.length}곳</small></h2><div class="tblwrap"><table class="tbl"><tr><th>산</th><th class="r">다녀옴</th><th class="r hide-sm">해발</th><th class="r">처음</th><th class="r">최근</th></tr>${mineArr.map(m=>`<tr data-act="hikeFind" data-m="${esc(m.name)}"><td><b>${esc(m.name)}</b>${m.sido?` <small>${esc(m.sido)}</small>`:''}</td><td class="r">${m.n}회${m.sum<m.n?`<br><small>정상 ${m.sum}회</small>`:''}</td><td class="r hide-sm">${m.height?num(m.height)+'m':'-'}</td><td class="r">${m.first.slice(2).replace(/-/g,'.')}</td><td class="r">${m.last.slice(2).replace(/-/g,'.')}</td></tr>`).join('')}</table></div><p class="hint" style="margin:6px 0 0">산 이름을 누르면 그 산의 산행 기록만 모아 봅니다.</p></section>`:''}
-  <section class="card"><h2>산행 일지<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">카드를 누르면 수정</small></h2>${list.length?list.map(card).join(''):'<p class="empty">다녀온 산행을 기록하세요. 날씨·거리·걸음수·코스·느낀 점까지 남길 수 있습니다.</p>'}</section>`;
+  ${mineArr.length?`<section class="card" id="hikeMine"><h2 data-act="hikeReset" style="cursor:pointer" title="눌러서 새로고침">나의 산 목록${hikeTop?' · 100대 명산':''}<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${mineArr.length}곳 ↻</small></h2><div class="tblwrap"><table class="tbl"><tr><th>산</th><th class="r">다녀옴</th><th class="r hide-sm">해발</th><th class="r">처음</th><th class="r">최근</th></tr>${mineArr.map(m=>`<tr data-act="hikeFind" data-m="${esc(m.name)}"><td><b>${esc(m.name)}</b>${m.sido?` <small>${esc(m.sido)}</small>`:''}</td><td class="r">${m.n}회${m.sum<m.n?`<br><small>정상 ${m.sum}회</small>`:''}</td><td class="r hide-sm">${m.height?num(m.height)+'m':'-'}</td><td class="r">${m.first.slice(2).replace(/-/g,'.')}</td><td class="r">${m.last.slice(2).replace(/-/g,'.')}</td></tr>`).join('')}</table></div><p class="hint" style="margin:6px 0 0">산 이름을 누르면 그 산의 산행 기록만 모아 봅니다.</p></section>`:''}
+  <section class="card"><h2 data-act="hikeReset" style="cursor:pointer" title="눌러서 새로고침">산행 일지<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">카드를 누르면 수정 ↻</small></h2>${list.length?list.map(card).join(''):'<p class="empty">다녀온 산행을 기록하세요. 날씨·거리·걸음수·코스·느낀 점까지 남길 수 있습니다.</p>'}</section>`;
 }
 
 /* ---------- 헬스 ---------- */
@@ -2134,6 +2134,10 @@ const ACT={
     if(weekStart(r.date)===weekStart(today()))setTimeout(()=>{const w=weekStats();toast(`이번 주 유산소 ${w.cardio}분 / ${GOAL_CARDIO}분${w.cardio>=GOAL_CARDIO?' 달성!':''}`);},0);
   });hikeTimeHelper();hikeKcalHelper();hikeTop100Helper();},
   hikeFind:d=>{hikeQ=d.m;render();window.scrollTo(0,0);},
+  // 연도·지역·검색·100대 명산 보기를 모두 처음으로
+  hikeReset:()=>{hikeYear='전체';hikeSido='전체';hikeQ='';hikeTop=false;render();window.scrollTo(0,0);toast('새로고침했습니다');},
+  // 다녀온 100대 명산만 보기 (다시 누르면 전체)
+  hikeTop100:()=>{hikeTop=!hikeTop;if(hikeTop){hikeYear='전체';hikeSido='전체';hikeQ='';}render();const m=hikeTop&&document.getElementById('hikeMine');if(m)m.scrollIntoView({block:'start',behavior:'smooth'});},
   editHike:d=>{crud('hike','산행 기록',hikeFields(),find('hike',d.id));hikeTimeHelper();hikeKcalHelper();hikeTop100Helper();},
   addGym:d=>crud('gym','운동 기록',gymFields(),null,(d.date||d.kind)?{date:d.date||today(),kind:d.kind||'근력'}:null),
   editGym:d=>crud('gym','운동 기록',gymFields(),find('gym',d.id)),
