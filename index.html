@@ -442,10 +442,22 @@ function weekStart(s){const d=parseD(s);d.setDate(d.getDate()-((d.getDay()+6)%7)
 
 /* ---------- 공용 입력 폼 ---------- */
 const dlg=$('#dlg'),dlgForm=$('#dlgForm');
+// '시'·'분' 칸을 고르면 숨은 칸에 HH:MM 으로 넣고, 산행시간 계산 등이 알아채도록 알린다
+dlgForm.addEventListener('change',e=>{const k=e.target.dataset.hh||e.target.dataset.mm;if(!k)return;
+  const h=dlgForm.querySelector(`[data-hh="${k}"]`),m=dlgForm.querySelector(`[data-mm="${k}"]`),hid=dlgForm.elements.namedItem(k);
+  if(h.value&&!m.value)m.value='00';
+  hid.value=h.value&&m.value?h.value+':'+m.value:'';
+  hid.dispatchEvent(new Event('input'));hid.dispatchEvent(new Event('change'));});
 function optHTML(opts,val){return opts.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<option value="${esc(v)}"${String(v)===String(val)?' selected':''}>${esc(l)}</option>`;}).join('');}
 function fieldHTML(fd,val){
   if(val===undefined||val===null)val=typeof fd.def==='function'?fd.def():(fd.def??'');
   const id='f_'+fd.k,req=fd.req?' required':'';
+  // 시각: 휴대폰 시계 선택창이 잘 안 되는 기기가 있어 '시'·'분' 두 칸으로 고른다 (값은 HH:MM)
+  if(fd.type==='hhmm'){const [h,m]=/^\d{1,2}:\d{2}$/.test(val)?val.split(':'):['',''];
+    const ms=[...new Set([...Array.from({length:12},(_,i)=>String(i*5).padStart(2,'0')),...(m?[m]:[])])].sort();
+    return `<div class="fld" data-k="${fd.k}"><label for="${id}">${esc(fd.label)}</label><div style="display:flex;gap:6px;align-items:center"><input type="hidden" name="${fd.k}" value="${esc(val||'')}">
+     <select id="${id}" data-hh="${fd.k}" style="flex:1"><option value="">시</option>${Array.from({length:24},(_,i)=>{const v=String(i).padStart(2,'0');return `<option value="${v}"${v===String(h).padStart(2,'0')&&h!==''?' selected':''}>${i<12?'오전':'오후'} ${i%12||12}시</option>`;}).join('')}</select>
+     <select data-mm="${fd.k}" style="flex:1"><option value="">분</option>${ms.map(v=>`<option value="${v}"${v===m?' selected':''}>${v}분</option>`).join('')}</select></div></div>`;}
   if(fd.type==='checkbox')return `<div class="fld chk" data-k="${fd.k}"><label><input type="checkbox" name="${fd.k}"${val?' checked':''}> ${esc(fd.label)}</label></div>`;
   let input;
   if(fd.type==='select')input=`<select id="${id}" name="${fd.k}"${req}>${fd.dep||fd.deps?'':optHTML(typeof fd.options==='function'?fd.options():fd.options,val)}</select>`;
@@ -1236,8 +1248,8 @@ const hikeFields=()=>[
   {k:'weather',label:'날씨',type:'select',options:WEATHER,def:'맑음'},
   {k:'temp',label:'기온(℃)',type:'text',ph:'예: 12 또는 8~15'},
   {k:'course',label:'코스',type:'text',ph:'예: 우이동 → 백운대 → 도선사'},
-  {k:'start',label:'출발 시각',type:'time'},
-  {k:'end',label:'하산 완료 시각',type:'time'},
+  {k:'start',label:'출발 시각',type:'hhmm'},
+  {k:'end',label:'하산 완료 시각',type:'hhmm'},
   {k:'minutes',label:'산행시간(분) — 이 값으로 합계·유산소 계산',type:'number',ph:'출발·하산 시각을 넣으면 자동으로 채워짐'},
   {k:'distance',label:'등산거리(km)',type:'number',dec:1},
   {k:'steps',label:'걸음수',type:'number'},
@@ -1269,7 +1281,8 @@ function hikeMinutes(h){
 function hikeTimeHelper(){
   const el=n=>dlgForm.elements.namedItem(n),st=el('start'),en=el('end'),mi=el('minutes');if(!st||!en||!mi)return;
   mi.closest('.fld').insertAdjacentHTML('beforeend','<small class="mh" id="hkspan"></small>');
-  let auto=!mi.value;
+  // 저장된 산행시간이 출발~하산 차이와 같으면 자동 값이었던 것 → 시각을 고치면 함께 바뀜
+  let auto=!mi.value||+mi.value===hikeMin({start:st.value,end:en.value});
   const upd=()=>{const m=hikeMin({start:st.value,end:en.value});const box=document.getElementById('hkspan');
     if(!m){box.textContent='';return;}
     if(auto||!mi.value){mi.value=m;auto=true;}
