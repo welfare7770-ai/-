@@ -1276,6 +1276,26 @@ function hikeTimeHelper(){
     box.textContent=`출발~하산 ${hm(m)}`+(+mi.value&&+mi.value!==m?` · 합계에는 입력한 산행시간 ${hm(+mi.value)}이 쓰입니다`:'');};
   mi.addEventListener('input',()=>{auto=false;upd();});st.addEventListener('input',upd);en.addEventListener('input',upd);st.addEventListener('change',upd);en.addEventListener('change',upd);upd();
 }
+// 등산 소모 칼로리: 산행시간과 거리만으로 계산. 평균 속도(휴식 포함)로 강도(MET)를 정한다
+// MET(Compendium of Physical Activities 등산 6.0 기준, 휴식 포함 평균속도 보정): 1.5km/h 미만 4 · 2.5 미만 5 · 3.5 미만 6 · 그 이상 7
+// 칼로리 = MET × 체중(kg) × 시간(h). 체중은 건강 탭 최근 체중, 없으면 70kg
+function hikeKcal(minutes,km){
+  minutes=+minutes||0;km=+km||0;if(!minutes||!km)return null;
+  const v=km/(minutes/60),met=v<1.5?4:v<2.5?5:v<3.5?6:7;
+  const w=+(S.health.filter(h=>+h.weight>0).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||{}).weight||70;
+  return {kcal:Math.round(met*w*minutes/60),v,met,w};
+}
+function hikeKcalHelper(){
+  const el=n=>dlgForm.elements.namedItem(n),mi=el('minutes'),di=el('distance'),kc=el('kcal');if(!mi||!di||!kc)return;
+  kc.closest('.fld').insertAdjacentHTML('beforeend','<small class="mh" id="hkkcal"></small>');
+  let auto=!kc.value;
+  const upd=()=>{const r=hikeKcal(mi.value,di.value),box=document.getElementById('hkkcal');
+    if(!r){box.textContent='';return;}
+    if(auto)kc.value=r.kcal;
+    box.textContent=`시간·거리 기준 약 ${num(r.kcal)}kcal (평균 ${r.v.toFixed(1)}km/h · 체중 ${r.w}kg)`;};
+  kc.addEventListener('input',()=>{auto=!kc.value;});
+  ['minutes','distance','start','end'].forEach(n=>{const x=el(n);if(x){x.addEventListener('input',upd);x.addEventListener('change',upd);}});upd();
+}
 let hikeYear='전체',hikeQ='',hikeSido='전체';
 function view_hike(){
   const years=[...new Set(S.hike.map(h=>h.date.slice(0,4)))].sort().reverse();
@@ -2085,9 +2105,9 @@ const ACT={
     const {_ledger,...r0}=v,r={id:uid(),ts:Date.now(),...r0};S.hike.push(r);
     linkNew('hike',r,_ledger);
     if(weekStart(r.date)===weekStart(today()))setTimeout(()=>{const w=weekStats();toast(`이번 주 유산소 ${w.cardio}분 / ${GOAL_CARDIO}분${w.cardio>=GOAL_CARDIO?' 달성!':''}`);},0);
-  });hikeTimeHelper();},
+  });hikeTimeHelper();hikeKcalHelper();},
   hikeFind:d=>{hikeQ=d.m;render();window.scrollTo(0,0);},
-  editHike:d=>{crud('hike','산행 기록',hikeFields(),find('hike',d.id));hikeTimeHelper();},
+  editHike:d=>{crud('hike','산행 기록',hikeFields(),find('hike',d.id));hikeTimeHelper();hikeKcalHelper();},
   addGym:d=>crud('gym','운동 기록',gymFields(),null,(d.date||d.kind)?{date:d.date||today(),kind:d.kind||'근력'}:null),
   editGym:d=>crud('gym','운동 기록',gymFields(),find('gym',d.id)),
   gymYM:d=>{gymYM=shiftYM(gymYM,+d.n);render();},
