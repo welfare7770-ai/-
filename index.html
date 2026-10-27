@@ -526,6 +526,7 @@ function openForm(title,fields,rec,onSave,onDelete){
     }else toast('저장했습니다');
   };
   showDlg();
+  if(fields.after)fields.after();
   const first=dlgForm.querySelector('input:not([type=checkbox]),select,textarea');
   if(first&&matchMedia('(pointer:fine)').matches)first.focus();
 }
@@ -1326,7 +1327,7 @@ function view_hike(){
 const GYM_KIND=['근력','런닝머신','실내자전거','걷기','기타 유산소','스트레칭'];
 const CARDIO=['런닝머신','실내자전거','걷기','기타 유산소'];
 const GYM_NAMES=['벤치프레스','스쿼트','데드리프트','레그프레스','랫풀다운','시티드 로우','숄더프레스','체스트프레스','덤벨 컬','케이블 푸시다운','레그 컬','레그 익스텐션','런지','플랭크','크런치','팔굽혀펴기','턱걸이'];
-const gymFields=()=>[
+const gymFields=()=>Object.assign([
   {k:'date',label:'날짜',type:'date',def:today,req:1},
   {k:'kind',label:'종류',type:'select',options:GYM_KIND,def:'근력'},
   {k:'name',label:'운동 이름',type:'text',show:['근력','스트레칭'],list:()=>[...new Set([...S.gym.map(g=>g.name).filter(Boolean),...GYM_NAMES])],ph:'예: 벤치프레스'},
@@ -1340,7 +1341,29 @@ const gymFields=()=>[
   {k:'kcal',label:'소모 칼로리(kcal)',type:'number',ph:'기계·워치 표시값'},
   {k:'feel',label:'힘든 정도',type:'select',options:['가벼움','적당함(대화 가능)','힘듦(숨참)','매우 힘듦'],def:'적당함(대화 가능)'},
   {k:'memo',label:'메모',type:'text',ph:'예: 어깨 통증 있음, 다음엔 무게 올리기'}
-];
+],{after:()=>gymAutoKcal()});
+// 이번 주 목표 (본인 설정): 유산소 240분, 근력운동 4일
+const GOAL_CARDIO=240,GOAL_STR=4;
+// 근력 소모 칼로리 자동 계산: 운동 시간 = 세트 × (한 세트 동작 시간 + 휴식 1분), 한 회 동작 약 3초.
+// 칼로리 = MET × 체중(kg) × 시간(h). MET(Compendium of Physical Activities 근력운동): 가벼움 3.5 · 적당함 5 · 힘듦 6. 체중은 건강 탭 최근 체중, 없으면 70kg
+function strengthCalc(sets,reps,feel){
+  sets=+sets||0;reps=+reps||0;if(!sets||!reps)return null;
+  const minutes=Math.round(sets*(reps*3/60+1));
+  const met=/매우|힘듦/.test(feel||'')?6:/가벼움/.test(feel||'')?3.5:5;
+  const w=(S.health.filter(h=>+h.weight>0).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||{}).weight||70;
+  return {minutes,kcal:Math.round(met*w*minutes/60)};
+}
+// 운동 기록 창에서 세트·횟수를 넣으면 운동 시간·소모 칼로리를 채운다 (직접 고친 칸은 건드리지 않음)
+function gymAutoKcal(){
+  const f=dlgForm.elements,el=k=>f.namedItem(k);if(!el('sets')||!el('kcal'))return;
+  const typed={minutes:false,kcal:false};
+  ['minutes','kcal'].forEach(k=>el(k).addEventListener('input',()=>{typed[k]=true;}));
+  let filled=false;
+  const upd=()=>{if(el('kind').value!=='근력'){if(filled){if(!typed.minutes)el('minutes').value='';if(!typed.kcal)el('kcal').value='';filled=false;}return;}const r=strengthCalc(el('sets').value,el('reps').value,el('feel').value);if(!r)return;
+    if(!typed.minutes)el('minutes').value=r.minutes;if(!typed.kcal)el('kcal').value=r.kcal;filled=true;};
+  ['sets','reps','feel','kind'].forEach(k=>el(k).addEventListener(k==='feel'||k==='kind'?'change':'input',upd));
+  if(el('kind').value==='근력'&&!el('kcal').value)upd();
+}
 function weekStats(start){
   const ws=start||weekStart(today()),we=(()=>{const d=parseD(ws);d.setDate(d.getDate()+6);return fmtD(d);})();
   const inWk=d=>d>=ws&&d<=we;
@@ -1353,10 +1376,10 @@ function weekStats(start){
   return {ws,cardio,gymCardio,hikeM,hikes:h.length,strengthDays,days,kcal,total};
 }
 function goalBars(w){
-  const p1=Math.min(w.cardio/150*100,100),p2=Math.min(w.strengthDays/2*100,100);
+  const p1=Math.min(w.cardio/GOAL_CARDIO*100,100),p2=Math.min(w.strengthDays/GOAL_STR*100,100);
   const split=w.hikeM?`<small style="display:block;color:var(--muted);font-size:12px;margin-top:3px">헬스 ${w.gymCardio}분 + 등산 ${w.hikeM}분 (${w.hikes}회)</small>`:'';
-  return `<div class="goal"><div><span>유산소 <b>${w.cardio}분</b> / 150분</span><span>${w.cardio>=150?'✔ 달성':`${150-w.cardio}분 남음`}</span></div><div class="bar"><span style="width:${p1}%"></span></div>${split}</div>
-  <div class="goal"><div><span>근력운동 <b>${w.strengthDays}일</b> / 2일</span><span>${w.strengthDays>=2?'✔ 달성':`${2-w.strengthDays}일 남음`}</span></div><div class="bar"><span style="width:${p2}%"></span></div></div>`;
+  return `<div class="goal"><div><span>유산소 <b>${w.cardio}분</b> / ${GOAL_CARDIO}분</span><span>${w.cardio>=GOAL_CARDIO?'✔ 달성':`${GOAL_CARDIO-w.cardio}분 남음`}</span></div><div class="bar"><span style="width:${p1}%"></span></div>${split}</div>
+  <div class="goal"><div><span>근력운동 <b>${w.strengthDays}일</b> / ${GOAL_STR}일</span><span>${w.strengthDays>=GOAL_STR?'✔ 달성':`${GOAL_STR-w.strengthDays}일 남음`}</span></div><div class="bar"><span style="width:${p2}%"></span></div></div>`;
 }
 function gymRow(g){
   if(g.kind==='등산')return `<li class="row" data-act="editHike" data-id="${g.id}"><span class="pill ok">등산</span><div class="grow"><b>${esc(g.name)}</b><small>${[g.minutes?(g.est?'약 ':'')+g.minutes+'분':'',g.distance?g.distance+'km':'',g.steps?num(g.steps)+'보':''].filter(Boolean).join(' · ')} · 유산소에 합산</small></div><span class="amt">${g.kcal?num(g.kcal)+' kcal':''}</span></li>`;
@@ -2061,7 +2084,7 @@ const ACT={
   addHike:()=>{openForm('산행 기록 추가',[...hikeFields(),{k:'_ledger',label:'경비를 가계부에도 기록',type:'checkbox',def:true}],null,v=>{
     const {_ledger,...r0}=v,r={id:uid(),ts:Date.now(),...r0};S.hike.push(r);
     linkNew('hike',r,_ledger);
-    if(weekStart(r.date)===weekStart(today()))setTimeout(()=>{const w=weekStats();toast(`이번 주 유산소 ${w.cardio}분 / 150분${w.cardio>=150?' 달성!':''}`);},0);
+    if(weekStart(r.date)===weekStart(today()))setTimeout(()=>{const w=weekStats();toast(`이번 주 유산소 ${w.cardio}분 / ${GOAL_CARDIO}분${w.cardio>=GOAL_CARDIO?' 달성!':''}`);},0);
   });hikeTimeHelper();},
   hikeFind:d=>{hikeQ=d.m;render();window.scrollTo(0,0);},
   editHike:d=>{crud('hike','산행 기록',hikeFields(),find('hike',d.id));hikeTimeHelper();},
