@@ -1242,7 +1242,7 @@ function fixPay(){let ch=false;
   S.recur.forEach(r=>{if(r.pay==='카드'){r.pay=/농협카드|신용카드/.test(r.memo||'')||/claude/i.test(r.name||'')?'신용카드':'체크카드';ch=true;}});
   return ch;}
 function fixCardBills(){let ch=false;S.tx.forEach(t=>{if(t.type==='out'&&!t.cb&&t.cat!=='카드대금'&&/카드\s*(대금|값)/.test(t.memo||'')){t.cat='카드대금';t.cb=1;ch=true;}});return ch;}
-const autoPost=()=>{const z=fixCardBills(),y=fixPay(),a=postPensions(),b=postRecurAuto(),c=snapAssets(),f=snapFlow(),g=closeDays();return y||z||a||b||c||f||g;};
+const autoPost=()=>{const h=fixHikeKcal(),z=fixCardBills(),y=fixPay()||h,a=postPensions(),b=postRecurAuto(),c=snapAssets(),f=snapFlow(),g=closeDays();return y||z||a||b||c||f||g;};
 /* 빠진 고정비 정리: 항목마다 '기록' 또는 '기록 안 함'을 고른다.
    기본값은 현금(통장)과 맞추는 쪽으로 미리 골라 둔다.
    - 아버지 것 중 부모님 자금에서 나간 것: 잔액 확인일 전이면 이미 통장 잔액에 반영됨 → 기록 안 함
@@ -1439,6 +1439,7 @@ const hikeFields=()=>[
   {k:'start',label:'출발 시각',type:'hhmm'},
   {k:'end',label:'하산 완료 시각',type:'hhmm'},
   {k:'minutes',label:'산행시간(분) — 이 값으로 합계·유산소 계산',type:'number',ph:'출발·하산 시각을 넣으면 자동으로 채워짐'},
+  {k:'rest',label:'식사·휴식 시간(분) — 칼로리 계산에서 뺌',type:'number',ph:'비우면 자동: 3시간 이상 산행은 60분'},
   {k:'distance',label:'등산거리(km)',type:'number',dec:1},
   {k:'steps',label:'걸음수',type:'number'},
   {k:'ascent',label:'누적 오르막(m)',type:'number',ph:'앱·시계에 나오면 입력'},
@@ -1477,25 +1478,35 @@ function hikeTimeHelper(){
     box.textContent=`출발~하산 ${hm(m)}`+(+mi.value&&+mi.value!==m?` · 합계에는 입력한 산행시간 ${hm(+mi.value)}이 쓰입니다`:'');};
   mi.addEventListener('input',()=>{auto=false;upd();});st.addEventListener('input',upd);en.addEventListener('input',upd);st.addEventListener('change',upd);en.addEventListener('change',upd);upd();
 }
-// 등산 소모 칼로리: 산행시간과 거리만으로 계산. 평균 속도(휴식 포함)로 강도(MET)를 정한다
-// MET(Compendium of Physical Activities 등산 6.0 기준, 휴식 포함 평균속도 보정): 1.5km/h 미만 4 · 2.5 미만 5 · 3.5 미만 6 · 그 이상 7
-// 칼로리 = MET × 체중(kg) × 시간(h). 체중은 건강 탭 최근 체중, 없으면 70kg
-function hikeKcal(minutes,km){
+// 등산 소모 칼로리: 산행시간에서 식사·휴식 시간을 빼고 '걸은 시간'으로만 계산한다
+// 휴식 시간을 비워 두면 자동: 3시간 이상 60분 · 1시간 30분 이상 30분 · 그보다 짧으면 0분
+// 강도 MET = 2.5 + 걸은 시간의 평균 속도(km/h), 4~8 사이 (Compendium of Physical Activities 등산 5~8 범위에 맞춤)
+// → 칼로리 = 체중 × (2.5 × 걸은 시간 + 거리): 휴식을 더 빼면 칼로리가 항상 줄고, 많이 걸을수록 늘어난다
+// 칼로리 = MET × 체중(kg) × 걸은 시간(h). 체중은 건강 탭 최근 체중, 없으면 70kg
+const autoRest=m=>m>=180?60:m>=90?30:0;
+// 예전 계산식(휴식 포함 평균속도)으로 자동 입력된 값인지 확인 → 그런 기록만 새 계산식으로 바꾼다 (직접 넣은 워치 값은 그대로)
+function oldHikeKcal(minutes,km){minutes=+minutes||0;km=+km||0;if(!minutes||!km)return null;const v=km/(minutes/60),met=v<1.5?4:v<2.5?5:v<3.5?6:7;
+  const w=+(S.health.filter(h=>+h.weight>0).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||{}).weight||70;return Math.round(met*w*minutes/60);}
+function fixHikeKcal(){let ch=false;S.hike.forEach(h=>{if(h.kcalV2||!h.kcal)return;const m=hikeMinutes(h).m,o=oldHikeKcal(m,h.distance);
+  if(o!=null&&Math.abs(o-h.kcal)<=1){const r=hikeKcal(m,h.distance,h.rest);if(r){h.kcal=r.kcal;h.kcalV2=1;ch=true;}}});return ch;}
+function hikeKcal(minutes,km,rest){
   minutes=+minutes||0;km=+km||0;if(!minutes||!km)return null;
-  const v=km/(minutes/60),met=v<1.5?4:v<2.5?5:v<3.5?6:7;
+  const rs=rest===''||rest==null?autoRest(minutes):Math.max(0,+rest||0),move=Math.max(Math.round(minutes*0.4),minutes-rs);
+  const v=km/(move/60),met=Math.min(8,Math.max(4,2.5+v));
   const w=+(S.health.filter(h=>+h.weight>0).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||{}).weight||70;
-  return {kcal:Math.round(met*w*minutes/60),v,met,w};
+  return {kcal:Math.round(met*w*move/60),v,met,w,move,rest:minutes-move};
 }
 function hikeKcalHelper(){
   const el=n=>dlgForm.elements.namedItem(n),mi=el('minutes'),di=el('distance'),kc=el('kcal');if(!mi||!di||!kc)return;
   kc.closest('.fld').insertAdjacentHTML('beforeend','<small class="mh" id="hkkcal"></small>');
-  let auto=!kc.value;
-  const upd=()=>{const r=hikeKcal(mi.value,di.value),box=document.getElementById('hkkcal');
+  // 비어 있거나 자동 계산값 그대로면 시간·거리·휴식을 고칠 때 함께 다시 계산
+  const r0=hikeKcal(mi.value,di.value,el('rest')?el('rest').value:'');let auto=!kc.value||(r0&&+kc.value===r0.kcal);
+  const upd=()=>{const r=hikeKcal(mi.value,di.value,el('rest')?el('rest').value:''),box=document.getElementById('hkkcal');
     if(!r){box.textContent='';return;}
     if(auto)kc.value=r.kcal;
-    box.textContent=`시간·거리 기준 약 ${num(r.kcal)}kcal (평균 ${r.v.toFixed(1)}km/h · 체중 ${r.w}kg)`;};
+    box.textContent=`걸은 시간 ${hm(r.move)} 기준 약 ${num(r.kcal)}kcal (식사·휴식 ${hm(r.rest)} 제외 · 평균 ${r.v.toFixed(1)}km/h · 체중 ${r.w}kg)`;};
   kc.addEventListener('input',()=>{auto=!kc.value;});
-  ['minutes','distance','start','end'].forEach(n=>{const x=el(n);if(x){x.addEventListener('input',upd);x.addEventListener('change',upd);}});upd();
+  ['minutes','distance','start','end','rest'].forEach(n=>{const x=el(n);if(x){x.addEventListener('input',upd);x.addEventListener('change',upd);}});upd();
 }
 // 산림청 100대 명산 전체 목록: 어디에 있는 산인지, 다녀왔는지 한눈에 (시·도별로 골라 보기)
 function top100Card(){
