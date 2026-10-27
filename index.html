@@ -1317,7 +1317,8 @@ function hikeKcalHelper(){
 }
 // 산림청 100대 명산 전체 목록: 어디에 있는 산인지, 다녀왔는지 한눈에 (시·도별로 골라 보기)
 function top100Card(){
-  const been={};S.hike.forEach(h=>{const k=String(h.mountain||'').trim();if(TOP100_INFO[k]&&(!been[k]||h.date>been[k]))been[k]=h.date;});
+  // 산행 요약의 '100대 명산 ○곳'과 같은 기준: 기록에서 '산림청 100대 명산'에 체크한 산행만 다녀온 것으로 본다
+  const been={};S.hike.forEach(h=>{const k=String(h.mountain||'').trim();if(h.top100&&TOP100_INFO[k]&&(!been[k]||h.date>been[k]))been[k]=h.date;});
   const done=Object.keys(been).length;
   const head=`<h2 data-act="hike100" style="cursor:pointer">산림청 100대 명산 목록<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">다녀옴 ${done} / 100 · ${hike100Open?'접기 ▲':'펼치기 ▼'}</small></h2>`;
   if(!hike100Open)return `<section class="card" id="hike100">${head}</section>`;
@@ -1336,7 +1337,8 @@ function hikeTop100Helper(){
   const upd=()=>{const i=TOP100_INFO[String(mt.value||'').trim()];if(!i)return;tp.checked=true;
     const [h,sido,peak]=i;if(el('height')&&!el('height').value)el('height').value=Math.round(h);
     if(el('sido')&&!el('sido').value)el('sido').value=sido;if(peak&&el('peak')&&!el('peak').value)el('peak').value=peak;};
-  mt.addEventListener('input',upd);mt.addEventListener('change',upd);upd();
+  // 산 이름을 새로 넣거나 바꿀 때만 자동 체크 (수정 창을 열 때 체크를 해제해 둔 기록을 다시 체크하지 않음)
+  mt.addEventListener('input',upd);mt.addEventListener('change',upd);
 }
 let hikeYear='전체',hikeQ='',hikeSido='전체',hikeTop=false,hike100Open=false,hike100Sido='전체';
 function view_hike(){
