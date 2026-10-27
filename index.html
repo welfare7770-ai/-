@@ -1236,7 +1236,11 @@ const SIDO=['서울','부산','대구','인천','광주','대전','울산','세�
 const SIDO_ALIAS={'서울특별시':'서울','부산광역시':'부산','대구광역시':'대구','인천광역시':'인천','광주광역시':'광주','대전광역시':'대전','울산광역시':'울산','세종특별자치시':'세종','경기도':'경기','강원도':'강원','강원특별자치도':'강원','충청북도':'충북','충청남도':'충남','전라북도':'전북','전북특별자치도':'전북','전라남도':'전남','경상북도':'경북','경상남도':'경남','제주도':'제주','제주특별자치도':'제주'};
 // 시·도 칸이 비어 있는 예전 기록은 상세 지역의 첫 단어로 추정
 function sidoOf(h){if(h.sido)return h.sido;const w=String(h.region||'').trim().split(/\s+/)[0]||'';return SIDO_ALIAS[w]||(SIDO.includes(w)?w:SIDO.find(x=>w.startsWith(x))||'');}
-const MOUNTAINS=['북한산','도봉산','관악산','수락산','불암산','청계산','인왕산','아차산','검단산','소요산','마니산','설악산','오대산','치악산','태백산','소백산','월악산','속리산','계룡산','대둔산','덕유산','지리산','내장산','무등산','월출산','가야산','팔공산','주왕산','금정산','한라산','칠갑산','명지산','운악산','감악산'];
+// 산림청 선정 100대 명산 (2002년 10월 공표, 가나다순). 같은 이름은 지역을 괄호로 구분
+const TOP100=['가리산', '가리왕산', '가야산', '가지산', '감악산', '강천산', '계룡산', '계방산', '공작산', '관악산', '구병산', '금산', '금수산', '금오산', '금정산', '깃대봉', '남산', '내연산', '내장산', '대둔산', '대암산', '대야산', '덕숭산', '덕유산', '덕항산', '도락산', '도봉산', '두륜산', '두타산', '마니산', '마이산', '명성산', '명지산', '모악산', '무등산', '무학산', '미륵산', '민주지산', '방장산', '방태산', '백덕산', '백암산', '백운산(광양)', '백운산(포천)', '백운산(정선)', '변산', '북한산', '비슬산', '삼악산', '서대산', '선운산', '설악산', '성인봉', '소백산', '소요산', '속리산', '신불산', '연화산', '오대산', '오봉산', '용문산', '용화산', '운문산', '운악산', '운장산', '월악산', '월출산', '유명산', '응봉산', '장안산', '재약산', '적상산', '점봉산', '조계산', '주왕산', '주흘산', '지리산', '지리산(통영)', '천관산', '천마산', '천성산', '천태산', '청량산', '추월산', '축령산', '치악산', '칠갑산', '태백산', '태화산', '팔공산', '팔봉산', '팔영산', '한라산', '화악산', '화왕산', '황매산', '황석산', '황악산', '황장산', '희양산'];
+const MOUNTAINS_ETC=['북한산','도봉산','관악산','수락산','불암산','청계산','인왕산','아차산','검단산','소요산','마니산','설악산','오대산','치악산','태백산','소백산','월악산','속리산','계룡산','대둔산','덕유산','지리산','내장산','무등산','월출산','가야산','팔공산','주왕산','금정산','한라산','칠갑산','명지산','운악산','감악산'];
+const MOUNTAINS=[...new Set([...TOP100,...MOUNTAINS_ETC])];
+const isTop100=n=>TOP100.includes(String(n||'').trim());
 const WEATHER=['맑음','구름조금','구름많음','흐림','비','눈','안개','바람 강함','미세먼지'];
 const hikeFields=()=>[
   {k:'date',label:'날짜',type:'date',def:today,req:1},
@@ -1308,6 +1312,12 @@ function hikeKcalHelper(){
     box.textContent=`시간·거리 기준 약 ${num(r.kcal)}kcal (평균 ${r.v.toFixed(1)}km/h · 체중 ${r.w}kg)`;};
   kc.addEventListener('input',()=>{auto=!kc.value;});
   ['minutes','distance','start','end'].forEach(n=>{const x=el(n);if(x){x.addEventListener('input',upd);x.addEventListener('change',upd);}});upd();
+}
+// 오른 산에 100대 명산 이름을 넣으면 '산림청 100대 명산'에 자동 체크
+function hikeTop100Helper(){
+  const mt=dlgForm.elements.namedItem('mountain'),tp=dlgForm.elements.namedItem('top100');if(!mt||!tp)return;
+  const upd=()=>{if(isTop100(mt.value))tp.checked=true;};
+  mt.addEventListener('input',upd);mt.addEventListener('change',upd);upd();
 }
 let hikeYear='전체',hikeQ='',hikeSido='전체';
 function view_hike(){
@@ -2118,9 +2128,9 @@ const ACT={
     const {_ledger,...r0}=v,r={id:uid(),ts:Date.now(),...r0};S.hike.push(r);
     linkNew('hike',r,_ledger);
     if(weekStart(r.date)===weekStart(today()))setTimeout(()=>{const w=weekStats();toast(`이번 주 유산소 ${w.cardio}분 / ${GOAL_CARDIO}분${w.cardio>=GOAL_CARDIO?' 달성!':''}`);},0);
-  });hikeTimeHelper();hikeKcalHelper();},
+  });hikeTimeHelper();hikeKcalHelper();hikeTop100Helper();},
   hikeFind:d=>{hikeQ=d.m;render();window.scrollTo(0,0);},
-  editHike:d=>{crud('hike','산행 기록',hikeFields(),find('hike',d.id));hikeTimeHelper();hikeKcalHelper();},
+  editHike:d=>{crud('hike','산행 기록',hikeFields(),find('hike',d.id));hikeTimeHelper();hikeKcalHelper();hikeTop100Helper();},
   addGym:d=>crud('gym','운동 기록',gymFields(),null,(d.date||d.kind)?{date:d.date||today(),kind:d.kind||'근력'}:null),
   editGym:d=>crud('gym','운동 기록',gymFields(),find('gym',d.id)),
   gymYM:d=>{gymYM=shiftYM(gymYM,+d.n);render();},
