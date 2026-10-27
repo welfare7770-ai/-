@@ -935,14 +935,17 @@ function moneyAt(d){
   const fa=fundCfg().startDate?fatherAt(d):0,held=fundCfg().inMine!==false&&S.accounts.length?Math.max(0,fa):0;
   return {me:assets-debt-held,fa};
 }
-// 주식 평가액이 바뀐 날만 저장 (현재가·수량을 고친 날)
+// 주식 평가액이 바뀐 날만 저장 (현재가·수량을 고친 날). 처음 저장할 때는 어제 값도 같이 남겨,
+// 오늘 현재가를 고치면 그 차이가 '오늘의 변동'으로 잡히게 한다 (지난 날짜까지 새 값으로 바뀌지 않도록)
 function snapFlow(){const v=stockNow(),t=today();S.flowHist=S.flowHist||{};const ks=Object.keys(S.flowHist).sort(),last=ks.length?S.flowHist[ks[ks.length-1]].s:null;
+  if(!ks.length)S.flowHist[addDay(t,-1)]={s:v};
   if(last===v)return false;S.flowHist[t]={s:v};while(Object.keys(S.flowHist).length>400)delete S.flowHist[Object.keys(S.flowHist).sort()[0]];return true;}
 // 그날 무슨 돈이 들고 났는지 (내 통장·아버지 돈)
 function dayEvents(d){const out=[];
   S.tx.filter(t=>t.date===d).forEach(t=>out.push({who:'me',v:t.type==='in'?+t.amount:-t.amount,m:t.memo||t.cat,card:!hitsAcct(t)||!t.acct}));
   S.care.filter(c=>c.date===d&&(c.who===SELF||c.cat==='부모님 자금 이체')).forEach(c=>out.push({who:'fa',v:c.type==='in'?+c.amount:-c.amount,m:c.memo||c.cat}));
   S.moves.filter(m=>m.date===d).forEach(m=>out.push({who:'mv',v:+m.amount,m:'계좌 이동 '+(m.memo||'')}));
+  const st=stockAt(d)-stockAt(addDay(d,-1));if(st)out.push({who:'me',v:st,m:'주식 평가액 변동'});
   return out;}
 let flowAll=false;
 function flowCard(){
