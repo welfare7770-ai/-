@@ -259,7 +259,7 @@ const REPEAT_M={none:0,'1m':1,'6m':6,'1y':12,'2y':24,'5y':60,'10y':120};
 const GIFT_KIND=['결혼','부고(조의)','돌·생일','회갑·칠순','개업·이전','병문안','출산','기타'];
 const GIFT_REL=['가족·친척','친구','직장','이웃·지인','모임·동호회','기타'];
 
-function blank(){return {tx:[],budget:0,car:{name:'',plate:'',odo:0,fuelType:'휘발유',year:''},rules:DEFAULT_RULES.map(r=>({...r})),maint:[],fuel:[],recur:[],sched:[],gift:[],health:[],hike:[],gym:[],lab:[],profile:{height:'',sex:''},care:[],careCfg:{name:'아버지',hospital:'',admit:'',members:[]},lock:null,recurAuto:'',accounts:[],moves:[],assetHist:{}};}
+function blank(){return {tx:[],budget:0,car:{name:'',plate:'',odo:0,fuelType:'휘발유',year:''},rules:DEFAULT_RULES.map(r=>({...r})),maint:[],fuel:[],recur:[],sched:[],gift:[],health:[],hike:[],gym:[],lab:[],profile:{height:'',sex:''},care:[],careCfg:{name:'아버지',hospital:'',admit:'',members:[]},lock:null,recurAuto:'',accounts:[],moves:[],assetHist:{},flowHist:{}};}
 let S;
 try{S=Object.assign(blank(),JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){S=blank();}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}dailyBackup();cloud.push();}
@@ -291,7 +291,7 @@ function merge3(base,mine,theirs){
 }
 const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
   docs(){
-    const out={meta:{budget:S.budget,car:S.car,rules:S.rules,profile:S.profile,careCfg:S.careCfg,lock:S.lock,recurAuto:S.recurAuto,assetHist:S.assetHist}};
+    const out={meta:{budget:S.budget,car:S.car,rules:S.rules,profile:S.profile,careCfg:S.careCfg,lock:S.lock,recurAuto:S.recurAuto,assetHist:S.assetHist,flowHist:S.flowHist}};
     for(const k of ['maint','fuel','recur','sched','gift','health','hike','gym','lab','care','accounts','moves'])out[k]={items:S[k]};
     const years={};S.tx.forEach(t=>{(years[t.date.slice(0,4)]||=[]).push(t);});
     for(const y in years)out['tx-'+y]={items:years[y]};
@@ -331,7 +331,7 @@ const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
     const lost=COLS.filter(k=>(S[k]||[]).length&&!(got[k]&&(got[k].items||[]).length));
     if(lost.length)backupLocal('동기화 전 자동 보관 ('+lost.join(',')+')');
     const n=blank();
-    if(got.meta){n.budget=got.meta.budget||0;n.car={...n.car,...got.meta.car};if(Array.isArray(got.meta.rules))n.rules=got.meta.rules;if(got.meta.profile)n.profile={...n.profile,...got.meta.profile};if('lock' in got.meta)n.lock=got.meta.lock;if(got.meta.recurAuto)n.recurAuto=got.meta.recurAuto;if(got.meta.assetHist)n.assetHist=JSON.parse(JSON.stringify(got.meta.assetHist));if(got.meta.careCfg)n.careCfg={...n.careCfg,...got.meta.careCfg};}
+    if(got.meta){n.budget=got.meta.budget||0;n.car={...n.car,...got.meta.car};if(Array.isArray(got.meta.rules))n.rules=got.meta.rules;if(got.meta.profile)n.profile={...n.profile,...got.meta.profile};if('lock' in got.meta)n.lock=got.meta.lock;if(got.meta.recurAuto)n.recurAuto=got.meta.recurAuto;if(got.meta.assetHist)n.assetHist=JSON.parse(JSON.stringify(got.meta.assetHist));if(got.meta.flowHist)n.flowHist=got.meta.flowHist;if(got.meta.careCfg)n.careCfg={...n.careCfg,...got.meta.careCfg};}
     let keep=false;
     for(const k of COLS){
       if(got[k])n[k]=JSON.parse(JSON.stringify(got[k].items||[]));
@@ -340,7 +340,7 @@ const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
     const hasTx=Object.keys(got).some(id=>id.startsWith('tx-'));
     for(const id in got)if(id.startsWith('tx-'))n.tx.push(...JSON.parse(JSON.stringify(got[id].items||[])));
     if(!hasTx&&S.tx.length){n.tx=S.tx;keep=true;}
-    if(!got.meta){['budget','car','rules','profile','careCfg','lock','recurAuto','assetHist'].forEach(k=>{n[k]=S[k];});keep=true;}
+    if(!got.meta){['budget','car','rules','profile','careCfg','lock','recurAuto','assetHist','flowHist'].forEach(k=>{n[k]=S[k];});keep=true;}
     this.sent={};for(const id in got)this.sent[id]=canon(got[id]);
     S=n;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
     if(autoPost()||keep)this.push();
@@ -907,6 +907,62 @@ function snapAssets(){
   return true;
 }
 const staleDays=a=>a.asOf?-dday(a.asOf):999;
+/* ---------- 돈의 흐름: 기록 시작일부터 날마다 그날 끝의 내 재산·아버지 돈 ----------
+   통장 잔액 = 확인한 잔액 ± 그 뒤(또는 그 전) 기록, 아버지 돈 = 원금 + 연금 − 지출을 날짜별로 다시 계산한다.
+   기록을 나중에 고쳐도 지난 날짜까지 함께 맞춰진다. 주식 평가액만은 날짜별로 저장해 둔 값(현재가 업데이트한 날)을 쓴다. */
+const addDay=(d,n)=>{const x=parseD(d);x.setDate(x.getDate()+n);return fmtD(x);};
+const flowStart=()=>S.recurAuto||S.accounts.map(a=>a.asOf).filter(Boolean).sort()[0]||today();
+function acctFlowAt(a,d){
+  const af=a.asOf||'',ck=a.checkedAt||0,after=r=>r.date>af||(r.date===af&&(r.ts||0)>ck);
+  let f=0;const add=(r,v)=>{if(after(r)){if(r.date<=d)f+=v;}else if(r.date>d)f-=v;};
+  S.tx.forEach(t=>{if(t.acct===a.id&&hitsAcct(t))add(t,t.type==='in'?+t.amount||0:-(+t.amount||0));});
+  S.moves.forEach(m=>{if(m.to===a.id)add(m,+m.amount||0);if(m.from===a.id)add(m,-(+m.amount||0));});
+  if(fundAcct()===a.id)S.care.forEach(c=>{if(c.who===SELF&&c.cat!=='잔액 조정')add(c,c.type==='in'?+c.amount||0:-(+c.amount||0));});
+  return f;
+}
+const stockNow=()=>S.accounts.filter(a=>a.type==='stock'&&a.inTotal!==false).reduce((x,a)=>x+stockVal(a),0);
+function stockAt(d){const h=S.flowHist||{},ks=Object.keys(h).sort();if(!ks.length||d>=today())return stockNow();
+  const k=ks.filter(x=>x<=d).pop()||ks[0];return +h[k].s||0;}
+function fatherAt(d){const f=fundCfg();if(!f.startDate)return 0;
+  return (+f.start||0)+S.care.filter(c=>c.date>=f.startDate&&c.date<=d).reduce((x,c)=>x+(c.who===SELF?(c.type==='in'?+c.amount||0:-(+c.amount||0)):(c.type==='in'&&c.cat==='부모님 자금 이체'?-(+c.amount||0):0)),0);}
+function moneyAt(d){
+  let assets=0,debt=0;
+  for(const a of S.accounts){if(a.inTotal===false)continue;const fl=acctFlowAt(a,d);
+    if(a.type==='loan')debt+=Math.max(0,(+a.balance||0)-fl);else assets+=(+a.balance||0)+fl;}
+  assets+=stockAt(d);
+  const fa=fundCfg().startDate?fatherAt(d):0,held=fundCfg().inMine!==false&&S.accounts.length?Math.max(0,fa):0;
+  return {me:assets-debt-held,fa};
+}
+// 주식 평가액이 바뀐 날만 저장 (현재가·수량을 고친 날)
+function snapFlow(){const v=stockNow(),t=today();S.flowHist=S.flowHist||{};const ks=Object.keys(S.flowHist).sort(),last=ks.length?S.flowHist[ks[ks.length-1]].s:null;
+  if(last===v)return false;S.flowHist[t]={s:v};while(Object.keys(S.flowHist).length>400)delete S.flowHist[Object.keys(S.flowHist).sort()[0]];return true;}
+// 그날 무슨 돈이 들고 났는지 (내 통장·아버지 돈)
+function dayEvents(d){const out=[];
+  S.tx.filter(t=>t.date===d).forEach(t=>out.push({who:'me',v:t.type==='in'?+t.amount:-t.amount,m:t.memo||t.cat,card:!hitsAcct(t)||!t.acct}));
+  S.care.filter(c=>c.date===d&&(c.who===SELF||c.cat==='부모님 자금 이체')).forEach(c=>out.push({who:'fa',v:c.type==='in'?+c.amount:-c.amount,m:c.memo||c.cat}));
+  S.moves.filter(m=>m.date===d).forEach(m=>out.push({who:'mv',v:+m.amount,m:'계좌 이동 '+(m.memo||'')}));
+  return out;}
+let flowAll=false;
+function flowCard(){
+  if(!S.accounts.length&&!fundCfg().startDate)return '';
+  const st=flowStart(),t=today(),pn=careName();if(st>t)return '';
+  const days=[];for(let d=st;d<=t;d=addDay(d,1))days.push(d);
+  const base=moneyAt(addDay(st,-1));
+  let prev=base;const rows=days.map(d=>{const m=moneyAt(d),r={d,...m,dm:m.me-prev.me,df:m.fa-prev.fa,ev:dayEvents(d)};prev=m;return r;});
+  const now=rows[rows.length-1],sg=v=>v>0?'+':v<0?'−':'±',cl=v=>v<0?'neg':v>0?'pos':'',w=v=>`<b class="${cl(v)}">${sg(v)}${num(Math.abs(v))}</b>`;
+  const shown=rows.filter(r=>r.dm||r.df||r.ev.length||r.d===t||r.d===st).reverse(),list=flowAll?shown:shown.slice(0,20);
+  let html='',cm='';
+  for(const r of list){const ym=r.d.slice(0,7);
+    if(ym!==cm){cm=ym;const mr=rows.filter(x=>x.d.startsWith(ym)),b0=rows.indexOf(mr[0])>0?rows[rows.indexOf(mr[0])-1]:base,e=mr[mr.length-1];
+      html+=`<tr><th colspan="3" style="text-align:left;background:var(--card2)">${Number(ym.slice(5))}월 합계 · 내 재산 ${w(e.me-b0.me)} · ${esc(pn)} 돈 ${w(e.fa-b0.fa)}</th></tr>`;}
+    html+=`<tr><td>${dLabel(r.d)}${r.ev.length?`<br><small style="color:var(--muted)">${r.ev.slice(0,3).map(e=>`${esc(e.m)} ${e.v>0?'+':'−'}${num(Math.abs(e.v))}${e.card?'(신용카드)':''}`).join(' · ')}${r.ev.length>3?` 외 ${r.ev.length-3}건`:''}</small>`:''}</td>
+      <td class="r">${num(r.me)}<br><small>${r.dm?w(r.dm):'-'}</small></td><td class="r">${num(r.fa)}<br><small>${r.df?w(r.df):'-'}</small></td></tr>`;}
+  return `<section class="card" id="flowCard"><h2>돈의 흐름 (매일 누적)<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${st.replace(/-/g,'.')}부터</small></h2>
+   <div class="stats"><div class="stat"><small>내 재산 (시작 후)</small><b>${num(now.me)}원</b><small>${w(now.me-base.me)}원</small></div><div class="stat"><small>${esc(pn)} 돈 (시작 후)</small><b>${num(now.fa)}원</b><small>${w(now.fa-base.fa)}원</small></div><div class="stat"><small>합계 (시작 후)</small><b>${num(now.me+now.fa)}원</b><small>${w(now.me+now.fa-base.me-base.fa)}원</small></div></div>
+   <div class="tblwrap" style="margin-top:10px"><table class="tbl"><tr><th>날짜 · 들고 난 돈</th><th class="r">내 재산</th><th class="r">${esc(pn)} 돈</th></tr>${html}</table></div>
+   ${shown.length>20?`<button class="btn sm" data-act="flowAll" style="margin-top:8px">${flowAll?'최근 20일만':'전체 '+shown.length+'일 보기'}</button>`:''}
+   <p class="hint" style="margin:8px 0 0">그날 끝 잔액입니다. 돈이 움직인 날만 보입니다. 기록을 고치면 지난 날짜도 함께 다시 계산됩니다. 주식은 현재가를 업데이트한 날의 평가액을 씁니다.</p></section>`;
+}
 function stackBar(by,total){
   const parts=ACCT_TYPES.filter(([k])=>k!=='loan'&&by[k]>0);
   if(!total||!parts.length)return '';
@@ -932,6 +988,8 @@ function netWorthCard(){
    <div class="hint" style="margin:2px 0 0">통장 등 합계 ${won(t.assets)}${t.held?` − ${esc(careName())} 돈 ${won(t.held)}`:''}${t.debt?` − 빚 ${won(t.debt)}`:''}${diff!=null?` · 지난달보다 <b class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${num(diff)}원</b>`:''}</div>
    ${stackBar(t.by,t.assets)}
    <p class="hint" style="margin:8px 0 0">${fl.n?`통장 확인 후 입력한 수입 <b class="pos">+${num(fl.inc)}</b> · 지출 <b class="neg">−${num(fl.out)}</b> (${fl.n}건) 반영된 <b>현재 잔액</b>`:'모든 금액은 통장에서 확인한 잔액 그대로입니다'}${fl.unlinked?` · 통장을 고르지 않은 기록(카드 등) ${fl.unlinked}건은 잔액에 안 들어감`:''}</p>
+   ${(()=>{const st=flowStart();if(st>=today())return '';const a=moneyAt(addDay(st,-1)),b=moneyAt(today()),dm=b.me-a.me,df=b.fa-a.fa,f=v=>`<b class="${v<0?'neg':'pos'}">${v>=0?'+':'−'}${num(Math.abs(v))}원</b>`;
+     return `<p class="hint" style="margin:6px 0 0">${st.slice(5).replace('-','/')} 기록 시작 후 · 내 재산 ${f(dm)}${fundCfg().startDate?` · ${esc(pn)} 돈 ${f(df)}`:''} <span style="color:var(--acc)">매일 흐름 보기 ›</span></p>`;})()}
    ${stale?`<p class="hint" style="margin:6px 0 0;color:var(--soon)">잔액을 확인한 지 30일이 넘은 계좌 ${stale}개 — 통장 앱을 보고 업데이트해 주세요</p>`:''}</section>`;
 }
 function acctRow(a){
@@ -965,6 +1023,7 @@ function view_assets(){
    <div class="hero-sub">통장 등 합계 ${won(t.assets)}${t.held?` − 보관 중인 ${esc(careName())} 돈 ${won(t.held)}`:''}${t.debt?` − 빚 ${won(t.debt)}`:''}${diff!=null?` · 지난달보다 <b class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${num(diff)}원</b>`:''}</div>
    ${stackBar(t.by,t.assets)}</section>
   <div class="toolbar"><button class="btn primary" data-act="addAcct" style="flex:1;padding:12px;font-size:15px">＋ 재산 추가</button><button class="btn" data-act="addMove" style="padding:12px">계좌 간 이동</button></div>
+  ${flowCard()}
   ${months.length>1?`<section class="card"><h2>순자산 추이</h2>${barChart(months.map(m=>({label:Number(m.slice(5))+'월',value:Math.max(0,(S.assetHist[m]||{t:t.net}).t),hi:m===cm})))}</section>`:''}
   ${ACCT_TYPES.map(([k,l])=>{const list=S.accounts.filter(a=>a.type===k);if(!list.length)return '';const sum=list.filter(a=>a.inTotal!==false).reduce((x,a)=>x+acctValue(a),0);
     return `<section class="card" style="--acc:${ACCT_COLOR[k]}"><h2>${l}<span class="sp"></span><b style="font-size:15px" class="${k==='loan'?'neg':''}">${k==='loan'?'-':''}${won(sum)}</b></h2>${list.map(acctRow).join('')}</section>`;}).join('')}
@@ -1096,7 +1155,7 @@ function fixPay(){let ch=false;
   S.recur.forEach(r=>{if(r.pay==='카드'){r.pay=/농협카드|신용카드/.test(r.memo||'')||/claude/i.test(r.name||'')?'신용카드':'체크카드';ch=true;}});
   return ch;}
 function fixCardBills(){let ch=false;S.tx.forEach(t=>{if(t.type==='out'&&!t.cb&&t.cat!=='카드대금'&&/카드\s*(대금|값)/.test(t.memo||'')){t.cat='카드대금';t.cb=1;ch=true;}});return ch;}
-const autoPost=()=>{const z=fixCardBills(),y=fixPay(),a=postPensions(),b=postRecurAuto(),c=snapAssets();return y||z||a||b||c;};
+const autoPost=()=>{const z=fixCardBills(),y=fixPay(),a=postPensions(),b=postRecurAuto(),c=snapAssets(),f=snapFlow();return y||z||a||b||c||f;};
 /* 빠진 고정비 정리: 항목마다 '기록' 또는 '기록 안 함'을 고른다.
    기본값은 현금(통장)과 맞추는 쪽으로 미리 골라 둔다.
    - 아버지 것 중 부모님 자금에서 나간 것: 잔액 확인일 전이면 이미 통장 잔액에 반영됨 → 기록 안 함
@@ -1684,6 +1743,7 @@ function view_care(){
   ${receiptDue().filter(d=>ownerOf(d.r)==='parent').map(d=>`<div class="xfer" style="margin:0 0 10px;background:var(--soon-bg)"><span><b>${esc(d.r.name)} ${Number(d.ym.slice(5))}월분</b> 영수증 금액을 입력하세요 <small style="color:var(--muted)">(예상 ${won(d.r.amount)})</small></span><button class="btn sm primary amt" data-act="receipt" data-id="${d.r.id}" data-ym="${d.ym}">입력</button></div>`).join('')}
   ${dups.length?`<div class="xfer" style="margin:0 0 12px;background:var(--over-bg)"><span style="color:var(--over)">같은 연금이 두 번 들어간 기록 <b>${dups.length}건</b>이 있어요 (${dups.map(c=>esc(c.memo||c.cat)).join(', ')})</span><button class="btn sm primary amt" data-act="fixPenDup">중복 지우기</button></div>`:''}
   ${fundCard()}
+  ${flowCard()}
   <div class="toolbar"><button class="btn primary" data-act="addCare" data-type="out">＋ 지출</button><button class="btn primary" data-act="addCare" data-type="in">＋ 입금</button><span class="grow"></span><button class="btn" data-act="careCfg">${esc(pn)} 정보</button></div>
   <div class="toolbar"><select id="careMode" style="width:auto">${optHTML([['month','월별'],['year','연도별'],['all','전체 기간']],careMode)}</select>${nav}</div>
   ${catArr.length?`<section class="card"><h2>항목별 지출</h2>${catArr.map(([c,v])=>`<div class="catrow"><span>${esc(c)}</span><div class="bar"><span style="width:${v/mx*100}%"></span></div><span class="amt">${num(v)}</span></div>`).join('')}</section>`:''}
@@ -2191,6 +2251,7 @@ const ACT={
   });hikeTimeHelper();hikeKcalHelper();hikeTop100Helper();},
   hikeFind:d=>{hikeQ=d.m;render();window.scrollTo(0,0);},
   // 연도·지역·검색·100대 명산 보기를 모두 처음으로
+  flowAll:()=>{flowAll=!flowAll;render();},
   hikeReset:()=>{hikeYear='전체';hikeSido='전체';hikeQ='';hikeTop=false;render();window.scrollTo(0,0);toast('새로고침했습니다');},
   // 다녀온 100대 명산만 보기 (다시 누르면 전체)
   hike100:()=>{hike100Open=!hike100Open;render();const el=document.getElementById('hike100');if(el&&hike100Open)el.scrollIntoView({block:'start',behavior:'smooth'});},
