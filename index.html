@@ -619,7 +619,7 @@ function view_ledger(){
       // 일별 지출은 월 합계와 같은 기준(카드대금은 지출로 다시 세지 않음)
       const dayOut=rows.filter(x=>x.date===cur&&x.type==='out'&&!isCardBill(x)).reduce((s,x)=>s+(+x.amount||0),0),dayIn=rows.filter(x=>x.date===cur&&x.type==='in').reduce((s,x)=>s+(+x.amount||0),0);
       // 일별 합계를 눈에 띄게: 날짜는 진하게, 지출은 빨강·수입은 파랑 굵은 글씨
-      html+=`<div class="daygrp" style="color:var(--text);font-size:13.5px;border-bottom:2px solid var(--line);padding-bottom:4px"><b>${dLabel(cur)}</b><span>${dayIn?`<b class="pos">수입 +${num(dayIn)}</b>`:''}${dayIn&&dayOut?' · ':''}${dayOut?`<b class="neg">지출 −${num(dayOut)}</b>`:''}</span></div><ul class="list">`;
+      html+=`<div class="daygrp" style="color:var(--text);font-size:13.5px;background:color-mix(in srgb,var(--acc) 13%,var(--card));border-radius:8px;padding:7px 10px"><b style="color:var(--acc)">${dLabel(cur)}</b><span>${dayIn?`<b class="pos">수입 +${num(dayIn)}</b>`:''}${dayIn&&dayOut?' · ':''}${dayOut?`<b class="neg">지출 −${num(dayOut)}</b>`:''}</span></div><ul class="list">`;
     }
     html+=txRow(t);
   }
