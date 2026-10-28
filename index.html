@@ -634,11 +634,11 @@ function view_ledger(){
   ${fundStats()?(()=>{const st=careStats(S.care.filter(c=>c.date.startsWith(ledgerYM)));return `<section class="card" style="--acc:var(--c-care);cursor:pointer" data-act="go" data-tab="care"><div class="row" style="border:0;padding:0"><span class="pill none">${esc(careName())} 돈</span><div class="grow"><small>이 달 들어온 돈 +${num(st.inc)} · 쓴 돈 −${num(st.self)} · 잔액 ${num(fundStats().bal)} (내 지출에 포함 안 됨)</small></div><span class="amt" style="color:var(--muted)">›</span></div></section>`;})():''}
   ${(()=>{const o=orphanTx();return o.length?`<div class="xfer" style="margin:0 0 10px;background:var(--soon-bg)"><span>자동차·등산 등에서 <b>지운 기록</b>이 가계부에 ${o.length}건 남아 있어요</span><button class="btn sm primary amt" data-act="fixOrphan">정리하기</button></div>`:'';})()}
   ${(()=>{ // 최근 6개월: 한 줄 요약(월·금액) + 높이 40px 고정 작은 막대(지출 있는 달이 2개 이상일 때만), 접기 가능
-    const vs=months.map(m=>({m,v:monthSum(m).out})),mx=Math.max(...vs.map(x=>x.v),1),bars=vs.filter(x=>x.v).length>=2;
+    const vs=months.map(m=>({m,v:monthSum(m).out})),mx=Math.max(...vs.map(x=>x.v),1),bars=true; // 막대는 항상 (기록 없는 달은 얇은 바닥선)
     return `<section class="card"><h2>최근 6개월 지출<span class="sp"></span>${foldBtn('chart6')}</h2>${hikeFold.chart6?'':`
      <div role="img" aria-label="최근 6개월 지출: ${vs.map(x=>Number(x.m.slice(5))+'월 '+(x.v?short(x.v):'없음')).join(', ')}" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;align-items:end">
      ${vs.map(x=>{const hi=x.m===ledgerYM;return `<div style="text-align:center;min-width:0">
-       ${bars?`<div style="height:40px;display:flex;align-items:flex-end;justify-content:center"><span style="display:block;width:60%;height:${x.v?Math.max(3,Math.round(40*x.v/mx)):0}px;background:var(--acc);opacity:${hi?1:.38};border-radius:4px 4px 0 0"></span></div>`:''}
+       ${bars?`<div style="height:40px;display:flex;align-items:flex-end;justify-content:center"><span style="display:block;width:60%;height:${x.v?Math.max(3,Math.round(40*x.v/mx)):2}px;background:${x.v?'var(--acc)':'var(--line)'};opacity:${hi||!x.v?1:.38};border-radius:4px 4px 0 0"></span></div>`:''}
        <div style="font-size:11.5px;color:var(--muted);margin-top:3px">${Number(x.m.slice(5))}월</div>
        <div style="font-size:12px;white-space:nowrap;${hi?'font-weight:700;color:var(--text)':'color:var(--muted)'}">${x.v?short(x.v):'-'}</div></div>`;}).join('')}
      </div>`}</section>`;})()}
