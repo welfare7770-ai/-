@@ -318,6 +318,21 @@ a.btn{text-decoration:none}
 @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 @media (prefers-reduced-motion:reduce){.lockcard.shake{animation:none}}
 .lockset{display:grid;gap:10px;max-width:420px}
+.dsum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.dsum div{border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.dsum span{display:block;font:600 12px var(--gothic);color:var(--muted)}
+.dsum b{font:700 20px var(--gothic);font-variant-numeric:tabular-nums}
+.dsum small{display:block;font:500 12px var(--gothic);color:var(--muted)}
+.bchart{margin-bottom:14px}
+.bchart h4{margin:0 0 6px;font:700 13.5px var(--gothic)}
+.bcols{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;align-items:end;height:120px;padding-bottom:2px;border-bottom:1px solid var(--line)}
+.bcol{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;cursor:pointer;border:0;background:transparent;padding:0;color:var(--text)}
+.bcol b{font:700 11px var(--gothic);font-variant-numeric:tabular-nums;margin-bottom:2px;white-space:nowrap}
+.bcol i{display:block;width:62%;max-width:28px;border-radius:4px 4px 0 0;min-height:0}
+.bcol.cur i{outline:2px solid var(--text);outline-offset:1px}
+.bxl{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;margin-top:4px}
+.bxl span{font:600 10.5px var(--gothic);color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden}
+.bxl span.cur{color:var(--text);font-weight:700}
 </style>
 </head>
 <body>
@@ -455,6 +470,15 @@ a.btn{text-decoration:none}
       <div class="readlist" id="dPrayList" style="margin:0 0 12px"></div>
       <label for="dNote">오늘의 기도 제목 · 묵상</label>
       <textarea id="dNote" rows="2" placeholder="기도 제목이나 오늘 받은 말씀 한 줄"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>경건 통계</h2>
+      <div class="seg sm" style="max-width:260px;margin-bottom:12px">
+        <label><input type="radio" name="stUnit" value="day" checked><span>일별 (한 주)</span></label>
+        <label><input type="radio" name="stUnit" value="week"><span>주별 (8주)</span></label>
+      </div>
+      <div id="devStats"></div>
     </div>
 
     <div class="card">
@@ -1231,7 +1255,7 @@ function renderDaily(){
     + (total ? `<div class="ptsum">오늘 기도 합계 ${fmtMins(total)}</div>` : '');
   $('#pAdd').textContent = pEdit >= 0 ? '수정' : '추가';
   $('#dNote').value = day.note || '';
-  renderCal(); renderProgress();
+  renderCal(); renderProgress(); renderDevStats();
 }
 function renderCal(){
   const [y, m] = calMonth.split('-').map(Number);
@@ -1245,6 +1269,43 @@ function renderCal(){
   }
   $('#dCal').innerHTML = h;
 }
+// ───────── 경건 통계 (일별 한 주 / 주별 8주) ─────────
+const ymd = t => `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+const addDays = (d, n) => { const [y,m,dd] = d.split('-').map(Number); return ymd(new Date(y, m-1, dd + n)); };
+const dayChapters = d => (db.daily[d]?.readings || []).reduce((a,r) => a + r.to - r.from + 1, 0);
+const dayPrayMins = d => (db.daily[d]?.prays || []).reduce((a,v) => a + prayMins(v), 0);
+function barChart(title, items, color, unit){
+  const max = Math.max(1, ...items.map(x => x.v));
+  return `<div class="bchart"><h4>${title}</h4>
+    <div class="bcols">${items.map(x => `<button type="button" class="bcol ${x.cur ? 'cur' : ''}" data-go="${x.go}" title="${x.label} ${x.v}${unit}">
+      ${x.v ? `<b>${x.v}</b>` : ''}<i style="height:${Math.round(x.v / max * 92)}%;background:${color}"></i></button>`).join('')}</div>
+    <div class="bxl">${items.map(x => `<span class="${x.cur ? 'cur' : ''}">${x.label}</span>`).join('')}</div></div>`;
+}
+function renderDevStats(){
+  const unit = $('[name=stUnit]:checked').value, sun = addDays(dSel, -dinfo(dSel).wd);
+  let rows;
+  if (unit === 'day') rows = Array.from({length:7}, (_,k) => { const d = addDays(sun, k), i = dinfo(d);
+    return {go:d, cur:d === dSel, label:`${i.d}(${i.wdName})`, ch:dayChapters(d), pm:dayPrayMins(d)}; });
+  else rows = Array.from({length:8}, (_,k) => { const ws = addDays(sun, (k - 7) * 7), i = dinfo(ws); let ch = 0, pm = 0;
+    for (let j = 0; j < 7; j++) { const d = addDays(ws, j); ch += dayChapters(d); pm += dayPrayMins(d); }
+    return {go:ws, cur:k === 7, label:`${i.m}/${i.d}~`, ch, pm}; });
+  const tch = rows.reduce((a,x) => a + x.ch, 0), tpm = rows.reduce((a,x) => a + x.pm, 0), n = rows.length;
+  const days = unit === 'day' ? 7 : 56, rd = rows.filter(x => x.ch).length, pd = rows.filter(x => x.pm).length;
+  const per = unit === 'day' ? '하루' : '한 주';
+  const s0 = dinfo(rows[0].go), s1 = dinfo(addDays(rows[n-1].go, unit === 'day' ? 0 : 6));
+  $('#devStats').innerHTML = `<p class="hint" style="margin:0 0 8px">${s0.m}월 ${s0.d}일 ~ ${s1.m}월 ${s1.d}일 (${unit === 'day' ? '선택한 날짜가 있는 주' : '최근 8주'})</p>
+    <div class="dsum">
+      <div><span>말씀 읽기 합계</span><b>${tch}</b>장<small>${per} 평균 ${(tch / n).toFixed(1)}장 · ${rd}/${n}${unit === 'day' ? '일' : '주'} 읽음</small></div>
+      <div><span>기도 시간 합계</span><b>${tpm}</b>분<small>${tpm >= 60 ? fmtMins(tpm) + ' · ' : ''}${per} 평균 ${Math.round(tpm / n)}분</small></div>
+    </div>` +
+    barChart(`📖 말씀 읽기 (장)`, rows.map(x => ({...x, v:x.ch})), 'var(--accent)', '장') +
+    barChart(`🙏 기도 시간 (분)`, rows.map(x => ({...x, v:x.pm})), 'var(--pm)', '분') +
+    `<p class="hint" style="margin:0">막대를 누르면 ${unit === 'day' ? '그날' : '그 주 첫날'}로 이동합니다.</p>`;
+}
+$('#v-daily').addEventListener('change', e => { if (e.target.name === 'stUnit') renderDevStats(); });
+$('#devStats').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (!b) return;
+  dSel = b.dataset.go; calMonth = dSel.slice(0,7); $('#rFromBook').value = ''; resetPrayInput(); renderDaily(); });
+
 let progBook = '';
 const ABBR = '창 출 레 민 신 수 삿 룻 삼상 삼하 왕상 왕하 대상 대하 스 느 에 욥 시 잠 전 아 사 렘 애 겔 단 호 욜 암 옵 욘 미 나 합 습 학 슥 말 마 막 눅 요 행 롬 고전 고후 갈 엡 빌 골 살전 살후 딤전 딤후 딛 몬 히 약 벧전 벧후 요일 요이 요삼 유 계'.split(' ');
 function renderProgress(){
