@@ -453,8 +453,8 @@ const ICON={
   settings:ic('<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>')
 };
 const short=v=>v>=100000?Math.round(v/10000)+'만':v>=10000?(v/10000).toFixed(1).replace(/\.0$/,'')+'만':num(v);
-function barChart(data,fmt=short){
-  const W=320,H=150,top=20,bot=22,max=Math.max(...data.map(d=>d.value),1),bw=W/data.length;
+function barChart(data,fmt=short,H=150){
+  const W=320,top=20,bot=22,max=Math.max(...data.map(d=>d.value),1),bw=W/data.length;
   const bars=data.map((d,i)=>{const h=Math.max((H-top-bot)*d.value/max,d.value?2:0),x=i*bw+bw*.2,w=bw*.6,y=H-bot-h,cx=(x+w/2).toFixed(1);
     return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="5" fill="var(--acc)" opacity="${d.hi?1:.38}"/>`+
       (d.value?`<text x="${cx}" y="${(y-6).toFixed(1)}" text-anchor="middle" class="cv">${fmt(d.value)}</text>`:'')+
@@ -616,8 +616,10 @@ function view_ledger(){
   for(const t of rows){
     if(t.date!==cur){
       if(cur)html+='</ul>';cur=t.date;
-      const dayOut=rows.filter(x=>x.date===cur&&x.type==='out').reduce((s,x)=>s+(+x.amount||0),0);
-      html+=`<div class="daygrp"><span>${dLabel(cur)}</span><span>${dayOut?'지출 '+num(dayOut):''}</span></div><ul class="list">`;
+      // 일별 지출은 월 합계와 같은 기준(카드대금은 지출로 다시 세지 않음)
+      const dayOut=rows.filter(x=>x.date===cur&&x.type==='out'&&!isCardBill(x)).reduce((s,x)=>s+(+x.amount||0),0),dayIn=rows.filter(x=>x.date===cur&&x.type==='in').reduce((s,x)=>s+(+x.amount||0),0);
+      // 일별 합계를 눈에 띄게: 날짜는 진하게, 지출은 빨강·수입은 파랑 굵은 글씨
+      html+=`<div class="daygrp" style="color:var(--text);font-size:13.5px;border-bottom:2px solid var(--line);padding-bottom:4px"><b>${dLabel(cur)}</b><span>${dayIn?`<b class="pos">수입 +${num(dayIn)}</b>`:''}${dayIn&&dayOut?' · ':''}${dayOut?`<b class="neg">지출 −${num(dayOut)}</b>`:''}</span></div><ul class="list">`;
     }
     html+=txRow(t);
   }
@@ -631,9 +633,9 @@ function view_ledger(){
   <div style="margin-top:10px"><button class="btn sm" data-act="setBudget">월 예산 설정</button></div></section>
   ${fundStats()?(()=>{const st=careStats(S.care.filter(c=>c.date.startsWith(ledgerYM)));return `<section class="card" style="--acc:var(--c-care);cursor:pointer" data-act="go" data-tab="care"><div class="row" style="border:0;padding:0"><span class="pill none">${esc(careName())} 돈</span><div class="grow"><small>이 달 들어온 돈 +${num(st.inc)} · 쓴 돈 −${num(st.self)} · 잔액 ${num(fundStats().bal)} (내 지출에 포함 안 됨)</small></div><span class="amt" style="color:var(--muted)">›</span></div></section>`;})():''}
   ${(()=>{const o=orphanTx();return o.length?`<div class="xfer" style="margin:0 0 10px;background:var(--soon-bg)"><span>자동차·등산 등에서 <b>지운 기록</b>이 가계부에 ${o.length}건 남아 있어요</span><button class="btn sm primary amt" data-act="fixOrphan">정리하기</button></div>`:'';})()}
-  <section class="card"><h2>최근 6개월 지출</h2>${barChart(months.map(m=>({label:Number(m.slice(5))+'월',value:monthSum(m).out,hi:m===ledgerYM})))}</section>
+  <section class="card"><h2>최근 6개월 지출</h2>${barChart(months.map(m=>({label:Number(m.slice(5))+'월',value:monthSum(m).out,hi:m===ledgerYM})),short,96)}</section>
   ${catArr.length?`<section class="card"><h2>분류별 지출</h2>${catArr.map(([c,v])=>`<div class="catrow"><span>${esc(c)}</span><div class="bar"><span style="width:${v/max*100}%"></span></div><span class="amt">${num(v)}<small style="color:var(--muted);font-weight:400"> ${out?Math.round(v/out*100):0}%</small></span></div>`).join('')}</section>`:''}
-  <section class="card"><h2>내역</h2><input type="search" id="ledgerQ" placeholder="내용·분류 검색" value="${esc(ledgerQ)}">${html||'<p class="empty">이 달의 기록이 없습니다.</p>'}</section>
+  <section class="card"><h2>내역<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${rows.length}건</small>${foldBtn('ledger')}</h2>${hikeFold.ledger?'':`<input type="search" id="ledgerQ" placeholder="내용·분류 검색" value="${esc(ledgerQ)}">${html||'<p class="empty">이 달의 기록이 없습니다.</p>'}`}</section>
   ${yearCard()}`;
 }
 function yearCard(){
