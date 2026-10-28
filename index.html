@@ -235,6 +235,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 .pray button small{font:500 11.5px var(--gothic);color:var(--muted)}
 .pray button.on{background:var(--fill);border-color:var(--fill);color:var(--on-fill)}
 .pray button.on small{color:var(--on-fill)}
+.padd{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.padd .tbox{flex:1 1 0}
+.padd .til{font-weight:700;color:var(--muted)}
+.padd .btn{flex:0 0 auto;padding:9px 12px}
+.tbox.unset span{color:var(--ph);font-weight:500}
+.readitem .now{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 9px;font:700 12px var(--gothic);color:var(--text);cursor:pointer;white-space:nowrap}
+.readitem.editing{outline:2px solid var(--accent)}
+#dPrayList .readitem span{font:700 15px var(--gothic);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bookbtn span{min-width:0}
+.rrow .bookbtn small{display:none}
 .ptimes{display:grid;gap:8px;margin-bottom:14px}
 .ptrow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 8px;padding:8px 10px;border-radius:10px;background:var(--surface-2)}
 .ptrow .ptin{grid-column:1/-1;display:flex;align-items:center;gap:6px}
@@ -435,9 +445,14 @@ a.btn{text-decoration:none}
 
     <div class="card">
       <h2>기도 시간</h2>
-      <div class="pray" id="dPray"></div>
-      <p class="hint" style="margin:0 0 10px">시간대를 누르면 체크되고 아래에서 시작·마친 시각을 고칠 수 있습니다. 다시 누르면 해제됩니다.</p>
-      <div class="ptimes" id="dPrayTimes"></div>
+      <div class="padd">
+        <label class="tbox unset" id="pStartBox"><span>시작</span><input type="time" id="pStart" aria-label="기도 시작 시각"></label>
+        <span class="til">~</span>
+        <label class="tbox unset" id="pEndBox"><span>마침</span><input type="time" id="pEnd" aria-label="기도 마친 시각"></label>
+        <button type="button" class="btn primary sm" id="pAdd">추가</button>
+      </div>
+      <p class="hint" id="pHint" style="margin:0 0 8px">시각을 넣고 [추가]를 누르세요. 비워 두고 누르면 지금부터 기도 시작으로 기록됩니다.</p>
+      <div class="readlist" id="dPrayList" style="margin:0 0 12px"></div>
       <label for="dNote">오늘의 기도 제목 · 묵상</label>
       <textarea id="dNote" rows="2" placeholder="기도 제목이나 오늘 받은 말씀 한 줄"></textarea>
     </div>
@@ -1155,9 +1170,20 @@ const ampm = t => { if (!t) return ''; const [h, m] = t.split(':').map(Number); 
 const tbox = (k, f, v, ph) => `<label class="tbox ${v ? '' : 'empty'}"><span>${v ? ampm(v) : ph}</span><input type="time" data-ptime="${f}" value="${v}" aria-label="${k} ${ph}"></label>`;
 const fmtPray = v => { const p = prayOf(v); return p.start ? `${p.start}${p.end ? '~' + p.end : ''}` : ''; };
 let dSel = today(), calMonth = today().slice(0,7);
-const dayOf = d => db.daily[d] || {readings:[], prayers:{}, note:''};
+const dayOf = d => db.daily[d] || {readings:[], prays:[], note:''};
+// 예전 '시간대 체크' 기록({새벽:{start,end}, …})을 시각 목록으로 옮깁니다.
+function migrateDay(day){
+  if (day.prayers && !Array.isArray(day.prays)) day.prays = PRAY.filter(([k]) => day.prayers[k]).map(([k]) => prayOf(day.prayers[k]));
+  delete day.prayers; day.prays = day.prays || []; day.readings = normRanges(day.readings || []);
+}
+function prayRange(v){
+  if (!v.start) return v.end ? `~ ${ampm(v.end)}` : '시각 없음';
+  const a = ampm(v.start); if (!v.end) return `${a} ~`;
+  const b = ampm(v.end); return a.slice(0,2) === b.slice(0,2) ? `${a}~${b.slice(3)}` : `${a}~${b}`;
+}
+const sortPrays = ps => [...ps].sort((a,b) => (a.start || '99').localeCompare(b.start || '99'));
 function putDay(d, day){
-  if (!day.readings.length && !Object.keys(day.prayers).length && !day.note) delete db.daily[d]; else db.daily[d] = day;
+  if (!day.readings.length && !day.prays.length && !day.note) delete db.daily[d]; else db.daily[d] = day;
   save();
 }
 function readCounts(){
@@ -1188,6 +1214,7 @@ function setRangeBtn(which, book){
   $(`#r${which}Ch`).max = b ? b.chapters : '';
 }
 function renderDaily(){
+  if (pEdit >= 0 && !dayOf(dSel).prays[pEdit]) resetPrayInput();
   const i = dinfo(dSel), isToday = dSel === today();
   $('#dDate').value = dSel;
   $('#dLabel').textContent = `${i.y}년 ${i.m}월 ${i.d}일 ${i.wdName}요일${isToday ? ' · 오늘' : ''}`;
@@ -1197,13 +1224,12 @@ function renderDaily(){
   if (!$('#rFromBook').value) { setRangeBtn('From', nx.book); $('#rFromCh').value = nx.ch; setRangeBtn('To', nx.book); $('#rToCh').value = ''; }
   $('#dReadList').innerHTML = (day.readings||[]).map((r,k) => `<div class="readitem"><span>📖 ${esc(fmtRange(r))}</span><small>${r.to - r.from + 1}장</small><button type="button" data-rdel="${k}" aria-label="삭제">×</button></div>`).join('')
     || '<div class="hint">아직 오늘 읽은 말씀이 없습니다. 위의 「이어서 ○장 읽음」을 누르거나 범위를 직접 넣으세요.</div>';
-  $('#dPray').innerHTML = PRAY.map(([k,t]) => { const v = day.prayers?.[k]; return `<button type="button" class="${v ? 'on' : ''}" data-pray="${k}">${v ? '✓ ' : ''}${k}<small>${v ? fmtPray(v) || '시각 미입력' : t}</small></button>`; }).join('');
-  const checked = PRAY.filter(([k]) => day.prayers?.[k]), total = checked.reduce((a,[k]) => a + prayMins(day.prayers[k]), 0);
-  $('#dPrayTimes').innerHTML = checked.map(([k]) => { const p = prayOf(day.prayers[k]), m = prayMins(day.prayers[k]);
-    return `<div class="ptrow" data-slot="${k}"><b>${k}</b>
-      <span class="ptend">${!p.end && isToday ? `<button type="button" class="now" data-now>지금 마침</button>` : ''}<span class="mins">${m ? fmtMins(m) : ''}</span></span>
-      <div class="ptin">${tbox(k, 'start', p.start, '시작 시각')}<span class="til">~</span>${tbox(k, 'end', p.end, '마친 시각')}</div></div>`; }).join('')
+  const total = day.prays.reduce((a,v) => a + prayMins(v), 0);
+  $('#dPrayList').innerHTML = day.prays.map((v,k) => { const m = prayMins(v);
+    return `<div class="readitem ${k === pEdit ? 'editing' : ''}"><span data-pedit="${k}" style="cursor:pointer">${prayRange(v)}</span>
+      ${m ? `<small>${fmtMins(m)}</small>` : ''}${!v.end && isToday ? '<button type="button" class="now" data-pnow="' + k + '">지금 마침</button>' : ''}<button type="button" data-pdel="${k}" aria-label="삭제">×</button></div>`; }).join('')
     + (total ? `<div class="ptsum">오늘 기도 합계 ${fmtMins(total)}</div>` : '');
+  $('#pAdd').textContent = pEdit >= 0 ? '수정' : '추가';
   $('#dNote').value = day.note || '';
   renderCal(); renderProgress();
 }
@@ -1214,7 +1240,7 @@ function renderCal(){
   let h = WD.map(w => `<div class="wd">${w}</div>`).join('') + '<div></div>'.repeat(first);
   for (let d = 1; d <= last; d++) {
     const key = `${calMonth}-${String(d).padStart(2,'0')}`, day = db.daily[key];
-    const ch = (day?.readings||[]).reduce((a,r) => a + r.to - r.from + 1, 0), pr = Object.keys(day?.prayers||{}).length, pm = Object.values(day?.prayers||{}).reduce((a,v) => a + prayMins(v), 0);
+    const ch = (day?.readings||[]).reduce((a,r) => a + r.to - r.from + 1, 0), pr = (day?.prays||[]).length, pm = (day?.prays||[]).reduce((a,v) => a + prayMins(v), 0);
     h += `<button type="button" data-day="${key}" class="${key===dSel?'sel':''} ${key===td?'today':''}">${d}${ch ? `<i>📖${ch}</i>` : ''}${pr ? `<i class="p">🙏${pm ? pm + '분' : pr}</i>` : ''}</button>`;
   }
   $('#dCal').innerHTML = h;
@@ -1241,7 +1267,7 @@ function renderProgress(){
     <p class="hint" style="margin:6px 0 0">작은 숫자는 지금까지 읽은 횟수입니다. 장 번호를 누르면 ${di.m}월 ${di.d}일에 읽은 것으로 체크됩니다.</p>`;
 }
 $('#dDate').addEventListener('change', e => { if (e.target.value) { dSel = e.target.value; calMonth = dSel.slice(0,7); $('#rFromBook').value = ''; renderDaily(); } });
-const shiftDay = n => { const [y,m,d] = dSel.split('-').map(Number); const t = new Date(y, m-1, d+n);
+const shiftDay = n => { resetPrayInput(); const [y,m,d] = dSel.split('-').map(Number); const t = new Date(y, m-1, d+n);
   dSel = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; calMonth = dSel.slice(0,7); $('#rFromBook').value = ''; renderDaily(); };
 $('#dPrev').onclick = () => shiftDay(-1);
 $('#dNextDay').onclick = () => shiftDay(1);
@@ -1264,18 +1290,29 @@ $('#rAdd').onclick = () => {
 $('#dReadList').addEventListener('click', e => { const b = e.target.closest('[data-rdel]'); if (!b) return;
   const day = dayOf(dSel), k = +b.dataset.rdel, [gone] = day.readings.splice(k, 1); putDay(dSel, day); $('#rFromBook').value = ''; renderDaily();
   toast(`${fmtRange(gone)} 체크를 지웠습니다`, () => { const d2 = dayOf(dSel); d2.readings = normRanges([...d2.readings, gone]); putDay(dSel, d2); $('#rFromBook').value = ''; renderDaily(); }); });
-$('#dPray').addEventListener('click', e => { const b = e.target.closest('[data-pray]'); if (!b) return;
-  const day = dayOf(dSel), k = b.dataset.pray; day.prayers = {...(day.prayers||{})};
-  if (day.prayers[k]) delete day.prayers[k];
-  else day.prayers[k] = {start: dSel === today() ? hhmm() : '', end: ''};
-  putDay(dSel, day); renderDaily(); });
-$('#dPrayTimes').addEventListener('change', e => { const f = e.target.dataset.ptime, row = e.target.closest('[data-slot]'); if (!f || !row) return;
-  const day = dayOf(dSel), k = row.dataset.slot; day.prayers = {...(day.prayers||{})};
-  day.prayers[k] = {...prayOf(day.prayers[k]), [f]: e.target.value}; putDay(dSel, day); renderDaily(); });
-$('#dPrayTimes').addEventListener('click', e => { if (e.target.matches('.tbox input')) { try { e.target.showPicker(); } catch(err) {} return; }
-  if (!e.target.closest('[data-now]')) return; const k = e.target.closest('[data-slot]').dataset.slot;
-  const day = dayOf(dSel); day.prayers = {...(day.prayers||{})}; day.prayers[k] = {...prayOf(day.prayers[k]), end: hhmm()};
-  putDay(dSel, day); renderDaily(); toast(`${k} 기도 ${fmtMins(prayMins(day.prayers[k]))} 기록했습니다`); });
+let pEdit = -1;
+function setTbox(box, v, ph){ box.classList.toggle('unset', !v); $('span', box).textContent = v ? ampm(v) : ph; $('input', box).value = v || ''; }
+function resetPrayInput(){ pEdit = -1; setTbox($('#pStartBox'), '', '시작'); setTbox($('#pEndBox'), '', '마침'); }
+['Start','End'].forEach(w => {
+  const box = $(`#p${w}Box`), inp = $(`#p${w}`);
+  inp.addEventListener('change', () => setTbox(box, inp.value, w === 'Start' ? '시작' : '마침'));
+  inp.addEventListener('click', () => { try { inp.showPicker(); } catch(err) {} });
+});
+$('#pAdd').onclick = () => {
+  let start = $('#pStart').value, end = $('#pEnd').value;
+  if (!start && !end) { if (dSel !== today()) return toast('지난 날짜는 시작 시각을 넣어 주세요'); start = hhmm(); }
+  const day = dayOf(dSel), v = {start, end}, editing = pEdit >= 0;
+  if (editing) day.prays[pEdit] = v; else day.prays = [...day.prays, v];
+  day.prays = sortPrays(day.prays); resetPrayInput(); putDay(dSel, day); renderDaily();
+  toast(editing ? '기도 시간을 고쳤습니다' : end ? `기도 ${fmtMins(prayMins(v))} 기록했습니다` : `${ampm(start)}부터 기도 시작 · 마치면 [지금 마침]을 누르세요`);
+};
+$('#dPrayList').addEventListener('click', e => {
+  const day = dayOf(dSel), now = e.target.closest('[data-pnow]'), del = e.target.closest('[data-pdel]'), ed = e.target.closest('[data-pedit]');
+  if (now) { const k = +now.dataset.pnow; day.prays[k] = {...day.prays[k], end: hhmm()}; putDay(dSel, day); renderDaily(); return toast(`기도 ${fmtMins(prayMins(day.prays[k]))} 기록했습니다`); }
+  if (del) { const k = +del.dataset.pdel, [gone] = day.prays.splice(k, 1); resetPrayInput(); putDay(dSel, day); renderDaily();
+    return toast('기도 시간을 지웠습니다', () => { const d2 = dayOf(dSel); d2.prays = sortPrays([...d2.prays, gone]); putDay(dSel, d2); renderDaily(); }); }
+  if (ed) { const k = +ed.dataset.pedit, v = day.prays[k]; pEdit = k; setTbox($('#pStartBox'), v.start, '시작'); setTbox($('#pEndBox'), v.end, '마침'); renderDaily(); }
+});
 let noteTimer;
 $('#dNote').addEventListener('input', e => { clearTimeout(noteTimer); noteTimer = setTimeout(() => { const day = dayOf(dSel); day.note = e.target.value.trim(); putDay(dSel, day); renderCal(); }, 500); });
 $('#dProg').addEventListener('click', e => { const b = e.target.closest('[data-prog]'); if (!b) return; progBook = progBook === b.dataset.prog ? '' : b.dataset.prog; renderProgress();
@@ -1499,6 +1536,7 @@ function importData(d){
   db.books = merge(db.books, d.books); db.studies = merge(db.studies, d.studies);
   db.weekNotes = Object.assign({}, db.weekNotes, d.weekNotes);
   db.daily = Object.assign({}, db.daily, d.daily);
+  Object.values(db.daily).forEach(migrateDay);
   save(); renderStats(); updateBackupNote(); toast(`불러왔습니다 (설교 ${d.sermons?.length || 0}건)`);
 }
 $('#restoreGo').onclick = () => { try { importData(JSON.parse($('#restoreText').value)); $('#restoreText').value = ''; } catch(e) { toast('내용을 읽을 수 없습니다. 백업 내용 전체를 붙여넣었는지 확인하세요'); } };
@@ -1528,8 +1566,8 @@ $('#exportEventCsv').onclick = () => {
 $('#exportDailyCsv').onclick = () => {
   const rows = Object.keys(db.daily).sort().map(d => { const day = db.daily[d];
     return [d, dinfo(d).wdName, (day.readings||[]).map(fmtRange).join(' / '), (day.readings||[]).reduce((a,r) => a + r.to - r.from + 1, 0),
-      PRAY.map(([k]) => { const v = day.prayers?.[k]; if (!v) return ''; const t = fmtPray(v), m = prayMins(v); return `${k}${t ? ' ' + t : ''}${m ? ` (${m}분)` : ''}`; }).filter(Boolean).join(', '),
-      Object.values(day.prayers||{}).reduce((a,v) => a + prayMins(v), 0) || '', day.note]; });
+      (day.prays||[]).map(v => { const m = prayMins(v); return `${fmtPray(v) || '시각 없음'}${m ? ` (${m}분)` : ''}`; }).join(', '),
+      (day.prays||[]).reduce((a,v) => a + prayMins(v), 0) || '', day.note]; });
   download(`매일경건_${today()}.csv`, '\ufeff' + [['날짜','요일','읽은 말씀','장 수','기도','기도 시간(분)','기도 제목·묵상'], ...rows].map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv');
 };
 $('#wipe').onclick = () => {
@@ -1569,7 +1607,7 @@ yearOptions($('#fYear')); monthOptions($('#fMonth')); fillBookFilter();
   const real = d && [d.title, d.theme, d.summary, d.application, d.practice, d.memo, ...(d.points||[]).flatMap(p => [p.h, p.body])].some(Boolean);
   if (real) { fillForm(d); toast('작성 중이던 내용을 불러왔습니다'); } else fillForm();
 })();
-Object.values(db.daily || {}).forEach(d => { d.readings = normRanges(d.readings || []); });
+Object.values(db.daily || {}).forEach(migrateDay);
 renderStats(); updateBackupNote(); resetEvent(); resetBook(); resetStudy();
 if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
 // 새 버전이 올라오면 앱으로 돌아올 때 확인해서 바로 새 화면으로 바꿉니다. 쓰던 글은 자동저장되어 있어 사라지지 않습니다.
