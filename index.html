@@ -1637,16 +1637,36 @@ function strengthCalc(sets,reps,feel){
   const w=(S.health.filter(h=>+h.weight>0).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||{}).weight||70;
   return {minutes,kcal:Math.round(met*w*minutes/60)};
 }
-// 운동 기록 창에서 세트·횟수를 넣으면 운동 시간·소모 칼로리를 채운다 (직접 고친 칸은 건드리지 않음)
+// 유산소 칼로리 추정 (기계·워치 값을 못 적었을 때): 런닝머신·걷기는 ACSM 대사식(속도·경사), 그 밖은 MET
+//  걷기(8km/h 미만) VO2=0.1·S+1.8·S·경사+3.5, 달리기 VO2=0.2·S+0.9·S·경사+3.5 (S=m/분), kcal/분 = VO2×체중/1000×5
+//  실내자전거 MET 가벼움 3.5 · 적당 6.8 · 힘듦 8.8, 기타 유산소 5 (Compendium of Physical Activities)
+function cardioCalc(kind,minutes,speed,incline,distance,feel){
+  minutes=+minutes||0;if(!minutes)return null;
+  const w=+(S.health.filter(h=>+h.weight>0).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||{}).weight||70;
+  let kpm;
+  if(kind==='런닝머신'||kind==='걷기'){
+    const v=+speed||(+distance?(+distance)/(minutes/60):0);if(!v)return null;
+    const Sm=v*1000/60,G=(+incline||0)/100,vo2=v<8?0.1*Sm+1.8*Sm*G+3.5:0.2*Sm+0.9*Sm*G+3.5;kpm=vo2*w/1000*5;
+  }else{const met=kind==='실내자전거'?(/매우|힘듦/.test(feel||'')?8.8:/가벼움/.test(feel||'')?3.5:6.8):5;kpm=met*3.5*w/200;}
+  return {kcal:Math.round(kpm*minutes)};
+}
+// 운동 기록 창: 근력은 세트·횟수로 시간·칼로리를, 유산소는 시간·속도·경사로 칼로리를 채운다
+// (직접 적은 칸은 건드리지 않음 — 기계·워치 표시값이 있으면 그 값을 적으면 됨)
 function gymAutoKcal(){
   const f=dlgForm.elements,el=k=>f.namedItem(k);if(!el('sets')||!el('kcal'))return;
   const typed={minutes:false,kcal:false};
   ['minutes','kcal'].forEach(k=>el(k).addEventListener('input',()=>{typed[k]=true;}));
-  let filled=false;
-  const upd=()=>{if(el('kind').value!=='근력'){if(filled){if(!typed.minutes)el('minutes').value='';if(!typed.kcal)el('kcal').value='';filled=false;}return;}const r=strengthCalc(el('sets').value,el('reps').value,el('feel').value);if(!r)return;
-    if(!typed.minutes)el('minutes').value=r.minutes;if(!typed.kcal)el('kcal').value=r.kcal;filled=true;};
-  ['sets','reps','feel','kind'].forEach(k=>el(k).addEventListener(k==='feel'||k==='kind'?'change':'input',upd));
-  if(el('kind').value==='근력'&&!el('kcal').value)upd();
+  let filled=false,filledMin=false;
+  const upd=()=>{const kind=el('kind').value;
+    if(kind==='근력'){const r=strengthCalc(el('sets').value,el('reps').value,el('feel').value);if(!r)return;
+      if(!typed.minutes){el('minutes').value=r.minutes;filledMin=true;}if(!typed.kcal)el('kcal').value=r.kcal;filled=true;return;}
+    if(filledMin&&!typed.minutes){el('minutes').value='';filledMin=false;} // 근력에서 채운 시간은 지움
+    if(kind==='스트레칭'){if(filled&&!typed.kcal)el('kcal').value='';filled=false;return;}
+    const r=cardioCalc(kind,el('minutes').value,el('speed')?el('speed').value:'',el('incline')?el('incline').value:'',el('distance')?el('distance').value:'',el('feel').value);
+    if(!typed.kcal){el('kcal').value=r?r.kcal:'';filled=!!r;}};
+  ['sets','reps','minutes','speed','incline','distance'].forEach(k=>el(k)&&el(k).addEventListener('input',upd));
+  ['feel','kind'].forEach(k=>el(k).addEventListener('change',upd));
+  if(!el('kcal').value)upd();
 }
 function weekStats(start){
   const ws=start||weekStart(today()),we=(()=>{const d=parseD(ws);d.setDate(d.getDate()+6);return fmtD(d);})();
