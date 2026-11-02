@@ -1072,7 +1072,8 @@ function flowCard(){
     const label=k[0]==='m'?`${a.slice(0,4)}년 ${Number(a.slice(5,7))}월`:a===b?dLabel(a):`${Number(a.slice(5,7))}/${Number(a.slice(8))}~${Number(b.slice(5,7))}/${Number(b.slice(8))} 주`;
     html+=`<tr data-act="flowDay" data-d="${k}" style="cursor:pointer;background:var(--card2)"><td><b>${op?'▼':'▶'} ${label}</b><br><small style="color:var(--acc)">${op?'접기':'눌러서 날짜별 보기'}</small></td><td class="r">${num(s.me)}<br><small>${w(s.dm)}</small></td><td class="r">${num(s.fa)}<br><small>${w(s.df)}</small></td></tr>`;
     if(op)html+=list.filter(act).reverse().map(dayRow).join('');});
-  const cmRows=rows.filter(r=>r.d.startsWith(ledgerYM)),ms=cmRows.length?span(cmRows):null;
+  // 보는 달 증감은 내 재산 화면·홈과 같은 계산(그달 말 − 지난달 말, 지금 기록 기준)으로 → 화면끼리 숫자가 항상 같다
+  const cmRows=rows.filter(r=>r.d.startsWith(ledgerYM)),ms=cmRows.length?(()=>{const e=moneyAt(ledgerYM<t.slice(0,7)?monthEnd(ledgerYM):t),s0=ledgerYM<=st.slice(0,7)?base:moneyAt(addDay(ledgerYM+'-01',-1));return {dm:e.me-s0.me,df:e.fa-s0.fa};})():null;
   return `<section class="card" id="flowCard"><h2>돈의 흐름 (매일 누적)<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${st.replace(/-/g,'.')}부터</small></h2>
    <div class="stats"><div class="stat"><small>내 재산 (시작 후)</small><b>${num(now.me)}원</b><small>${w(now.me-base.me)}원</small></div><div class="stat"><small>${esc(pn)} 돈 (시작 후)</small><b>${num(now.fa)}원</b><small>${w(now.fa-base.fa)}원</small></div><div class="stat"><small>합계 (시작 후)</small><b>${num(now.me+now.fa)}원</b><small>${w(now.me+now.fa-base.me-base.fa)}원</small></div></div>
    <div class="hint" style="margin:8px 0 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${monthNav()}<span>${ms?`내 재산 ${w(ms.dm)}원 · ${esc(pn)} 돈 ${w(ms.df)}원`:'이 달은 기록 시작 전입니다'}</span></div>
