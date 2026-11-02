@@ -1778,12 +1778,16 @@ function postPensions(){
   const dd=dedupePensions()|repairIncomes();
   const f=fundCfg();if(!f.startDate||!(f.incomes||[]).length)return dd;
   const t=today();let ym=f.startDate.slice(0,7),changed=false,guard=0;
+  // 소급 방지: 이미 들어온 연금 기록이 있으면 그 날짜 이전 달은 절대 새로 넣지 않는다
+  // (원금은 그때까지의 연금이 이미 들어 있는 잔액이므로, 설정을 다시 저장해도 지난달 연금이 불어나지 않게)
+  const lastPen=S.care.filter(c=>c.type==='in'&&c.who===SELF&&PEN_CATS.includes(c.cat)).map(c=>c.date).sort().pop()||'';
+  const from=[f.postFrom||'',lastPen].sort().pop();
   while(ym<=t.slice(0,7)&&guard++<600){
     for(const r of f.incomes){
       if(!(+r.amount>0))continue;
       const last=new Date(+ym.slice(0,4),+ym.slice(5),0).getDate(),d=`${ym}-${String(Math.min(+r.day||25,last)).padStart(2,'0')}`;
       const id=`pen-${ym}-${r.id}`,key=penKey(ym,r.who,r.kind);
-      if(d<f.startDate||(f.postFrom&&d<=f.postFrom)||d>t||(f.skip||[]).includes(id)||(f.skip||[]).includes(key)||S.care.some(c=>c.id===id||(c.auto&&c.type==='in'&&penKey(c.date.slice(0,7),...splitMemo(c.memo))===key)))continue;
+      if(d<f.startDate||(from&&d<from.slice(0,7)+'-01')||d>t||(f.skip||[]).includes(id)||(f.skip||[]).includes(key)||S.care.some(c=>c.id===id||(c.auto&&c.type==='in'&&penKey(c.date.slice(0,7),...splitMemo(c.memo))===key)))continue;
       const same=S.care.filter(c=>c.type==='in'&&c.who===SELF&&c.cat===r.kind&&+c.amount===+r.amount&&c.date.startsWith(ym)).length,need=f.incomes.filter(x=>x.kind===r.kind&&+x.amount===+r.amount).length;
       if(same>=need)continue;
       S.care.push({id,ts:Date.now(),auto:true,type:'in',date:d,amount:+r.amount,cat:r.kind,who:SELF,memo:`${r.who} ${r.kind}`,tax:false});changed=true;
@@ -2386,7 +2390,7 @@ const ACT={
       const start=+dlgForm.querySelector('#fs').value||0,startDate=dlgForm.querySelector('#fsd').value;
       if(!startDate){toast('기준일을 입력하세요');return;}
       const incomes=[...box.querySelectorAll('.rule')].map(r=>({id:r.dataset.id,who:r.querySelector('.fw').value.trim(),kind:r.querySelector('.fk').value,amount:+r.querySelector('.fa').value||0,day:Math.min(31,Math.max(1,+r.querySelector('.fd').value||25))})).filter(r=>r.who);
-      S.careCfg.fund={start,startDate,inMine:dlgForm.querySelector('#finmine').checked,acct:dlgForm.querySelector('#facct').value,note:dlgForm.querySelector('#fn').value.trim(),incomes,skip:f.skip||[],year:today().slice(0,4)};
+      S.careCfg.fund={start,startDate,inMine:dlgForm.querySelector('#finmine').checked,acct:dlgForm.querySelector('#facct').value,note:dlgForm.querySelector('#fn').value.trim(),incomes,skip:f.skip||[],year:today().slice(0,4),...(f.postFrom?{postFrom:f.postFrom}:{})}; // postFrom(연금 소급 금지 기준일)은 설정을 다시 저장해도 유지
       // 확인일 이전에 자동으로 들어갔던 연금 기록은 잔액에 이미 반영된 것이므로 정리
       S.care=S.care.filter(c=>!(c.auto&&c.date<startDate));
       postPensions();save();dlg.close();render();toast('저장했습니다');};
