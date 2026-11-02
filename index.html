@@ -1007,22 +1007,22 @@ const closeOf=d=>(S.close||[]).find(c=>c.id===d);
 const flowBase=()=>{const st=flowStart(),c=closeOf(addDay(st,-1));return c?{me:c.me,fa:c.fa}:moneyAt(addDay(st,-1));};
 let flowAll=false;const flowOpen=new Set();
 // 시작 후 누적 증감 꺾은선 (두 줄 모두 같은 원 단위 축 하나). 손가락·마우스를 올리면 그날 값
-function flowChart(rows,base){
+function flowChart(rows,base,mode='all'){
+  // mode: 'me' 내 재산만 · 'fa' 아버지 돈만 · 'all' 둘 다 (모두 같은 원 단위 축 하나)
   if(rows.length<2)return '';
   const W=320,H=150,L=8,R=8,T=12,B=20,pts=rows.map(r=>({d:r.d,me:r.me-base.me,fa:r.fa-base.fa}));
-  const vals=pts.flatMap(p=>[p.me,p.fa,0]),lo=Math.min(...vals),hi=Math.max(...vals),pad=(hi-lo)*0.1||1,y0=lo-pad,y1=hi+pad;
+  const ks=mode==='me'?['me']:mode==='fa'?['fa']:['fa','me'],col={me:'var(--flow-me)',fa:'var(--flow-fa)'},nm={me:'내 재산',fa:careName()+' 돈'};
+  const vals=pts.flatMap(p=>[...ks.map(k=>p[k]),0]),lo=Math.min(...vals),hi=Math.max(...vals),pad=(hi-lo)*0.1||1,y0=lo-pad,y1=hi+pad;
   const X=i=>L+(W-L-R)*i/(pts.length-1),Y=v=>T+(H-T-B)*(1-(v-y0)/(y1-y0));
   const path=k=>pts.map((p,i)=>`${i?'L':'M'}${X(i).toFixed(1)},${Y(p[k]).toFixed(1)}`).join(''),last=pts[pts.length-1],n=pts.length-1;
   const sg=v=>(v>0?'+':v<0?'−':'')+short(Math.abs(v));
-  return `<div class="flowchart" id="flowChart" data-pts='${esc(JSON.stringify(pts))}' style="position:relative;margin-top:10px">
-   <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:4px"><span><i style="display:inline-block;width:14px;height:3px;border-radius:2px;background:var(--flow-me);vertical-align:middle;margin-right:4px"></i>내 재산 <b style="color:var(--text)">${sg(last.me)}원</b></span><span><i style="display:inline-block;width:14px;height:3px;border-radius:2px;background:var(--flow-fa);vertical-align:middle;margin-right:4px"></i>${esc(careName())} 돈 <b style="color:var(--text)">${sg(last.fa)}원</b></span><span>시작 후 누적 증감</span></div>
-   <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="시작 후 누적 증감: 내 재산 ${sg(last.me)}원, ${esc(careName())} 돈 ${sg(last.fa)}원" style="display:block;overflow:visible;touch-action:pan-y">
+  return `<div class="flowchart" id="flowChart" data-mode="${mode}" data-pts='${esc(JSON.stringify(pts))}' style="position:relative;margin-top:10px">
+   <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:4px">${ks.slice().reverse().map(k=>`<span><i style="display:inline-block;width:14px;height:3px;border-radius:2px;background:${col[k]};vertical-align:middle;margin-right:4px"></i>${esc(nm[k])} <b style="color:var(--text)">${sg(last[k])}원</b></span>`).join('')}<span>시작 후 누적 증감</span></div>
+   <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="시작 후 누적 증감: ${ks.map(k=>esc(nm[k])+' '+sg(last[k])+'원').join(', ')}" style="display:block;overflow:visible;touch-action:pan-y">
     <line x1="${L}" x2="${W-R}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}" stroke="var(--line)" stroke-width="1"/>
     <text x="${L}" y="${(Y(0)-4).toFixed(1)}" font-size="10" fill="var(--muted)">0</text>
-    <path d="${path('fa')}" fill="none" stroke="var(--flow-fa)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="${path('me')}" fill="none" stroke="var(--flow-me)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${X(n).toFixed(1)}" cy="${Y(last.fa).toFixed(1)}" r="4" fill="var(--flow-fa)" stroke="var(--card)" stroke-width="2"/>
-    <circle cx="${X(n).toFixed(1)}" cy="${Y(last.me).toFixed(1)}" r="4" fill="var(--flow-me)" stroke="var(--card)" stroke-width="2"/>
+    ${ks.map(k=>`<path d="${path(k)}" fill="none" stroke="${col[k]}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`).join('')}
+    ${ks.map(k=>`<circle cx="${X(n).toFixed(1)}" cy="${Y(last[k]).toFixed(1)}" r="4" fill="${col[k]}" stroke="var(--card)" stroke-width="2"/>`).join('')}
     <text x="${L}" y="${H-4}" font-size="10" fill="var(--muted)">${Number(pts[0].d.slice(5,7))}/${Number(pts[0].d.slice(8))}</text>
     <text x="${W-R}" y="${H-4}" text-anchor="end" font-size="10" fill="var(--muted)">${Number(last.d.slice(5,7))}/${Number(last.d.slice(8))}</text>
     <line class="fc-x" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3" visibility="hidden"/>
@@ -1037,12 +1037,15 @@ function flowHover(e){
   const r=svg.getBoundingClientRect(),W=320,L=8,R=8,x=(e.clientX-r.left)/r.width*W,i=Math.max(0,Math.min(pts.length-1,Math.round((x-L)/(W-L-R)*(pts.length-1)))),p=pts[i],px=L+(W-L-R)*i/(pts.length-1);
   ln.setAttribute('x1',px);ln.setAttribute('x2',px);ln.setAttribute('visibility','visible');
   const f=v=>`${v>0?'+':v<0?'−':''}${num(Math.abs(v))}원`;
-  tip.innerHTML=`<b>${dLabel(p.d)}</b><br><i style="display:inline-block;width:10px;height:3px;background:var(--flow-me);vertical-align:middle"></i> 내 재산 ${f(p.me)}<br><i style="display:inline-block;width:10px;height:3px;background:var(--flow-fa);vertical-align:middle"></i> ${esc(careName())} 돈 ${f(p.fa)}`;
+  const md=box.dataset.mode||'all',lm=`<br><i style="display:inline-block;width:10px;height:3px;background:var(--flow-me);vertical-align:middle"></i> 내 재산 ${f(p.me)}`,lf=`<br><i style="display:inline-block;width:10px;height:3px;background:var(--flow-fa);vertical-align:middle"></i> ${esc(careName())} 돈 ${f(p.fa)}`;
+  tip.innerHTML=`<b>${dLabel(p.d)}</b>${md!=='fa'?lm:''}${md!=='me'?lf:''}`;
   tip.hidden=false;const left=px/W*r.width;tip.style.left=Math.max(0,Math.min(r.width-tip.offsetWidth,left-tip.offsetWidth/2))+'px';
 }
 document.addEventListener('pointermove',flowHover);document.addEventListener('pointerdown',flowHover);
 document.addEventListener('pointerout',e=>{const box=e.target.closest&&e.target.closest('#flowChart');if(box&&!box.contains(e.relatedTarget)){box.querySelector('.fc-tip').hidden=true;box.querySelector('.fc-x').setAttribute('visibility','hidden');}});
-function flowCard(){
+// 돈의 흐름 카드. mode: 'me' 내 재산 화면(내 돈만) · 'fa' 아버지 장부(아버지 돈만) · 'all' 홈(둘 다)
+// 맨 위 합계 3칸은 어느 화면이든 같게 두고, 그 아래(달 증감·그래프·날짜별 표·내역)만 화면 주인의 돈으로 나눈다
+function flowCard(mode='all'){
   if(!S.accounts.length&&!fundCfg().startDate)return '';
   const st=flowStart(),t=today(),pn=careName();if(st>t)return '';
   const days=[];for(let d=st;d<=t;d=addDay(d,1))days.push(d);
@@ -1054,32 +1057,39 @@ function flowCard(){
     if(c){const now=at(d),pv=at(addDay(d,-1));r={d,me:c.me,fa:c.fa,dm:c.dm,df:c.df,ev:(c.ev||[]).map(e=>({who:e.w,v:e.v,m:e.m,card:!!e.c})),closed:true,adjMe:(now.me-pv.me)-(c.dm-(c.ua||0)),adjFa:(now.fa-pv.fa)-(c.df-(c.uf||0))};}
     else{const m=moneyAt(d);r={d,...m,dm:m.me-prev.me,df:m.fa-prev.fa,closed:false};r.ev=withAdj(dayEvents(d),r.dm,r.df,d);}
     prev=r;return r;});
+  const showMe=mode!=='fa',showFa=mode!=='me',cols=1+(showMe?1:0)+(showFa?1:0);
+  // 내역 나누기: 아버지 돈 기록·아버지 돈 고침 → 아버지 쪽, 나머지(가계부·계좌 이동·주식·잔액 맞춤) → 내 쪽
+  const isFa=e=>e.who==='fa'||(e.who==='adj'&&String(e.m).includes(pn+' 돈'));
+  const evOf=r=>r.ev.filter(e=>isFa(e)?showFa:showMe);
   const now=rows[rows.length-1],sg=v=>v>0?'+':v<0?'−':'±',cl=v=>v<0?'neg':v>0?'pos':'',w=v=>`<b class="${cl(v)}">${sg(v)}${num(Math.abs(v))}</b>`;
-  const act=r=>r.dm||r.df||r.ev.length||r.adjMe||r.adjFa||r.d===t||r.d===st;
+  const act=r=>(showMe&&(r.dm||r.adjMe))||(showFa&&(r.df||r.adjFa))||evOf(r).length||r.d===t||r.d===st;
   // 구간 증감: 구간 마지막 날 − 구간 시작 전날
   const span=list=>{const i=rows.indexOf(list[0]),b0=i>0?rows[i-1]:base,e=list[list.length-1];return {me:e.me,fa:e.fa,dm:e.me-b0.me,df:e.fa-b0.fa};};
+  const cell=(v,dv)=>`<td class="r" style="white-space:nowrap">${num(v)}<br><small>${dv?w(dv):'-'}</small></td>`;
   // 날짜 줄은 한 줄로만(날짜·건수·잔액·증감). 내역은 접혀 있다가 누르면 아래에 전체 폭으로 펼쳐짐
-  const dayRow=r=>{const op=flowOpen.has(r.d),n=r.ev.length,adj=r.adjMe||r.adjFa;
+  const dayRow=r=>{const op=flowOpen.has(r.d),ev=evOf(r),n=ev.length,am=showMe?r.adjMe:0,af=showFa?r.adjFa:0,adj=am||af;
     let h=`<tr${n||adj?` data-act="flowDay" data-d="${r.d}" style="cursor:pointer"`:''}><td style="white-space:nowrap">${dLabel(r.d).replace(/ \(/,'<br><small style="color:var(--muted)">(').replace(/\)$/,')</small>')} <small style="color:var(--muted)">${r.closed?'마감':'오늘'}</small>${n||adj?`<br><small style="color:var(--acc)">${n?`내역 ${n}건 `:''}${adj?'<span style="color:var(--soon)">· 고침 </span>':''}${op?'▲':'▼'}</small>`:''}</td>
-      <td class="r" style="white-space:nowrap">${num(r.me)}<br><small>${r.dm?w(r.dm):'-'}</small></td><td class="r" style="white-space:nowrap">${num(r.fa)}<br><small>${r.df?w(r.df):'-'}</small></td></tr>`;
-    if(op)h+=`<tr><td colspan="3" style="background:var(--card2);font-size:12.5px;line-height:1.6">${adj?`<div style="color:var(--soon)">마감 후 고침: ${[r.adjMe?`내 재산 ${w(r.adjMe)}`:'',r.adjFa?`${esc(pn)} 돈 ${w(r.adjFa)}`:''].filter(Boolean).join(' · ')} (그다음 날 금액에 반영)</div>`:''}${r.ev.map(e=>`<div style="display:flex;gap:8px"><span style="flex:1;min-width:0">${esc(e.m)}${e.card?' <small style="color:var(--muted)">(신용카드)</small>':''}</span><b class="${e.v<0?'neg':'pos'}" style="white-space:nowrap">${e.v>0?'+':'−'}${num(Math.abs(e.v))}</b></div>`).join('')}</td></tr>`;
+      ${showMe?cell(r.me,r.dm):''}${showFa?cell(r.fa,r.df):''}</tr>`;
+    if(op)h+=`<tr><td colspan="${cols}" style="background:var(--card2);font-size:12.5px;line-height:1.6">${adj?`<div style="color:var(--soon)">마감 후 고침: ${[am?`내 재산 ${w(am)}`:'',af?`${esc(pn)} 돈 ${w(af)}`:''].filter(Boolean).join(' · ')} (그다음 날 금액에 반영)</div>`:''}${ev.map(e=>`<div style="display:flex;gap:8px"><span style="flex:1;min-width:0">${esc(e.m)}${e.card?' <small style="color:var(--muted)">(신용카드)</small>':''}</span><b class="${e.v<0?'neg':'pos'}" style="white-space:nowrap">${e.v>0?'+':'−'}${num(Math.abs(e.v))}</b></div>`).join('')}</td></tr>`;
     return h;};
   // 최근 7일은 펼쳐 두고, 그 전은 약 5주 안쪽 달은 주 단위·그보다 오래된 달은 달 단위로 접는다 (누르면 펼침)
   const t7=addDay(t,-6),m35=addDay(t,-35);
-  let html=`<tr><th colspan="3" style="text-align:left;background:var(--card2)">최근 7일</th></tr>`+rows.filter(r=>r.d>=t7&&act(r)).reverse().map(dayRow).join('');
+  let html=`<tr><th colspan="${cols}" style="text-align:left;background:var(--card2)">최근 7일</th></tr>`+rows.filter(r=>r.d>=t7&&act(r)).reverse().map(dayRow).join('');
   const grp=new Map();rows.filter(r=>r.d<t7).forEach(r=>{const k=r.d.slice(0,7)<m35.slice(0,7)?'m'+r.d.slice(0,7):'w'+weekStart(r.d);if(!grp.has(k))grp.set(k,[]);grp.get(k).push(r);});
   [...grp.entries()].reverse().forEach(([k,list])=>{const s=span(list),op=flowOpen.has(k),a=list[0].d,b=list[list.length-1].d;
     const label=k[0]==='m'?`${a.slice(0,4)}년 ${Number(a.slice(5,7))}월`:a===b?dLabel(a):`${Number(a.slice(5,7))}/${Number(a.slice(8))}~${Number(b.slice(5,7))}/${Number(b.slice(8))} 주`;
-    html+=`<tr data-act="flowDay" data-d="${k}" style="cursor:pointer;background:var(--card2)"><td><b>${op?'▼':'▶'} ${label}</b><br><small style="color:var(--acc)">${op?'접기':'눌러서 날짜별 보기'}</small></td><td class="r">${num(s.me)}<br><small>${w(s.dm)}</small></td><td class="r">${num(s.fa)}<br><small>${w(s.df)}</small></td></tr>`;
+    html+=`<tr data-act="flowDay" data-d="${k}" style="cursor:pointer;background:var(--card2)"><td><b>${op?'▼':'▶'} ${label}</b><br><small style="color:var(--acc)">${op?'접기':'눌러서 날짜별 보기'}</small></td>${showMe?`<td class="r">${num(s.me)}<br><small>${w(s.dm)}</small></td>`:''}${showFa?`<td class="r">${num(s.fa)}<br><small>${w(s.df)}</small></td>`:''}</tr>`;
     if(op)html+=list.filter(act).reverse().map(dayRow).join('');});
   // 보는 달 증감은 내 재산 화면·홈과 같은 계산(그달 말 − 지난달 말, 지금 기록 기준)으로 → 화면끼리 숫자가 항상 같다
   const cmRows=rows.filter(r=>r.d.startsWith(ledgerYM)),ms=cmRows.length?(()=>{const e=moneyAt(ledgerYM<t.slice(0,7)?monthEnd(ledgerYM):t),s0=ledgerYM<=st.slice(0,7)?base:moneyAt(addDay(ledgerYM+'-01',-1));return {dm:e.me-s0.me,df:e.fa-s0.fa};})():null;
-  return `<section class="card" id="flowCard"><h2>돈의 흐름 (매일 누적)<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${st.replace(/-/g,'.')}부터</small></h2>
+  const title=mode==='me'?'내 재산 흐름 (매일 누적)':mode==='fa'?`${esc(pn)} 돈 흐름 (매일 누적)`:'돈의 흐름 (매일 누적)';
+  const folded=mode==='all'&&hikeFold.homeFlow; // 홈에서는 접어 둘 수 있게 (접으면 합계 3칸만)
+  return `<section class="card" id="flowCard"><h2>${title}<span class="sp"></span><small style="font-weight:400;color:var(--muted);font-size:12px">${st.replace(/-/g,'.')}부터</small>${mode==='all'?foldBtn('homeFlow'):''}</h2>
    <div class="stats"><div class="stat"><small>내 재산 (시작 후)</small><b>${num(now.me)}원</b><small>${w(now.me-base.me)}원</small></div><div class="stat"><small>${esc(pn)} 돈 (시작 후)</small><b>${num(now.fa)}원</b><small>${w(now.fa-base.fa)}원</small></div><div class="stat"><small>합계 (시작 후)</small><b>${num(now.me+now.fa)}원</b><small>${w(now.me+now.fa-base.me-base.fa)}원</small></div></div>
-   <div class="hint" style="margin:8px 0 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${monthNav()}<span>${ms?`내 재산 ${w(ms.dm)}원 · ${esc(pn)} 돈 ${w(ms.df)}원`:'이 달은 기록 시작 전입니다'}</span></div>
-   ${flowChart(rows,base)}
-   <div class="tblwrap" style="margin-top:10px"><table class="tbl"><tr><th>날짜 · 들고 난 돈</th><th class="r">내 재산</th><th class="r">${esc(pn)} 돈</th></tr>${html}</table></div>
-   <p class="hint" style="margin:8px 0 0">매일 밤 12시 기준으로 그날 끝 잔액과 내역을 <b>마감해 저장</b>합니다(앱을 그 시각에 열어 두지 않아도 다음에 열 때 지난날을 마감). 마감한 날의 금액은 바뀌지 않고, 나중에 지난 기록을 고치면 그 줄에 <b>‘마감 후 고침’</b>으로 차이가 보이며 그 차이는 오늘 금액에 들어갑니다. 돈이 움직인 날만 보입니다. 주식은 현재가를 업데이트한 날의 평가액을 씁니다.</p></section>`;
+   ${folded?'</section>':`<div class="hint" style="margin:8px 0 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${monthNav()}<span>${ms?[showMe?`내 재산 ${w(ms.dm)}원`:'',showFa?`${esc(pn)} 돈 ${w(ms.df)}원`:''].filter(Boolean).join(' · '):'이 달은 기록 시작 전입니다'}</span></div>
+   ${flowChart(rows,base,mode)}
+   <div class="tblwrap" style="margin-top:10px"><table class="tbl"><tr><th>날짜 · 들고 난 돈</th>${showMe?'<th class="r">내 재산</th>':''}${showFa?`<th class="r">${esc(pn)} 돈</th>`:''}</tr>${html}</table></div>
+   <p class="hint" style="margin:8px 0 0">${mode==='me'?`내 통장·증권과 가계부 기록만 보여 줍니다(${esc(pn)} 돈은 ${esc(pn)} 장부에서). `:mode==='fa'?`${esc(pn)} 돈(연금·병원비·${esc(pn)} 집 고정비)만 보여 줍니다(내 돈은 내 재산에서). `:''}매일 밤 12시 기준으로 그날 끝 잔액과 내역을 <b>마감해 저장</b>합니다. 마감한 날의 금액은 바뀌지 않고, 나중에 지난 기록을 고치면 그 줄에 <b>‘마감 후 고침’</b>으로 차이가 보입니다. 돈이 움직인 날만 보입니다.</p></section>`}`;
 }
 function stackBar(by,total){
   const parts=ACCT_TYPES.filter(([k])=>k!=='loan'&&by[k]>0);
@@ -1148,7 +1158,7 @@ function view_assets(){
    <div class="hero-sub">통장 등 합계 ${won(t.assets)}${t.held?` − 보관 중인 ${esc(careName())} 돈 ${won(t.held)}`:''}${t.debt?` − 빚 ${won(t.debt)}`:''}${diff!=null?` · 지난달 말보다 <b class="${diff<0?'neg':'pos'}">${diff>=0?'+':''}${num(diff)}원</b>`:''}</div>
    ${stackBar(t.by,t.assets)}</section>
   <div class="toolbar"><button class="btn primary" data-act="addAcct" style="flex:1;padding:12px;font-size:15px">＋ 재산 추가</button><button class="btn" data-act="addMove" style="padding:12px">계좌 간 이동</button></div>
-  ${flowCard()}
+  ${flowCard('me')}
   ${months.length>1?`<section class="card"><h2>순자산 추이</h2>${barChart(months.map(m=>({label:Number(m.slice(5))+'월',value:Math.max(0,(S.assetHist[m]||{t:t.net}).t),hi:m===cm})))}</section>`:''}
   ${ACCT_TYPES.map(([k,l])=>{const list=S.accounts.filter(a=>a.type===k);if(!list.length)return '';const sum=list.filter(a=>a.inTotal!==false).reduce((x,a)=>x+acctValue(a),0);
     return `<section class="card" style="--acc:${ACCT_COLOR[k]}"><h2>${l}<span class="sp"></span><b style="font-size:15px" class="${k==='loan'?'neg':''}">${k==='loan'?'-':''}${won(sum)}</b></h2>${list.map(acctRow).join('')}</section>`;}).join('')}
@@ -1923,7 +1933,7 @@ function view_care(){
   ${receiptDue().filter(d=>ownerOf(d.r)==='parent').map(d=>`<div class="xfer" style="margin:0 0 10px;background:var(--soon-bg)"><span><b>${esc(d.r.name)} ${Number(d.ym.slice(5))}월분</b> 영수증 금액을 입력하세요 <small style="color:var(--muted)">(예상 ${won(d.r.amount)})</small></span><button class="btn sm primary amt" data-act="receipt" data-id="${d.r.id}" data-ym="${d.ym}">입력</button></div>`).join('')}
   ${dups.length?`<div class="xfer" style="margin:0 0 12px;background:var(--over-bg)"><span style="color:var(--over)">같은 연금이 두 번 들어간 기록 <b>${dups.length}건</b>이 있어요 (${dups.map(c=>esc(c.memo||c.cat)).join(', ')})</span><button class="btn sm primary amt" data-act="fixPenDup">중복 지우기</button></div>`:''}
   ${fundCard()}
-  ${flowCard()}
+  ${flowCard('fa')}
   <div class="toolbar"><button class="btn primary" data-act="addCare" data-type="out">＋ 지출</button><button class="btn primary" data-act="addCare" data-type="in">＋ 입금</button><span class="grow"></span><button class="btn" data-act="careCfg">${esc(pn)} 정보</button></div>
   <div class="toolbar"><select id="careMode" style="width:auto">${optHTML([['month','월별'],['year','연도별'],['all','전체 기간']],careMode)}</select>${nav}</div>
   ${catArr.length?`<section class="card"><h2>항목별 지출<span class="sp"></span>${foldBtn('careCat')}</h2>${hikeFold.careCat?'':catArr.map(([c,v])=>`<div class="catrow"><span>${esc(c)}</span><div class="bar"><span style="width:${v/mx*100}%"></span></div><span class="amt">${num(v)}</span></div>`).join('')}</section>`:''}
@@ -2020,6 +2030,7 @@ function view_home(){
    <div class="hero-sub" style="margin-top:6px">남은 돈 <b>${won(inc-out)}</b>${(()=>{const sv=S.tx.filter(x=>x.type==='out'&&x.cat==='저축·투자'&&x.date.startsWith(ym)).reduce((s,x)=>s+(+x.amount||0),0);return sv?` · 저축 ${won(sv)}`:'';})()}</div>${budgetBar(out-(S.tx.filter(x=>x.type==='out'&&x.cat==='저축·투자'&&x.date.startsWith(ym)).reduce((s,x)=>s+(+x.amount||0),0)))}</section>
   ${netWorthCard()}
   ${fatherCard()}
+  ${flowCard('all')}
   <div class="quick">${[['addTx','ledger','가계부'],['addFuel','car','주유'],['addMaint','car','정비'],['addHealth','health','혈압·혈당'],['addGym','gym','운동'],['addHike','hike','등산']].map(([a,k,l])=>`<button data-act="${a}" style="--acc:var(--c-${k})">${ICON[k]}<span>${l}</span></button>`).join('')}</div>
   <section class="card"><h2>알림 · 다가오는 일</h2>${al.length?`<ul class="list">${al.map(x=>`<li class="row" data-act="${x.act||'go'}" data-tab="${x.tab}"${x.id?` data-id="${x.id}" data-ym="${x.ym}"`:''}><span class="pill ${x.level}">${esc(x.badge)}</span><div class="grow"><b>${esc(x.title)}</b><small>${esc(x.sub)}</small></div></li>`).join('')}</ul>`:'<p class="empty">임박한 일이 없습니다.</p>'}</section>
   <section class="card" style="--acc:var(--c-gym)"><h2>이번 주 운동<span class="sp"></span><button class="btn sm" data-act="go" data-tab="gym">헬스</button></h2>${goalBars(w)}</section>
