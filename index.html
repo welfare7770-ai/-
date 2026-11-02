@@ -312,7 +312,11 @@ const cloud={db:null,base:null,sent:{},timer:null,busy:false,again:false,
       let merged=false;
       for(const id of ids){
         let body=docs[id];const base=this.sent[id]?JSON.parse(this.sent[id]):undefined,cur=srv[id];
+        // 안전장치 1: 이 기기가 아직 한 번도 받아 보지 못한 서버 문서는 통째로 덮어쓰지 않는다 → 서버본을 먼저 받아 온다
+        if(base===undefined&&cur!==undefined){this.missed=true;continue;}
         if(base!==undefined&&canon(cur)!==this.sent[id]){body=merge3(base,body,cur);merged=true;}
+        // 안전장치 2: 하루 마감은 한 번 서버에 저장되면 바뀌지 않는다 (먼저 저장된 마감을 지키고, 새 날짜만 더함)
+        if(id==='close'&&cur&&body){const have=new Set((cur.items||[]).map(x=>x.id));body={items:[...(cur.items||[]),...(body.items||[]).filter(x=>!have.has(x.id))]};merged=true;}
         const js=body?canon(body):null;
         if(js===(cur?canon(cur):null)){if(js)this.sent[id]=js;else delete this.sent[id];continue;}
         const ref=this.db.collection(this.base).doc(id);
