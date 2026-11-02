@@ -1869,7 +1869,9 @@ function fundCard(){
   const janWarn=today().slice(5,7)<='02'&&f.year!==today().slice(0,4);
   // 한눈에: 잔액 / 매달 연금 / 이번 달 실제 들어온 돈·쓴 돈 (추정치는 보여 주지 않음) — 자세한 건 '잔액 계산 보기' 안에
   return `<section class="card"><h2>${esc(careName())} 돈 잔액<span class="sp"></span><button class="btn sm" data-act="careFund">설정</button></h2>
-   <div class="stats"><div class="stat" style="grid-column:span 3"><small>원금 ${won(f.start)} + 연금 − 지출</small><b style="font-size:21px;color:var(--acc)">${won(st.bal)}</b></div>
+   ${(()=>{ // 지난달을 보고 있으면 그달 마지막 날 잔액 (내 재산 화면과 같은 기준)
+     const vd=ledgerYM<today().slice(0,7)?monthEnd(ledgerYM):'';
+     return `<div class="stats"><div class="stat" style="grid-column:span 3"><small>원금 ${won(f.start)} + 연금 − 지출${vd?` · <b>${vd.replace(/-/g,'.')} 기준</b>`:''}</small><b style="font-size:21px;color:var(--acc)">${won(vd?fatherAt(vd):st.bal)}</b></div>`;})()}
    <div class="stat"><small>매달 연금</small><b class="pos">${short(st.monthlyIn)}원</b></div>${(()=>{const ms=careStats(S.care.filter(c=>c.date.startsWith(ledgerYM))),mo=Number(ledgerYM.slice(5));return `<div class="stat"><small>${mo}월 들어온 돈</small><b class="pos">${short(ms.inc)}원</b></div><div class="stat"><small>${mo}월 쓴 돈</small><b class="neg">${short(ms.self)}원</b></div>`;})()}</div>
    ${janWarn?`<div class="xfer" style="margin-top:8px;background:var(--soon-bg)"><span style="color:var(--soon)">새해 연금이 올랐으면 금액을 고쳐 주세요</span><button class="btn sm primary amt" data-act="careIncome">연금 금액</button></div>`:''}
    <div style="margin-top:8px">${fundBreakdown()}</div></section>`;
@@ -1915,6 +1917,7 @@ function view_care(){
   const taxOf=w=>S.care.filter(c=>c.type==='out'&&c.tax&&(w===SELF?c.who===SELF:c.who!==SELF)&&c.date.startsWith(careY)).reduce((x,c)=>x+(+c.amount||0),0);
   return `
   <section class="hero" style="padding:16px"><div class="hero-date">${esc(pn)}${cfg.hospital?' · '+esc(cfg.hospital):''}${admitDays>0?` · 입원 ${num(admitDays)}일째`:''}</div>
+   ${careMode==='month'?`<div style="margin:6px 0 4px">${monthNav()}</div>`:''}
    <div class="hero-two"><div><div class="hero-label">${label} 들어온 돈</div><div class="hero-num in">${won(st.inc)}</div></div><div><div class="hero-label">${label} 쓴 돈</div><div class="hero-num out">${won(st.total)}</div></div></div>
    <div class="hero-sub" style="margin-top:6px">${esc(pn)} 돈으로 ${won(st.self)}${st.mine?` · 내 돈으로 ${won(st.mine)}`:''}</div></section>
   ${receiptDue().filter(d=>ownerOf(d.r)==='parent').map(d=>`<div class="xfer" style="margin:0 0 10px;background:var(--soon-bg)"><span><b>${esc(d.r.name)} ${Number(d.ym.slice(5))}월분</b> 영수증 금액을 입력하세요 <small style="color:var(--muted)">(예상 ${won(d.r.amount)})</small></span><button class="btn sm primary amt" data-act="receipt" data-id="${d.r.id}" data-ym="${d.ym}">입력</button></div>`).join('')}
