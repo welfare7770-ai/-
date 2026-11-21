@@ -341,6 +341,19 @@ a.btn{text-decoration:none}
 .tsap button.on,.tsgrid button.on{background:var(--fill);border-color:var(--fill);color:var(--on-fill)}
 .tsadj{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:6px;margin-top:6px}
 .tsadj button{font-size:15px}
+.prun-start{width:100%;border:0;border-radius:14px;padding:16px;background:var(--fill);color:var(--on-fill);font:700 19px var(--gothic);cursor:pointer;box-shadow:0 3px 10px rgba(90,80,130,.15)}
+.prun-on{border:2px solid var(--fill);background:var(--accent-soft);border-radius:14px;padding:14px;text-align:center}
+.prun-on .lbl{font:700 14.5px var(--gothic);color:var(--accent);display:flex;align-items:center;justify-content:center;gap:8px}
+.prun-on .el{display:block;font:700 34px var(--gothic);font-variant-numeric:tabular-nums;margin:4px 0 10px;color:var(--text)}
+.prun-on .acts{display:flex;gap:8px}
+.prun-on .stop{flex:1;border:0;border-radius:12px;padding:13px;background:var(--accent);color:var(--surface);font:700 18px var(--gothic);cursor:pointer}
+.prun-on .cancel{border:1px solid var(--line);border-radius:12px;padding:0 14px;background:var(--surface);color:var(--muted);font:600 14px var(--gothic);cursor:pointer}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--pm);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none}}
+.pman{margin:10px 0 8px}
+.pman summary{cursor:pointer;font:600 13.5px var(--gothic);color:var(--muted);padding:6px 0}
+.pman[open] summary{margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -468,13 +481,16 @@ a.btn{text-decoration:none}
 
     <div class="card">
       <h2>기도 시간</h2>
+      <div id="pRun"></div>
+      <details class="pman" id="pMan"><summary>시각 직접 넣기 (지난 기록 · 고치기)</summary>
       <div class="padd">
         <label class="tbox unset" id="pStartBox" role="button" tabindex="0" aria-label="기도 시작 시각 고르기"><span>시작</span><input type="hidden" id="pStart"></label>
         <span class="til">~</span>
         <label class="tbox unset" id="pEndBox" role="button" tabindex="0" aria-label="기도 마친 시각 고르기"><span>마침</span><input type="hidden" id="pEnd"></label>
         <button type="button" class="btn primary sm" id="pAdd">추가</button>
       </div>
-      <p class="hint" id="pHint" style="margin:0 0 8px">시각을 넣고 [추가]를 누르세요. 비워 두고 누르면 지금부터 기도 시작으로 기록됩니다.</p>
+      <p class="hint" id="pHint" style="margin:0 0 8px">시작·마침 칸을 눌러 시각을 고르고 [추가]를 누르세요.</p>
+      </details>
       <div class="readlist" id="dPrayList" style="margin:0 0 12px"></div>
       <label for="dNote">오늘의 기도 제목 · 묵상</label>
       <textarea id="dNote" rows="2" placeholder="기도 제목이나 오늘 받은 말씀 한 줄"></textarea>
@@ -1274,6 +1290,8 @@ function renderDaily(){
       ${m ? `<small>${fmtMins(m)}</small>` : ''}${!v.end && isToday ? '<button type="button" class="now" data-pnow="' + k + '">지금 마침</button>' : ''}<button type="button" data-pdel="${k}" aria-label="삭제">×</button></div>`; }).join('')
     + (total ? `<div class="ptsum">오늘 기도 합계 ${fmtMins(total)}</div>` : '');
   $('#pAdd').textContent = pEdit >= 0 ? '수정' : '추가';
+  if (pEdit >= 0) $('#pMan').open = true;
+  renderRun();
   $('#dNote').value = day.note || '';
   renderCal(); renderProgress(); renderDevStats();
 }
@@ -1372,6 +1390,29 @@ $('#dReadList').addEventListener('click', e => { const b = e.target.closest('[da
   const day = dayOf(dSel), k = +b.dataset.rdel, [gone] = day.readings.splice(k, 1); putDay(dSel, day); $('#rFromBook').value = ''; renderDaily();
   toast(`${fmtRange(gone)} 체크를 지웠습니다`, () => { const d2 = dayOf(dSel); d2.readings = normRanges([...d2.readings, gone]); putDay(dSel, d2); $('#rFromBook').value = ''; renderDaily(); }); });
 let pEdit = -1;
+// 기도 시작~마침을 버튼 두 번으로 기록합니다. 진행 중인 기도는 db.prayRun에 두어 앱을 닫아도 남습니다.
+function renderRun(){
+  const el = $('#pRun'), run = db.prayRun;
+  if (run) {
+    const m = Math.max(0, Math.floor((Date.now() - run.ts) / 60000)), other = run.date !== today();
+    el.innerHTML = `<div class="prun-on"><div class="lbl"><span class="pulse"></span>${other ? run.date.slice(5).replace('-','/') + ' ' : ''}${ampm(run.start)}부터 기도 중</div>
+      <span class="el">${fmtMins(m)}</span>
+      <div class="acts"><button type="button" class="stop" data-run="stop">기도 마침</button><button type="button" class="cancel" data-run="cancel">취소</button></div></div>`;
+  } else el.innerHTML = dSel === today() ? '<button type="button" class="prun-start" data-run="start">🙏 기도 시작</button>' : '';
+  if (!run && dSel !== today()) $('#pMan').open = true;
+}
+$('#pRun').addEventListener('click', e => {
+  const b = e.target.closest('[data-run]'); if (!b) return; const act = b.dataset.run;
+  if (act === 'start') { db.prayRun = {date: today(), start: hhmm(), ts: Date.now()}; save(); renderDaily(); return toast(`${ampm(db.prayRun.start)} 기도를 시작했습니다 · 마치면 [기도 마침]을 누르세요`); }
+  const run = db.prayRun; if (!run) return renderDaily();
+  delete db.prayRun;
+  if (act === 'cancel') { save(); renderDaily(); return toast('진행 중인 기도를 취소했습니다', () => { db.prayRun = run; save(); renderDaily(); }); }
+  const v = {start: run.start, end: hhmm()}, day = dayOf(run.date);
+  day.prays = sortPrays([...day.prays, v]); putDay(run.date, day); renderDaily();
+  toast(`기도 ${fmtMins(prayMins(v))} 기록했습니다 (${prayRange(v)})`);
+});
+setInterval(() => { if (db.prayRun && $('#v-daily').classList.contains('on') && document.visibilityState === 'visible') renderRun(); }, 20000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('#v-daily').classList.contains('on')) renderRun(); });
 function setTbox(box, v, ph){ box.classList.toggle('unset', !v); $('span', box).textContent = v ? ampm(v) : ph; $('input', box).value = v || ''; }
 function resetPrayInput(){ pEdit = -1; setTbox($('#pStartBox'), '', '시작'); setTbox($('#pEndBox'), '', '마침'); }
 ['Start','End'].forEach(w => {
