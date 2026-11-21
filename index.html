@@ -333,6 +333,14 @@ a.btn{text-decoration:none}
 .bxl{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;margin-top:4px}
 .bxl span{font:600 10.5px var(--gothic);color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden}
 .bxl span.cur{color:var(--text);font-weight:700}
+.tsview{text-align:center;font:700 34px var(--gothic);font-variant-numeric:tabular-nums;margin:2px 0 12px;color:var(--text)}
+.tsap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.tslabel{font:700 13px var(--gothic);color:var(--muted);margin:4px 0 6px}
+.tsgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:8px}
+.tsap button,.tsgrid button,.tsadj button{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:10px;padding:10px 0;font:700 17px var(--gothic);font-variant-numeric:tabular-nums;cursor:pointer}
+.tsap button.on,.tsgrid button.on{background:var(--fill);border-color:var(--fill);color:var(--on-fill)}
+.tsadj{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:6px;margin-top:6px}
+.tsadj button{font-size:15px}
 </style>
 </head>
 <body>
@@ -461,9 +469,9 @@ a.btn{text-decoration:none}
     <div class="card">
       <h2>기도 시간</h2>
       <div class="padd">
-        <label class="tbox unset" id="pStartBox"><span>시작</span><input type="time" id="pStart" aria-label="기도 시작 시각"></label>
+        <label class="tbox unset" id="pStartBox" role="button" tabindex="0" aria-label="기도 시작 시각 고르기"><span>시작</span><input type="hidden" id="pStart"></label>
         <span class="til">~</span>
-        <label class="tbox unset" id="pEndBox"><span>마침</span><input type="time" id="pEnd" aria-label="기도 마친 시각"></label>
+        <label class="tbox unset" id="pEndBox" role="button" tabindex="0" aria-label="기도 마친 시각 고르기"><span>마침</span><input type="hidden" id="pEnd"></label>
         <button type="button" class="btn primary sm" id="pAdd">추가</button>
       </div>
       <p class="hint" id="pHint" style="margin:0 0 8px">시각을 넣고 [추가]를 누르세요. 비워 두고 누르면 지금부터 기도 시작으로 기록됩니다.</p>
@@ -656,6 +664,17 @@ a.btn{text-decoration:none}
   </section>
 </div>
 
+<div class="sheet" id="timeSheet"><div class="sheet-card" role="dialog" aria-label="시각 고르기">
+  <div class="sheet-head"><span id="tsTitle">시각</span><button type="button" class="xbtn" data-tsclose aria-label="닫기">✕</button></div>
+  <div class="tsview" id="tsView"></div>
+  <div class="tsap"><button type="button" data-ap="0">오전</button><button type="button" data-ap="1">오후</button></div>
+  <div class="tslabel">시</div>
+  <div class="tsgrid" id="tsHours"></div>
+  <div class="tslabel">분</div>
+  <div class="tsgrid" id="tsMins"></div>
+  <div class="tsadj"><button type="button" data-adj="-1">− 1분</button><button type="button" data-adj="1">+ 1분</button><button type="button" data-tsnow>지금 시각</button></div>
+  <div class="row end" style="margin-top:14px"><button type="button" class="btn ghost" data-tsclear>지우기</button><button type="button" class="btn primary" data-tsok>확인</button></div>
+</div></div>
 <div class="sheet" id="bookSheet"><div class="sheet-card" role="dialog" aria-label="성경 선택">
   <div class="sheet-head"><span>성경 선택</span><button type="button" class="xbtn" data-sheetclose aria-label="닫기">✕</button></div>
   <input id="bookFind" placeholder="이름으로 찾기 (예: 로마, 시편)" autocomplete="off">
@@ -932,6 +951,7 @@ function closeModal(){
 window.addEventListener('popstate', e => {
   if (skipPop) { skipPop = false; return; }
   if ($('#bookSheet').classList.contains('on')) { $('#bookSheet').classList.remove('on'); return; }
+  if ($('#timeSheet').classList.contains('on')) { $('#timeSheet').classList.remove('on'); return; }
   if ($('#modal').classList.contains('on')) { $('#modal').classList.remove('on'); return; }
   showView(e.state?.view || 'write', true);
 });
@@ -975,7 +995,7 @@ $('#modal').addEventListener('click', e => {
   const del = e.target.closest('[data-del]');
   if (del) removeSermon(del.dataset.del);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeBookSheet(); closeModal(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeTimeSheet(); closeBookSheet(); closeModal(); } });
 document.addEventListener('click', e => { const it = e.target.closest('[data-open]'); if (it) openDetail(it.dataset.open); });
 function refreshCurrent(){ const v = $('#tabs .on')?.dataset.v; if (v && v !== 'write') showView(v); }
 
@@ -1357,7 +1377,44 @@ function resetPrayInput(){ pEdit = -1; setTbox($('#pStartBox'), '', '시작'); s
 ['Start','End'].forEach(w => {
   const box = $(`#p${w}Box`), inp = $(`#p${w}`);
   inp.addEventListener('change', () => setTbox(box, inp.value, w === 'Start' ? '시작' : '마침'));
-  inp.addEventListener('click', () => { try { inp.showPicker(); } catch(err) {} });
+  const open = () => openTimeSheet(inp, w === 'Start' ? '기도 시작 시각' : '기도 마친 시각');
+  box.addEventListener('click', open);
+  box.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+});
+// ───────── 시각 고르기 창 (오전/오후 · 시 · 분 버튼) ─────────
+let tsInput = null, tsH = 0, tsM = 0;
+function renderTimeSheet(){
+  const ap = tsH >= 12 ? 1 : 0, h12 = tsH % 12 || 12;
+  $('#tsView').textContent = `${ap ? '오후' : '오전'} ${h12}:${String(tsM).padStart(2,'0')}`;
+  $$('#timeSheet [data-ap]').forEach(b => b.classList.toggle('on', +b.dataset.ap === ap));
+  $('#tsHours').innerHTML = Array.from({length:12}, (_,k) => { const n = k + 1; return `<button type="button" data-h="${n}" class="${n === h12 ? 'on' : ''}">${n}</button>`; }).join('');
+  $('#tsMins').innerHTML = Array.from({length:12}, (_,k) => { const n = k * 5; return `<button type="button" data-m="${n}" class="${n === tsM ? 'on' : ''}">${String(n).padStart(2,'0')}</button>`; }).join('');
+}
+function openTimeSheet(input, title){
+  tsInput = input; $('#tsTitle').textContent = title;
+  const v = input.value || hhmm(); [tsH, tsM] = v.split(':').map(Number);
+  renderTimeSheet(); $('#timeSheet').classList.add('on'); $('#timeSheet .sheet-card').scrollTop = 0;
+  history.pushState({sheet:1, view:history.state?.view}, '');
+}
+function closeTimeSheet(){
+  if (!$('#timeSheet').classList.contains('on')) return;
+  $('#timeSheet').classList.remove('on');
+  if (history.state?.sheet) { skipPop = true; history.back(); }
+}
+function setTimeValue(v){ tsInput.value = v; tsInput.dispatchEvent(new Event('change', {bubbles:true})); closeTimeSheet(); }
+$('#timeSheet').addEventListener('click', e => {
+  const t = e.target;
+  if (t.id === 'timeSheet' || t.closest('[data-tsclose]')) return closeTimeSheet();
+  if (t.closest('[data-tsok]')) return setTimeValue(`${String(tsH).padStart(2,'0')}:${String(tsM).padStart(2,'0')}`);
+  if (t.closest('[data-tsclear]')) return setTimeValue('');
+  const ap = t.closest('[data-ap]'), h = t.closest('[data-h]'), m = t.closest('[data-m]'), adj = t.closest('[data-adj]');
+  if (ap) tsH = tsH % 12 + (+ap.dataset.ap ? 12 : 0);
+  else if (h) tsH = (+h.dataset.h % 12) + (tsH >= 12 ? 12 : 0);
+  else if (m) tsM = +m.dataset.m;
+  else if (adj) { const total = (tsH * 60 + tsM + +adj.dataset.adj + 1440) % 1440; tsH = Math.floor(total / 60); tsM = total % 60; }
+  else if (t.closest('[data-tsnow]')) [tsH, tsM] = hhmm().split(':').map(Number);
+  else return;
+  renderTimeSheet();
 });
 $('#pAdd').onclick = () => {
   let start = $('#pStart').value, end = $('#pEnd').value;
